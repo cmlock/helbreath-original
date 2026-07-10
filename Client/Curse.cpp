@@ -54,7 +54,7 @@ void CCurse::filterChar(const char *src, char *dst, const char *chars)
     char *dstp = dst;
 
     while (*srcp) {
-	if (strchr(chars, *srcp) == 0) {
+	if (strchr(chars, *srcp) == NULL) {
 	    *dstp = *srcp;   dstp += 1;
 	} else {
 	    int msb, lsb;
@@ -128,7 +128,7 @@ char* CCurse::ConvertString(char * str, int max_len)
     char line[128], curse[128], replace[128];
     char *ptr = curse_string, *lptr, *cptr;
 
-    if (!str) return 0;
+    if (!str) return NULL;
 
     if (!max_len || max_len >= sizeof(result)) return str;
 
@@ -158,7 +158,7 @@ char* CCurse::ConvertString(char * str, int max_len)
 			// if there is no matching replacement of curse word
 			if (!replace[0])
 			{
-				str[0] = 0;
+				str[0] = NULL;
 				return str;
 			}
 			if ( (max_len-1) < (int)( (cptr - string) + strlen(replace) + strlen(cptr + strlen(curse) ) ) )

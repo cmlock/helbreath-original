@@ -810,8 +810,6 @@
 #define	GET_ITEM_NAME34	"Experience+%d%%"
 #define	GET_ITEM_NAME35	"Gold+%d%%"
 
-//50Cent - Repair all
-#define DRAW_DIALOGBOX_NPCACTION_QUERY49    "Repair All"
 
 #define	CALC_SOCKET_CLOSED1	"Game exits because paying sockect disconnected."
 
@@ -827,7 +825,7 @@
 #define	UPDATE_SCREEN_ONGAME7	"Too far to give the Item."
 #define	UPDATE_SCREEN_ONGAME8	"The quantity you enter is not correct."
 #define	UPDATE_SCREEN_ONGAME9	"You entered more quantity that you can carry."
-#define	UPDATE_SCREEN_ONGAME10	"Endurance: %d/%d"
+#define	UPDATE_SCREEN_ONGAME10	"Endurance: %d"
 #define	UPDATE_SCREEN_ONGAME12	"Press F1 for help."
 #define	UPDATE_SCREEN_ONGAME13	"Logging out...%d"
 #define	UPDATE_SCREEN_ONGAME14	"Restarting game...%d"

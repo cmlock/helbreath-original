@@ -22,7 +22,6 @@ typedef signed char i8;
 class DXC_ddraw  
 {
 public:	
-	void DrawItemShadowBox(short sX, short sY, short dX, short dY, int iType = 0);
 	bool m_init;
 	void ChangeBPP(i8 bpp);
 	void * operator new (size_t size) 
@@ -36,7 +35,7 @@ public:
 
 	DXC_ddraw();
 	virtual ~DXC_ddraw();
-	bool bInit(HWND hWnd);
+	BOOL bInit(HWND hWnd);
 	void ColorTransferRGB(COLORREF fcolor, int * iR, int * iG, int * iB);
 	HRESULT InitFlipToGDI(HWND hWnd);
 	void ChangeDisplayMode(HWND hWnd);
@@ -65,7 +64,7 @@ public:
 	long    m_lTransG2[64][64], m_lTransRB2[64][64];
 	long    m_lFadeG[64][64],  m_lFadeRB[64][64];
 
-	bool m_bFullMode;
+	BOOL m_bFullMode;
 
 	LPDIRECTDRAW7		 m_lpDD4;
 	LPDIRECTDRAWSURFACE7 m_lpFrontB4, m_lpBackB4, m_lpBackB4flip;

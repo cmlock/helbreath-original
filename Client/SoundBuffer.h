@@ -18,14 +18,14 @@ class CSoundBuffer
 {
 public:
 	void _ReleaseSoundBuffer();
-	void bStop(bool bIsNoRewind = false);
+	void bStop(BOOL bIsNoRewind = FALSE);
 	void SetVolume(LONG Volume);
 	LPDIRECTSOUNDBUFFER GetIdleBuffer();
-	bool Play(bool bLoop = false, long lPan = 0, int iVol = 0);
-	bool _LoadWavContents(char cBufferIndex, FILE* pFile, DWORD dwSize, DWORD dwPos);
-	bool bCreateBuffer_LoadWavFileContents(char cBufferIndex);
-	bool _bCreateSoundBuffer(char cBufferIndex, DWORD dwBufSize, DWORD dwFreq, DWORD dwBitsPerSample, DWORD dwBlkAlign, bool bStereo);
-	CSoundBuffer(LPDIRECTSOUND lpDS, DSCAPS DSCaps, char * pWavFileName, bool bIsSingleLoad = false);
+	BOOL Play(BOOL bLoop = FALSE, long lPan = 0, int iVol = 0);
+	BOOL _LoadWavContents(char cBufferIndex, FILE* pFile, DWORD dwSize, DWORD dwPos);
+	BOOL bCreateBuffer_LoadWavFileContents(char cBufferIndex);
+	BOOL _bCreateSoundBuffer(char cBufferIndex, DWORD dwBufSize, DWORD dwFreq, DWORD dwBitsPerSample, DWORD dwBlkAlign, BOOL bStereo);
+	CSoundBuffer(LPDIRECTSOUND lpDS, DSCAPS DSCaps, char * pWavFileName, BOOL bIsSingleLoad = FALSE);
 	virtual ~CSoundBuffer();
 
 	LPDIRECTSOUND	m_lpDS;
@@ -35,8 +35,8 @@ public:
 	LPDIRECTSOUNDBUFFER m_lpDSB[DEF_MAXSOUNDBUFFERS];
 	char				m_cCurrentBufferIndex;
 
-	bool				m_bIsSingleLoad;
-	bool				m_bIsLooping;
+	BOOL				m_bIsSingleLoad;
+	BOOL				m_bIsLooping;
 	DWORD				m_dwTime;
 };
 

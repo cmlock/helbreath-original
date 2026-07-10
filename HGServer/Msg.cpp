@@ -10,19 +10,19 @@
 
 CMsg::CMsg()
 {
-	m_pData  = 0;
-	m_dwSize = 0;
+	m_pData  = NULL;
+	m_dwSize = NULL;
 }
 
 CMsg::~CMsg()						   
 {
-	if (m_pData != 0) delete m_pData;
+	if (m_pData != NULL) delete m_pData;
 }
 
-bool CMsg::bPut(char cFrom, char * pData, DWORD dwSize, int iIndex, char cKey)
+BOOL CMsg::bPut(char cFrom, char * pData, DWORD dwSize, int iIndex, char cKey)
 {
 	m_pData = new char [dwSize + 1];
-	if (m_pData == 0) return false;
+	if (m_pData == NULL) return FALSE;
 	ZeroMemory(m_pData, dwSize + 1);
 	memcpy(m_pData, pData, dwSize);
 
@@ -31,7 +31,7 @@ bool CMsg::bPut(char cFrom, char * pData, DWORD dwSize, int iIndex, char cKey)
 	m_iIndex = iIndex;
 	m_cKey   = cKey;
 
-	return true;
+	return TRUE;
 }
 
 void CMsg::Get(char * pFrom, char * pData, DWORD * pSize, int * pIndex, char * pKey)

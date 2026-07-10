@@ -7,27 +7,6 @@
 #define MSGID_REQUEST_INITPLAYER			0x05040205
 #define MSGID_RESPONSE_INITPLAYER			0x05040206
 
-#define DEF_NOTIFY_MOBKILLS 0x0A68
-
-#define DEF_COMMONTYPE_DISENCHANTITEM 0x0A75
-#define DEF_COMMONTYPE_ENCHANTITEM 0x0A73
-#define DEF_COMMONTYPE_UPGRADEENCHANT 0x0A74
-
-#define msg_shard 0x0A71
-#define msg_fragment 0x0A72
-
-#define DEF_NOTIFY_CURLIFESPAN 0x0BF3
-
-//50Cent - Repair All
-#define DEF_COMMONTYPE_REQ_REPAIRALL            0x0F10
-#define DEF_NOTIFY_REPAIRALLPRICES                0x0F11
-#define DEF_COMMONTYPE_REQ_REPAIRALLDELETE        0x0F12
-#define DEF_COMMONTYPE_REQ_REPAIRALLCONFIRM        0x0F13
-
-//50Cent - HP Bar
-#define DEF_COMMONTYPE_REQ_GETNPCHP					0x1F12
-#define DEF_SEND_NPCHP								0x1F13
-
 #define MSGID_REQUEST_INITDATA				0x05080404
 #define MSGID_RESPONSE_INITDATA				0x05080405
 
@@ -302,7 +281,7 @@
 
 
   #define DEF_NOTIFY_ANGELIC_STATS					0x0BF2 // Sends m_iAngelicStr, Int, Dex, Mag to client
-
+  #define DEF_NOTIFY_ITEM_CANT_RELEASE				0x0BF3 // "Item cannot be released"
   #define DEF_NOTIFY_ANGEL_FAILED					0x0BF4 // Failed receiving an Angel pandent
   #define DEF_NOTIFY_ANGEL_RECEIVED					0x0BF5 // "You have received the Tutelary Angel"
 

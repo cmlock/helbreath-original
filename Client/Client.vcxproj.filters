@@ -115,7 +115,6 @@
     <ClInclude Include="NetMessages.h" />
     <ClInclude Include="SpriteID.h" />
     <ClInclude Include="Winmain.h" />
-    <ClInclude Include="MobCounter.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="YWSound.cpp">
@@ -192,7 +191,6 @@
     </ClCompile>
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Wmain.cpp" />
-    <ClCompile Include="MobCounter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="AIcon.ico">

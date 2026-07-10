@@ -1,7 +1,7 @@
 // winmain.h
 
 BOOL InitApplication( HINSTANCE hInstance);
-bool InitInstance( HINSTANCE hInstance, int nCmdShow );
+BOOL InitInstance( HINSTANCE hInstance, int nCmdShow );
 LRESULT CALLBACK WndProc( HWND hWnd,UINT message,WPARAM wParam,LPARAM lParam );
 void EventLoop();
 void OnDestroy();

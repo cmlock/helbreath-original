@@ -15,7 +15,7 @@
 class CTile  
 {
 public:
-	bool  m_bSpriteOmit;
+	BOOL  m_bSpriteOmit;
 
 	void Clear();
 	
@@ -56,8 +56,8 @@ public:
 	short m_sV3;								// +B50
 	short m_sDynamicObjectType;
 
-	short m_sItemID;
-	DWORD m_dwItemAttr;
+	short m_sItemSprite;
+	short m_sItemSpriteFrame;
 
 	char  m_cDeadOwnerFrame;
 	char  m_cOwnerAction;						// +B59

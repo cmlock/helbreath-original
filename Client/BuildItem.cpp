@@ -14,7 +14,7 @@ CBuildItem::CBuildItem()
 
 	ZeroMemory(m_cName, sizeof(m_cName));
 
-	m_bBuildEnabled = false;
+	m_bBuildEnabled = FALSE;
 	m_iSkillLimit   = 0;
 	m_iMaxSkill     = 0;
 

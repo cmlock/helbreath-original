@@ -12,27 +12,6 @@
 #define DEF_NOTIFY_CRAFTING_SUCCESS				0x0BF0 // Crafting ok
 #define DEF_NOTIFY_CRAFTING_FAIL					0x0BF1 // Crafting failed
 
-//50Cent - HP Bar
-#define DEF_COMMONTYPE_REQ_GETNPCHP					0x1F12
-#define DEF_SEND_NPCHP								0x1F13
-
-#define DEF_COMMONTYPE_DISENCHANTITEM 0x0A75
-#define DEF_COMMONTYPE_ENCHANTITEM 0x0A73
-#define DEF_COMMONTYPE_UPGRADEENCHANT 0x0A74
-
-#define msg_shard 0x0A71
-#define msg_fragment 0x0A72
-
-#define DEF_NOTIFY_CURLIFESPAN 0x0BF3
-
-#define DEF_NOTIFY_MOBKILLS 0x0A68
-
-//50Cent - Repair All
-#define DEF_COMMONTYPE_REQ_REPAIRALL            0x0F10
-#define DEF_NOTIFY_REPAIRALLPRICES                0x0F11
-#define DEF_COMMONTYPE_REQ_REPAIRALLDELETE        0x0F12
-#define DEF_COMMONTYPE_REQ_REPAIRALLCONFIRM        0x0F13
-
 // Reversed by Snoopy from real 3.72 client
 #define DEF_REQUEST_ANGEL				0x0FC9421E
 

@@ -20,7 +20,7 @@ public:
 	char m_cName[21];
 
 	int  m_iLevel;
-	bool m_bIsUseable;
+	BOOL m_bIsUseable;
 	char m_cUseMethod;
 };
 
