@@ -15111,7 +15111,7 @@ void CGame::SendNotifyMsg(int iFromH, int iToH, WORD wMsgType, DWORD sV1, DWORD 
 		*dwp = (DWORD)m_pClientList[iToH]->m_iHP;
 		cp += 4;
 		dwp  = (DWORD *)cp;
-		*dwp = (DWORD)m_pClientList[iToH]->m_iHungerStatus; // v2.04 0926 HP의 뒤에 MP를 같이 알려준다. 마나변환의 특성치 때문 
+		*dwp = (DWORD)m_pClientList[iToH]->m_iMP; // v2.04 0926 HP의 뒤에 MP를 같이 알려준다. 마나변환의 특성치 때문
 		cp += 4;
 
 		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData, 14);
