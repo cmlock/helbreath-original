@@ -22,6 +22,12 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 
+# Must match gate-server-address / log-server-address / world-server-address
+# in GateServer.cfg, HMLServer.cfg, and WLserver.cfg - those servers may bind
+# their listening socket to this address rather than all interfaces, so the
+# readiness check has to dial the same address other servers register against.
+$serverAddress = '192.168.0.192'
+
 function Wait-ForPort {
     param(
         [string]$Name,
@@ -33,7 +39,7 @@ function Wait-ForPort {
     while ((Get-Date) -lt $deadline) {
         $client = New-Object System.Net.Sockets.TcpClient
         try {
-            $client.Connect('127.0.0.1', $Port)
+            $client.Connect($serverAddress, $Port)
             if ($client.Connected) {
                 $client.Close()
                 # Grace buffer: the port can accept connections slightly
