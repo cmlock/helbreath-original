@@ -27,7 +27,7 @@
 #define DEF_EQUIPPOS_BACK		12  //680h
 #define DEF_EQUIPPOS_RELEASEALL	13	//682h
  
-#define DEF_ITEMTYPE_NOTUSED	-1	// v1.4 ±âÁ¸¿¡ »ç¿ëµÇ¾úÀ¸³ª ÇöÀç·Î¼­´Â »ç¿ëµÇÁö ¾Ê´Â ¾ÆÀÌÅÛ: Æ÷»ó±ÝÀ¸·Î ´ëÃ¼µÈ´Ù.
+#define DEF_ITEMTYPE_NOTUSED	-1	// v1.4 ê¸°ì¡´ì— ì‚¬ìš©ë˜ì—ˆìœ¼ë‚˜ í˜„ìž¬ë¡œì„œëŠ” ì‚¬ìš©ë˜ì§€ ì•ŠëŠ” ì•„ì´í…œ: í¬ìƒê¸ˆìœ¼ë¡œ ëŒ€ì²´ëœë‹¤.
 #define DEF_ITEMTYPE_NONE		 0
 #define DEF_ITEMTYPE_EQUIP		 1
 #define DEF_ITEMTYPE_APPLY		 2
@@ -44,33 +44,33 @@
 
 
 #define DEF_ITEMEFFECTTYPE_NONE				0
-#define DEF_ITEMEFFECTTYPE_ATTACK			1		// °ø°ÝÄ¡: value1 D value2 + value3
-#define DEF_ITEMEFFECTTYPE_DEFENSE			2		// ¹æ¾î´É·Â 
-#define DEF_ITEMEFFECTTYPE_ATTACK_ARROW		3		// È­»ìÀ» »ç¿ëÇÏ´Â °ø°Ý¹«±â. ¹«±â ÀÚÃ¼´Â °ø°Ý·ÂÀÌ ¾ø´Ù.		
-#define DEF_ITEMEFFECTTYPE_HP   		    4		// HP°ü·Ã È¿°ú 
-#define DEF_ITEMEFFECTTYPE_MP   		    5		// MP°ü·Ã È¿°ú 
-#define DEF_ITEMEFFECTTYPE_SP   		    6		// SP°ü·Ã È¿°ú 
-#define DEF_ITEMEFFECTTYPE_HPSTOCK 		    7		// HP°ü·Ã È¿°ú. Áï°¢ÀûÀ¸·Î ¹ÝÀÀÀÌ ³ªÅ¸³ªÁö´Â ¾Ê´Â´Ù. 
-#define DEF_ITEMEFFECTTYPE_GET			    8		// ¾ò´Â´Ù. ¹°°í±â³ª ±¤¹°µî 
-#define DEF_ITEMEFFECTTYPE_STUDYSKILL		9		// ±â¼úÀ» ¹è¿ì´Â ¾ÆÀÌÅÛÀÌ´Ù.
-#define DEF_ITEMEFFECTTYPE_SHOWLOCATION		10		// À§Ä¡¸¦ Ç¥½ÃÇÏ´Â ¾ÆÀÌÅÛ. 
-#define DEF_ITEMEFFECTTYPE_MAGIC			11		// »ç¿ëÇÏ¸é ¸¶¹ý È¿°ú¸¦ ¾ò´Â ¾ÆÀÌÅÛ 
-#define DEF_ITEMEFFECTTYPE_CHANGEATTR		12		// ÇÃ·¹ÀÌ¾îÀÇ ¼Ó¼ºÀ» º¯È¯½ÃÅ²´Ù. ¼ºº°, ¸Ó¸®¸ð¾ç, ÇÇºÎ»ö, Çì¾î½ºÅ¸ÀÏ 
-#define DEF_ITEMEFFECTTYPE_ATTACK_MANASAVE	13		// °ø°ÝÈ¿°ú¿Í ´õºÒ¾î ¸¶³ªÀÇ Àý¾à È¿°ú°¡ ÀÖ´Ù.(¸¶¹ý»ç¿ë)
-#define DEF_ITEMEFFECTTYPE_ADDEFFECT	    14		// Ãß°¡ È¿°ú
-#define DEF_ITEMEFFECTTYPE_MAGICDAMAGESAVE	15		// ¸¶¹ýÀ¸·Î ÀÎÇÑ °ø°ÝÀÇ ´ë¹ÌÁö¸¦ Àý°¨ÇÑ´Ù. ¹ÝÁö³ª ¸ñ°ÉÀÌ·ù 
-#define DEF_ITEMEFFECTTYPE_OCCUPYFLAG		16		// Á¡·É ±ê¹ß 
-#define DEF_ITEMEFFECTTYPE_DYE				17		// ¿°»ö¾à. 
-#define DEF_ITEMEFFECTTYPE_STUDYMAGIC		18		// ¸¶¹ýÀ» ¹è¿ì´Â ¾ÆÀÌÅÛÀÌ´Ù.
-#define DEF_ITEMEFFECTTYPE_ATTACK_MAXHPDOWN	19		// °ø°Ý È¿°ú¿Í ÇÔ²² ÃÖ´ë  HP ¹× HP È¸º¹·®ÀÌ ¶³¾îÁö´Â ¾ÆÀÌÅÛ 
-#define DEF_ITEMEFFECTTYPE_ATTACK_DEFENSE	20		// °ø°Ý È¿°ú¿Í ÇÔ²² °©¿Ê°ú °°ÀÌ ¹°¸® ¹æ¾î±¸ È¿°ú°¡ ÀÖ´Â ¾ÆÀÌÅÛ 
-#define DEF_ITEMEFFECTTYPE_MATERIAL_ATTR	21		// ¹«±â Á¦ÀÛ Àç·á ¼Ó¼º 
-#define DEF_ITEMEFFECTTYPE_FIRMSTAMINAR		22		// ½ºÅÂ¹Ì³Ê °íÁ¤ ¾ÆÀÌÅÛ 
-#define DEF_ITEMEFFECTTYPE_LOTTERY			23		// º¹±Ç ¾ÆÀÌÅnÛ
-#define DEF_ITEMEFFECTTYPE_ATTACK_SPECABLTY		24	// °ø°Ý ¾ÆÀÌÅÛ Æ¯¼ö È¿°ú 
-#define DEF_ITEMEFFECTTYPE_DEFENSE_SPECABLTY	25	// ¹æ¾î±¸ ¾ÆÀÌÅÛ Æ¯¼ö È¿°ú 
-#define DEF_ITEMEFFECTTYPE_ALTERITEMDROP		26	// ´Ù¸¥ ¾ÆÀÌÅÛ ¶³¾îÁú °Í ´ë½Å ÀÌ ¾ÆÀÌÅÛÀÌ ¶³¾îÁø´Ù.
-#define DEF_ITEMEFFECTTYPE_CONSTRUCTIONKIT		27	// °ÇÃà Å°Æ®
+#define DEF_ITEMEFFECTTYPE_ATTACK			1		// ê³µê²©ì¹˜: value1 D value2 + value3
+#define DEF_ITEMEFFECTTYPE_DEFENSE			2		// ë°©ì–´ëŠ¥ë ¥ 
+#define DEF_ITEMEFFECTTYPE_ATTACK_ARROW		3		// í™”ì‚´ì„ ì‚¬ìš©í•˜ëŠ” ê³µê²©ë¬´ê¸°. ë¬´ê¸° ìžì²´ëŠ” ê³µê²©ë ¥ì´ ì—†ë‹¤.		
+#define DEF_ITEMEFFECTTYPE_HP   		    4		// HPê´€ë ¨ íš¨ê³¼ 
+#define DEF_ITEMEFFECTTYPE_MP   		    5		// MPê´€ë ¨ íš¨ê³¼ 
+#define DEF_ITEMEFFECTTYPE_SP   		    6		// SPê´€ë ¨ íš¨ê³¼ 
+#define DEF_ITEMEFFECTTYPE_HPSTOCK 		    7		// HPê´€ë ¨ íš¨ê³¼. ì¦‰ê°ì ìœ¼ë¡œ ë°˜ì‘ì´ ë‚˜íƒ€ë‚˜ì§€ëŠ” ì•ŠëŠ”ë‹¤. 
+#define DEF_ITEMEFFECTTYPE_GET			    8		// ì–»ëŠ”ë‹¤. ë¬¼ê³ ê¸°ë‚˜ ê´‘ë¬¼ë“± 
+#define DEF_ITEMEFFECTTYPE_STUDYSKILL		9		// ê¸°ìˆ ì„ ë°°ìš°ëŠ” ì•„ì´í…œì´ë‹¤.
+#define DEF_ITEMEFFECTTYPE_SHOWLOCATION		10		// ìœ„ì¹˜ë¥¼ í‘œì‹œí•˜ëŠ” ì•„ì´í…œ. 
+#define DEF_ITEMEFFECTTYPE_MAGIC			11		// ì‚¬ìš©í•˜ë©´ ë§ˆë²• íš¨ê³¼ë¥¼ ì–»ëŠ” ì•„ì´í…œ 
+#define DEF_ITEMEFFECTTYPE_CHANGEATTR		12		// í”Œë ˆì´ì–´ì˜ ì†ì„±ì„ ë³€í™˜ì‹œí‚¨ë‹¤. ì„±ë³„, ë¨¸ë¦¬ëª¨ì–‘, í”¼ë¶€ìƒ‰, í—¤ì–´ìŠ¤íƒ€ì¼ 
+#define DEF_ITEMEFFECTTYPE_ATTACK_MANASAVE	13		// ê³µê²©íš¨ê³¼ì™€ ë”ë¶ˆì–´ ë§ˆë‚˜ì˜ ì ˆì•½ íš¨ê³¼ê°€ ìžˆë‹¤.(ë§ˆë²•ì‚¬ìš©)
+#define DEF_ITEMEFFECTTYPE_ADDEFFECT	    14		// ì¶”ê°€ íš¨ê³¼
+#define DEF_ITEMEFFECTTYPE_MAGICDAMAGESAVE	15		// ë§ˆë²•ìœ¼ë¡œ ì¸í•œ ê³µê²©ì˜ ëŒ€ë¯¸ì§€ë¥¼ ì ˆê°í•œë‹¤. ë°˜ì§€ë‚˜ ëª©ê±¸ì´ë¥˜ 
+#define DEF_ITEMEFFECTTYPE_OCCUPYFLAG		16		// ì ë ¹ ê¹ƒë°œ 
+#define DEF_ITEMEFFECTTYPE_DYE				17		// ì—¼ìƒ‰ì•½. 
+#define DEF_ITEMEFFECTTYPE_STUDYMAGIC		18		// ë§ˆë²•ì„ ë°°ìš°ëŠ” ì•„ì´í…œì´ë‹¤.
+#define DEF_ITEMEFFECTTYPE_ATTACK_MAXHPDOWN	19		// ê³µê²© íš¨ê³¼ì™€ í•¨ê»˜ ìµœëŒ€  HP ë° HP íšŒë³µëŸ‰ì´ ë–¨ì–´ì§€ëŠ” ì•„ì´í…œ 
+#define DEF_ITEMEFFECTTYPE_ATTACK_DEFENSE	20		// ê³µê²© íš¨ê³¼ì™€ í•¨ê»˜ ê°‘ì˜·ê³¼ ê°™ì´ ë¬¼ë¦¬ ë°©ì–´êµ¬ íš¨ê³¼ê°€ ìžˆëŠ” ì•„ì´í…œ 
+#define DEF_ITEMEFFECTTYPE_MATERIAL_ATTR	21		// ë¬´ê¸° ì œìž‘ ìž¬ë£Œ ì†ì„± 
+#define DEF_ITEMEFFECTTYPE_FIRMSTAMINAR		22		// ìŠ¤íƒœë¯¸ë„ˆ ê³ ì • ì•„ì´í…œ 
+#define DEF_ITEMEFFECTTYPE_LOTTERY			23		// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½nï¿½
+#define DEF_ITEMEFFECTTYPE_ATTACK_SPECABLTY		24	// ê³µê²© ì•„ì´í…œ íŠ¹ìˆ˜ íš¨ê³¼ 
+#define DEF_ITEMEFFECTTYPE_DEFENSE_SPECABLTY	25	// ë°©ì–´êµ¬ ì•„ì´í…œ íŠ¹ìˆ˜ íš¨ê³¼ 
+#define DEF_ITEMEFFECTTYPE_ALTERITEMDROP		26	// ë‹¤ë¥¸ ì•„ì´í…œ ë–¨ì–´ì§ˆ ê²ƒ ëŒ€ì‹  ì´ ì•„ì´í…œì´ ë–¨ì–´ì§„ë‹¤.
+#define DEF_ITEMEFFECTTYPE_CONSTRUCTIONKIT		27	// ê±´ì¶• í‚¤íŠ¸
 #define DEF_ITEMEFFECTTYPE_WARM				28		// Unfreeze pot
 #define DEF_ITEMEFFECTTYPE_FARMING			30
 #define DEF_ITEMEFFECTTYPE_SLATES			31 // Ancient Tablets
@@ -78,9 +78,9 @@
 #define DEF_ITEMEFFECTTYPE_CRITKOMM			33 // Crit Candy
 #define DEF_ITEMEFFECTTYPE_WEAPONDYE		34 // Weapons Dyes
 
-#define DEF_ITET_UNIQUE_OWNER				1		// ItemTouchEffect: ÁÖÀÎÀ» °®´Â ¾ÆÀÌÅÛ 
-#define DEF_ITET_ID							2		// ±×³É ¾ÆÀÌÅÛ ¾ÆÀÌµð
-#define DEF_ITET_DATE						3		// »ç¿ë°¡´ÉÇÑ ³¯Â¥°¡ ÁöÁ¤µÈ ¾ÆÀÌÅÛ 
+#define DEF_ITET_UNIQUE_OWNER				1		// ItemTouchEffect: ì£¼ì¸ì„ ê°–ëŠ” ì•„ì´í…œ 
+#define DEF_ITET_ID							2		// ê·¸ëƒ¥ ì•„ì´í…œ ì•„ì´ë””
+#define DEF_ITET_DATE						3		// ì‚¬ìš©ê°€ëŠ¥í•œ ë‚ ì§œê°€ ì§€ì •ëœ ì•„ì´í…œ 
 
 
 class CItem  
@@ -91,7 +91,7 @@ public:
 
 	char  m_cName[21];
 	
-	short m_sIDnum;					// ¾ÆÀÌÅÛÀÇ °íÀ¯ ¹øÈ£
+	short m_sIDnum;					// ì•„ì´í…œì˜ ê³ ìœ  ë²ˆí˜¸
 	char  m_cItemType;
 	char  m_cEquipPos;
 	short m_sItemEffectType;     
@@ -101,7 +101,7 @@ public:
 	short m_sSpecialEffect;
 	
 	//short m_sSM_HitRatio, m_sL_HitRatio;
-	//v1.432 ¸íÁß·ü °¡°¨ »ç¿ë ¾ÈÇÑ´Ù. ´ë½Å Æ¯¼ö ´É·Â ¼öÄ¡°¡ µé¾î°£´Ù.
+	//v1.432 ëª…ì¤‘ë¥  ê°€ê° ì‚¬ìš© ì•ˆí•œë‹¤. ëŒ€ì‹  íŠ¹ìˆ˜ ëŠ¥ë ¥ ìˆ˜ì¹˜ê°€ ë“¤ì–´ê°„ë‹¤.
 	short m_sSpecialEffectValue1, m_sSpecialEffectValue2; 
 
 	short m_sSprite;
@@ -123,87 +123,87 @@ public:
 	DWORD m_dwCount;
 	short m_sTouchEffectType;
 	short m_sTouchEffectValue1, m_sTouchEffectValue2, m_sTouchEffectValue3;
-	char  m_cItemColor; // v1.4 ¿¡¼­ ¾ÆÀÌÅÛ »öÀ¸·Î º¯°æµÇ¾ú´Ù. 
+	char  m_cItemColor; // v1.4 ì—ì„œ ì•„ì´í…œ ìƒ‰ìœ¼ë¡œ ë³€ê²½ë˜ì—ˆë‹¤. 
 	short m_sItemSpecEffectValue1, m_sItemSpecEffectValue2, m_sItemSpecEffectValue3;
 	WORD  m_wCurLifeSpan;
 	DWORD m_dwAttribute;				// aaaa bbbb cccc dddd eeee ffff xxxx xxx1 
 										// 1: Custom-Made Item flag 
-										// a: Item ¼Ó¼º Á¾·ù 
-										// b: Item ¼Ó¼º Á¤µµ
-										// c: Æ¯¼ö ¾ÆÀÌÅÛ ¼ºÁú Flag 
-										// d: Æ¯¼ö ¾ÆÀÌÅÛ ¼ºÁú Á¤µµ 
-										// e: Æ¯¼ö ¾ÆÀÌÅÛ Ãß°¡ ¼ºÁú Flag
-										// f: Æ¯¼ö ¾ÆÀÌÅÛ Ãß°¡ ¼ºÁú Á¤µµ 
+										// a: Item ì†ì„± ì¢…ë¥˜ 
+										// b: Item ì†ì„± ì •ë„
+										// c: íŠ¹ìˆ˜ ì•„ì´í…œ ì„±ì§ˆ Flag 
+										// d: íŠ¹ìˆ˜ ì•„ì´í…œ ì„±ì§ˆ ì •ë„ 
+										// e: íŠ¹ìˆ˜ ì•„ì´í…œ ì¶”ê°€ ì„±ì§ˆ Flag
+										// f: íŠ¹ìˆ˜ ì•„ì´í…œ ì¶”ê°€ ì„±ì§ˆ ì •ë„ 
 										 
 
 };
 
 /*
-¾ÆÀÌÅÛ Á¤ÀÇÆÄÀÏ¿¡ ÇÊ¿äÇÑ ³»¿ë - °ÔÀÓ ¼­¹ö¿ë
+ì•„ì´í…œ ì •ì˜íŒŒì¼ì— í•„ìš”í•œ ë‚´ìš© - ê²Œìž„ ì„œë²„ìš©
 
 char cItemType
- - ¾ÆÀÌÅÛÀÇ Á¾·ù. ÀåÂøµÇ´Â °ÍÀÎÁö ¼Ò¸ðµÇ´Â °ÍÀÎÁö¿¡ ´ëÇÑ Á¤ÀÇ
+ - ì•„ì´í…œì˜ ì¢…ë¥˜. ìž¥ì°©ë˜ëŠ” ê²ƒì¸ì§€ ì†Œëª¨ë˜ëŠ” ê²ƒì¸ì§€ì— ëŒ€í•œ ì •ì˜
 
 char cEquipPos
- - ÀåÂøµÇ´Â ¾ÆÀÌÅÛÀÌ¶ó¸é ±× À§Ä¡ 
+ - ìž¥ì°©ë˜ëŠ” ì•„ì´í…œì´ë¼ë©´ ê·¸ ìœ„ì¹˜ 
 
 short sItemEffectType     
-  - ¾ÆÀÌÅÛÀÇ È¿°ú Á¾·ù.  
+  - ì•„ì´í…œì˜ íš¨ê³¼ ì¢…ë¥˜.  
 
 short sItemEffectValue1, 2, 3 ... 
- - ¾ÆÀÌÅÛ È¿°úÀÇ ¼öÄ¡ 1, 2, 3...
+ - ì•„ì´í…œ íš¨ê³¼ì˜ ìˆ˜ì¹˜ 1, 2, 3...
 
 WORD wMaxLifeSpan
- - ¾ÆÀÌÅÛÀÇ ÃÖ´ë ¼ö¸í 
+ - ì•„ì´í…œì˜ ìµœëŒ€ ìˆ˜ëª… 
 
 short sMaxFixCount
- - ÃÖ´ë °íÄ¥¼ö ÀÖ´Â È½¼ö
+ - ìµœëŒ€ ê³ ì¹ ìˆ˜ ìžˆëŠ” íšŸìˆ˜
 
 short sSprite
 short sSpriteFrame
- - ¾ÆÀÌÅÛ ½ºÇÁ¶óÀÌÆ® ¹øÈ£ 
+ - ì•„ì´í…œ ìŠ¤í”„ë¼ì´íŠ¸ ë²ˆí˜¸ 
 
 WORD  wPrice 
- - ¾ÆÀÌÅÛ °¡°Ý 
+ - ì•„ì´í…œ ê°€ê²© 
 WORD  wWeight
- - ¾ÆÀÌÅÛ ¹«°Ô 
+ - ì•„ì´í…œ ë¬´ê²Œ 
 short sLevelLimit
- - ¾ÆÀÌÅÛ ·¹º§ Á¦ÇÑ 
+ - ì•„ì´í…œ ë ˆë²¨ ì œí•œ 
 char  cGenderLimit
- - ¾ÆÀÌÅÛ ¼ºº° Á¦ÇÑ 
+ - ì•„ì´í…œ ì„±ë³„ ì œí•œ 
 
 short m_SM_HitRatio, m_sL_HitRatio
- - ¸ñÇ¥º° ¸íÁß·ü °¡°¨Ä¡ (¹«±âÀÏ °æ¿ì)
+ - ëª©í‘œë³„ ëª…ì¤‘ë¥  ê°€ê°ì¹˜ (ë¬´ê¸°ì¼ ê²½ìš°)
 
 short sRelatedSkill
- - ¿¬°áµÈ Skill
+ - ì—°ê²°ëœ Skill
 
-ÇÃ·¹ÀÌ¾î µ¥ÀÌÅÍ ÆÄÀÏ¿¡ ÀúÀåµÇ¾î¾ß ÇÒ Á¤º¸ - ·Î±× ¼­¹ö¿ë 
+í”Œë ˆì´ì–´ ë°ì´í„° íŒŒì¼ì— ì €ìž¥ë˜ì–´ì•¼ í•  ì •ë³´ - ë¡œê·¸ ì„œë²„ìš© 
 
 DWORD dwCount
- - ¾ÆÀÌÅÛÀÇ °¹¼ö. (°°Àº Á¾·ùÀÇ È­»ìÀÌ³ª Æ÷¼Ç, Goldµî¸¸ÀÌ ÀÇ¹Ì¸¦ °®´Â´Ù)
+ - ì•„ì´í…œì˜ ê°¯ìˆ˜. (ê°™ì€ ì¢…ë¥˜ì˜ í™”ì‚´ì´ë‚˜ í¬ì…˜, Goldë“±ë§Œì´ ì˜ë¯¸ë¥¼ ê°–ëŠ”ë‹¤)
 
 WORD wCurLifeSpan
- - ÇöÀç ³²Àº ¼ö¸í 
+ - í˜„ìž¬ ë‚¨ì€ ìˆ˜ëª… 
 
 short sCurFixCount
- - ÇöÀç±îÁö ¼ö¸®ÇÑ È½¼ö 
+ - í˜„ìž¬ê¹Œì§€ ìˆ˜ë¦¬í•œ íšŸìˆ˜ 
 
 short sTouchEffectType
- - ¾ÆÀÌÅÛÀ» Ã³À½ °Çµå·ÈÀ»¶§ ÀÛµ¿µÇ´Â È¿°ú Á¾·ù 
+ - ì•„ì´í…œì„ ì²˜ìŒ ê±´ë“œë ¸ì„ë•Œ ìž‘ë™ë˜ëŠ” íš¨ê³¼ ì¢…ë¥˜ 
 
 short sTouchEffectValue1, 2, 3...
- - ¾ÆÀÌÅÛ Á¢ÃË È¿°úÀÇ ¼öÄ¡ 
+ - ì•„ì´í…œ ì ‘ì´‰ íš¨ê³¼ì˜ ìˆ˜ì¹˜ 
 
 short sItemSpecEffectType
- - ¾ÆÀÌÅÛÀÇ Æ¯¼öÈ¿°ú Á¾·ù (ex:¸¶¹ýÀÌ °É¸° ¹«±â¶ó¸é °ø°Ý·ÂÀÌ³ª ¹æ¾î·Â¿¡ ¿µÇâÀÌ ÀÖÀ»¼öµµ)
+ - ì•„ì´í…œì˜ íŠ¹ìˆ˜íš¨ê³¼ ì¢…ë¥˜ (ex:ë§ˆë²•ì´ ê±¸ë¦° ë¬´ê¸°ë¼ë©´ ê³µê²©ë ¥ì´ë‚˜ ë°©ì–´ë ¥ì— ì˜í–¥ì´ ìžˆì„ìˆ˜ë„)
 
 short sItemSpecEffectValue1, 2, 3...
- - ¾ÆÀÌÅÛ Æ¯¼öÈ¿°úÀÇ ¼öÄ¡ 1, 2, 3...
+ - ì•„ì´í…œ íŠ¹ìˆ˜íš¨ê³¼ì˜ ìˆ˜ì¹˜ 1, 2, 3...
 
 
-¿Ê ¾ÆÀÌÅÛÀÎ °æ¿ì(Equip PositionÀÌ Body, Leggings, ArmsÀÎ °æ¿ì)
-sItemEffectValue4: ¿ÊÀÇ Æ¯Á¤ Æ¯¼ºÄ¡ Á¦ÇÑ Á¾·ù¸¦ ³ªÅ¸³½´Ù. 
+ì˜· ì•„ì´í…œì¸ ê²½ìš°(Equip Positionì´ Body, Leggings, Armsì¸ ê²½ìš°)
+sItemEffectValue4: ì˜·ì˜ íŠ¹ì • íŠ¹ì„±ì¹˜ ì œí•œ ì¢…ë¥˜ë¥¼ ë‚˜íƒ€ë‚¸ë‹¤. 
 
   10: Str
   11: Dex
@@ -212,7 +212,7 @@ sItemEffectValue4: ¿ÊÀÇ Æ¯Á¤ Æ¯¼ºÄ¡ Á¦ÇÑ Á¾·ù¸¦ ³ªÅ¸³½´Ù.
   14: Mag
   15: Chr
 
-sItemEffectValue5: ¿ÊÀÇ Æ¯Á¤ Æ¯¼ºÄ¡ Á¦ÇÑ ¼öÁØ
+sItemEffectValue5: ì˜·ì˜ íŠ¹ì • íŠ¹ì„±ì¹˜ ì œí•œ ìˆ˜ì¤€
 
 
 
