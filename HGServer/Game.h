@@ -70,37 +70,37 @@
 #define DEF_AUTOSAVETIME			600000
 #define MAX_HELDENIANTOWER			200
 
-#define DEF_EXPSTOCKTIME		1000*10		// ExpStockÀ» °è»êÇÏ´Â ½Ã°£ °£°İ 
-#define DEF_MSGQUENESIZE		100000		// ¸Ş½ÃÁö Å¥ »çÀÌÁî 10¸¸°³ 
-#define DEF_AUTOEXPTIME			1000*60*6	// ÀÚµ¿À¸·Î °æÇèÄ¡°¡ ¿Ã¶ó°¡´Â ½Ã°£°£°İ 
-#define DEF_TOTALLEVELUPPOINT	3			// ·¹º§¾÷½Ã ÇÒ´çÇÏ´Â ÃÑ Æ÷ÀÎÆ® ¼ö 
+#define DEF_EXPSTOCKTIME		1000*10		// ExpStockì„ ê³„ì‚°í•˜ëŠ” ì‹œê°„ ê°„ê²© 
+#define DEF_MSGQUENESIZE		100000		// ë©”ì‹œì§€ í ì‚¬ì´ì¦ˆ 10ë§Œê°œ 
+#define DEF_AUTOEXPTIME			1000*60*6	// ìë™ìœ¼ë¡œ ê²½í—˜ì¹˜ê°€ ì˜¬ë¼ê°€ëŠ” ì‹œê°„ê°„ê²© 
+#define DEF_TOTALLEVELUPPOINT	3			// ë ˆë²¨ì—…ì‹œ í• ë‹¹í•˜ëŠ” ì´ í¬ì¸íŠ¸ ìˆ˜ 
 
 
 #define DEF_MAXDYNAMICOBJECTS	60000
 #define DEF_MAXDELAYEVENTS		60000
 #define DEF_GUILDSTARTRANK		12
 
-#define DEF_SSN_LIMIT_MULTIPLY_VALUE	2	// SSN-limit °öÇÏ´Â ¼ö 
+#define DEF_SSN_LIMIT_MULTIPLY_VALUE	2	// SSN-limit ê³±í•˜ëŠ” ìˆ˜ 
 
-#define DEF_MAXNOTIFYMSGS		300			// ÃÖ´ë °øÁö»çÇ× ¸Ş½ÃÁö 
-#define DEF_MAXSKILLPOINTS		700			// ½ºÅ³ Æ÷ÀÎÆ®ÀÇ ÃÑÇÕ 
+#define DEF_MAXNOTIFYMSGS		300			// ìµœëŒ€ ê³µì§€ì‚¬í•­ ë©”ì‹œì§€ 
+#define DEF_MAXSKILLPOINTS		700			// ìŠ¤í‚¬ í¬ì¸íŠ¸ì˜ ì´í•© 
 #define DEF_NIGHTTIME			40
 
-#define DEF_CHARPOINTLIMIT		1000		// °¢°¢ÀÇ Æ¯¼ºÄ¡ÀÇ ÃÖ´ë°ª 
-#define DEF_RAGPROTECTIONTIME	7000		// ¸î ÃÊ ÀÌ»ó Áö³ª¸é ·¢À¸·Î ºÎÅÍ º¸È£¸¦ ¹Ş´ÂÁö 
-#define DEF_MAXREWARDGOLD		99999999	// Æ÷»ó±İ ÃÖ´ëÄ¡ 
+#define DEF_CHARPOINTLIMIT		1000		// ê°ê°ì˜ íŠ¹ì„±ì¹˜ì˜ ìµœëŒ€ê°’ 
+#define DEF_RAGPROTECTIONTIME	7000		// ëª‡ ì´ˆ ì´ìƒ ì§€ë‚˜ë©´ ë™ìœ¼ë¡œ ë¶€í„° ë³´í˜¸ë¥¼ ë°›ëŠ”ì§€ 
+#define DEF_MAXREWARDGOLD		99999999	// í¬ìƒê¸ˆ ìµœëŒ€ì¹˜ 
 
-#define DEF_ATTACKAI_NORMAL				1	// ¹«Á¶°Ç °ø°İ 
-#define DEF_ATTACKAI_EXCHANGEATTACK		2	// ±³È¯ °ø°İ - ÈÄÅğ 
-#define DEF_ATTACKAI_TWOBYONEATTACK		3	// 2-1 °ø°İ, ÈÄÅğ 
+#define DEF_ATTACKAI_NORMAL				1	// ë¬´ì¡°ê±´ ê³µê²© 
+#define DEF_ATTACKAI_EXCHANGEATTACK		2	// êµí™˜ ê³µê²© - í›„í‡´ 
+#define DEF_ATTACKAI_TWOBYONEATTACK		3	// 2-1 ê³µê²©, í›„í‡´ 
 
 #define DEF_MAXFISHS					200
 #define DEF_MAXMINERALS					200
 #define	DEF_MAXCROPS					200
-#define DEF_MAXENGAGINGFISH				30  // ÇÑ ¹°°í±â¿¡ ³¬½Ã¸¦ ½ÃµµÇÒ ¼ö ÀÖ´Â ÃÖ´ë ÀÎ¿ø 
-#define DEF_MAXPORTIONTYPES				500 // ÃÖ´ë Æ÷¼Ç Á¤ÀÇ °¹¼ö 
+#define DEF_MAXENGAGINGFISH				30  // í•œ ë¬¼ê³ ê¸°ì— ë‚šì‹œë¥¼ ì‹œë„í•  ìˆ˜ ìˆëŠ” ìµœëŒ€ ì¸ì› 
+#define DEF_MAXPORTIONTYPES				500 // ìµœëŒ€ í¬ì…˜ ì •ì˜ ê°¯ìˆ˜ 
 
-#define DEF_SPECIALEVENTTIME			300000 //600000 // 10ºĞ
+#define DEF_SPECIALEVENTTIME			300000 //600000 // 10ë¶„
 #define DEF_MAXQUESTTYPE				200
 #define DEF_DEF_MAXHELDENIANDOOR			10
 
@@ -129,8 +129,8 @@
 
 #define DEF_MAXDUPITEMID				100
 
-#define DEF_MAXGUILDS					1000 // µ¿½Ã¿¡ Á¢¼ÓÇÒ ¼ö ÀÖ´Â ±æµå¼ö 
-#define DEF_MAXONESERVERUSERS			800	// 800 // ÇÑ ¼­¹ö¿¡¼­ Çã¿ëÇÒ ¼ö ÀÖ´Â ÃÖ´ë »ç¿ëÀÚ¼ö. ÃÊ°úµÈ °æ¿ì ºÎÈ°Á¸ È¤Àº ºí¸®µù ¾ÆÀÏ, ³ó°æÁö·Î º¸³»Áø´Ù.
+#define DEF_MAXGUILDS					1000 // ë™ì‹œì— ì ‘ì†í•  ìˆ˜ ìˆëŠ” ê¸¸ë“œìˆ˜ 
+#define DEF_MAXONESERVERUSERS			800	// 800 // í•œ ì„œë²„ì—ì„œ í—ˆìš©í•  ìˆ˜ ìˆëŠ” ìµœëŒ€ ì‚¬ìš©ììˆ˜. ì´ˆê³¼ëœ ê²½ìš° ë¶€í™œì¡´ í˜¹ì€ ë¸”ë¦¬ë”© ì•„ì¼, ë†ê²½ì§€ë¡œ ë³´ë‚´ì§„ë‹¤.
 
 #define DEF_MAXGATESERVERSTOCKMSGSIZE	10000
 
@@ -139,31 +139,31 @@
 #define DEF_MAXAPOCALYPSE				7
 #define DEF_MAXHELDENIAN				10
 
-//v1.4311-3  »çÅõÀåÀÇ ÃÖ´ë ¼ıÀÚ
+//v1.4311-3  ì‚¬íˆ¬ì¥ì˜ ìµœëŒ€ ìˆ«ì
 #define DEF_MAXFIGHTZONE 10 
 
 //============================
-#define DEF_LEVELLIMIT		20				// Ã¼ÇèÆÇ ·¹º§ Á¦ÇÑÄ¡!!!			
+#define DEF_LEVELLIMIT		20				// ì²´í—˜íŒ ë ˆë²¨ ì œí•œì¹˜!!!			
 //============================
 
 //============================
-#define DEF_MINIMUMHITRATIO 15				// ÃÖÀú ¸íÁß È®·ü 
+#define DEF_MINIMUMHITRATIO 15				// ìµœì € ëª…ì¤‘ í™•ë¥  
 //============================		
 
 //============================
-#define DEF_MAXIMUMHITRATIO	99				// ÃÖ´ë ¸íÁß È®·ü
+#define DEF_MAXIMUMHITRATIO	99				// ìµœëŒ€ ëª…ì¤‘ í™•ë¥ 
 //============================
 
 //============================
-#define DEF_PLAYERMAXLEVEL	180				// ÃÖ´ë ·¹º§: Npc.cfg ÆÄÀÏ¿¡ ¼³Á¤µÇ¾î ÀÖÁö ¾ÊÀ» °æ¿ì m_iPlayerMaxLevel¿¡ ÀÔ·ÂµÈ´Ù.
+#define DEF_PLAYERMAXLEVEL	180				// ìµœëŒ€ ë ˆë²¨: Npc.cfg íŒŒì¼ì— ì„¤ì •ë˜ì–´ ìˆì§€ ì•Šì„ ê²½ìš° m_iPlayerMaxLevelì— ì…ë ¥ëœë‹¤.
 //============================
 
 //============================
 // New Changed 12/05/2004
-#define DEF_GMGMANACONSUMEUNIT	15			// Grand Magic Generator ¸¶³ª Èí¼ö ´ÜÀ§.
+#define DEF_GMGMANACONSUMEUNIT	15			// Grand Magic Generator ë§ˆë‚˜ í¡ìˆ˜ ë‹¨ìœ„.
 //============================
 
-#define DEF_MAXCONSTRUCTIONPOINT 30000		// ÃÖ´ë ¼ÒÈ¯ Æ÷ÀÎÆ® 
+#define DEF_MAXCONSTRUCTIONPOINT 30000		// ìµœëŒ€ ì†Œí™˜ í¬ì¸íŠ¸ 
 #define DEF_MAXSUMMONPOINTS		 30000
 #define DEF_MAXWARCONTRIBUTION	 200000
 
@@ -171,7 +171,7 @@
 // MOG Definitions - 3.51
 // Level up MSG
 #define MSGID_LEVELUPSETTINGS				0x11A01000
-// 2003-04-14 ÁöÁ¸ Æ÷ÀÎÆ®¸¦ ·¹º§ ¼öÁ¤¿¡ ¾µ¼ö ÀÖ´Ù...
+// 2003-04-14 ì§€ì¡´ í¬ì¸íŠ¸ë¥¼ ë ˆë²¨ ìˆ˜ì •ì— ì“¸ìˆ˜ ìˆë‹¤...
 // Stat Point Change MSG
 #define MSGID_STATECHANGEPOINT				0x11A01001
 
@@ -581,7 +581,7 @@ public:
 	void RequestCivilRightHandler(int iClientH, char * pData);
 	BOOL bCheckLimitedUser(int iClientH);
 	void LevelUpSettingsHandler(int iClientH, char * pData, DWORD dwMsgSize);
-	// v1.4311-3 ¼±¾ğ ÇÔ¼ö  »çÅõÀå ¿¹¾à ÇÔ¼ö ¼±¾ğ FightzoneReserveHandler
+	// v1.4311-3 ì„ ì–¸ í•¨ìˆ˜  ì‚¬íˆ¬ì¥ ì˜ˆì•½ í•¨ìˆ˜ ì„ ì–¸ FightzoneReserveHandler
 	void FightzoneReserveHandler(int iClientH, char * pData, DWORD dwMsgSize);
 	BOOL bCheckLevelUp(int iClientH);
 	DWORD iGetLevelExp(int iLevel);
@@ -828,8 +828,8 @@ public:
 	class CMineral * m_pMineral[DEF_MAXMINERALS];
 
 	int   m_iMiddlelandMapIndex; 
-	int   m_iAresdenMapIndex;		// ¾Æ·¹½ºµ§ ¸Ê ÀÎµ¦½º 
-	int	  m_iElvineMapIndex;		// ¿¤¹ÙÀÎ ¸Ê ÀÎµ¦½º
+	int   m_iAresdenMapIndex;		// ì•„ë ˆìŠ¤ë´ ë§µ ì¸ë±ìŠ¤ 
+	int	  m_iElvineMapIndex;		// ì—˜ë°”ì¸ ë§µ ì¸ë±ìŠ¤
 	int   m_iBTFieldMapIndex;
 	int   m_iGodHMapIndex;
 	int   m_iAresdenOccupyTiles;
@@ -867,7 +867,7 @@ public:
 	DWORD  m_dwMapSectorInfoTime;
 	int    m_iMapSectorInfoUpdateCount;
 
-	// Crusade Ã³¸®¿ë
+	// Crusade ì²˜ë¦¬ìš©
 	int	   m_iCrusadeCount;	
 	BOOL   m_bIsCrusadeMode;		
 	BOOL   m_bIsApocalypseMode;

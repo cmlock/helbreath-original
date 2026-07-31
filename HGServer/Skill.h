@@ -13,9 +13,9 @@
 
 
 
-#define DEF_SKILLEFFECTTYPE_GET			    1		// ��´�. �����⳪ ������ 
-#define DEF_SKILLEFFECTTYPE_PRETEND			2		// ...�� ü �ϴ� 
-#define DEF_SKILLEFFECTTYPE_TAMING			3		//  ����̱� �迭	
+#define DEF_SKILLEFFECTTYPE_GET			    1		// 얻는다. 물고기나 광물등 
+#define DEF_SKILLEFFECTTYPE_PRETEND			2		// ...한 체 하다 
+#define DEF_SKILLEFFECTTYPE_TAMING			3		//  길들이기 계열	
 
 
 class CSkill  

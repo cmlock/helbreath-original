@@ -52,7 +52,7 @@ XSocket::~XSocket()
 	for (i = 0; i < DEF_XSOCKBLOCKLIMIT; i++)
 		if (m_pUnsentDataList[i] != NULL) delete m_pUnsentDataList[i];
 
-	// ¼ÒÄÏÀ» ¸¶Àú ÀÐ°í ´Ý´Â´Ù.
+	// ì†Œì¼“ì„ ë§ˆì € ì½ê³  ë‹«ëŠ”ë‹¤.
 	_CloseConn(); 
 }
 
@@ -76,9 +76,9 @@ int XSocket::iOnSocketEvent(WPARAM wParam, LPARAM lParam)
 {
  int WSAEvent;
 
-	// ¸®½º´× ¼ÒÄÏÀÇ ÀÌº¥Æ®´Â Ã³¸®ÇÒ ¼ö ¾ø´Ù.
+	// ë¦¬ìŠ¤ë‹ ì†Œì¼“ì˜ ì´ë²¤íŠ¸ëŠ” ì²˜ë¦¬í•  ìˆ˜ ì—†ë‹¤.
 	if (m_cType != DEF_XSOCK_NORMALSOCK) return DEF_XSOCKEVENT_SOCKETMISMATCH;
-	// ÃÊ±âÈ­ µÇÁö ¾Ê¾Æ¼­ Ã³¸®ÇÒ ¼ö ¾ø´Ù.
+	// ì´ˆê¸°í™” ë˜ì§€ ì•Šì•„ì„œ ì²˜ë¦¬í•  ìˆ˜ ì—†ë‹¤.
 	if (m_cType == NULL) return DEF_XSOCKEVENT_NOTINITIALIZED;
 
 	if ((SOCKET)wParam != m_Sock) return DEF_XSOCKEVENT_SOCKETMISMATCH;
@@ -87,7 +87,7 @@ int XSocket::iOnSocketEvent(WPARAM wParam, LPARAM lParam)
 	switch (WSAEvent) {
 	case FD_CONNECT:
 		if (WSAGETSELECTERROR(lParam) != 0) { 
-			// ÀÌ ¼ÒÄÏÀÇ Á¢¼ÓÀÌ ½ÇÆÐÇßÀ¸¹Ç·Î ÀçÁ¢¼ÓÀ» ½ÃµµÇÑ´Ù.
+			// ì´ ì†Œì¼“ì˜ ì ‘ì†ì´ ì‹¤íŒ¨í–ˆìœ¼ë¯€ë¡œ ìž¬ì ‘ì†ì„ ì‹œë„í•œë‹¤.
 			if (bConnect(m_pAddr, m_iPortNum, m_uiMsg) == FALSE) return DEF_XSOCKEVENT_SOCKETERROR;
 				
 			return DEF_XSOCKEVENT_RETRYINGCONNECTION;
@@ -100,7 +100,7 @@ int XSocket::iOnSocketEvent(WPARAM wParam, LPARAM lParam)
 
 	case FD_READ:
 		if (WSAGETSELECTERROR(lParam) != 0) { 
-			// ÀÐ´Â µµÁß ¿¡·¯°¡ ¹ß»ýÇß´Ù.
+			// ì½ëŠ” ë„ì¤‘ ì—ëŸ¬ê°€ ë°œìƒí–ˆë‹¤.
 			m_WSAErr = WSAGETSELECTERROR(lParam);
 			return DEF_XSOCKEVENT_SOCKETERROR;
 		}
@@ -113,7 +113,7 @@ int XSocket::iOnSocketEvent(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case FD_CLOSE:
-		m_cType = DEF_XSOCK_SHUTDOWNEDSOCK; // ¼ÒÄÏÀÌ ´ÝÇûÀ¸¹Ç·Î ÀÌ ¼ÒÄÏÀº »ç¿ë ºÒ°¡´É. 
+		m_cType = DEF_XSOCK_SHUTDOWNEDSOCK; // ì†Œì¼“ì´ ë‹«í˜”ìœ¼ë¯€ë¡œ ì´ ì†Œì¼“ì€ ì‚¬ìš© ë¶ˆê°€ëŠ¥. 
 		return DEF_XSOCKEVENT_SOCKETCLOSED;
 		break;
 	}
@@ -128,7 +128,7 @@ BOOL XSocket::bConnect(char * pAddr, int iPort, unsigned int uiMsg)
  int             iRet;
  DWORD			 dwOpt;
 
-	// ¸®½º´× ¼ÒÄÏÀ¸·Î ÃÊ±âÈ­µÈ Å¬·¡½º´Â ÀÌ ÇÔ¼ö¸¦ »ç¿ëÇÒ ¼ö ¾ø´Ù.
+	// ë¦¬ìŠ¤ë‹ ì†Œì¼“ìœ¼ë¡œ ì´ˆê¸°í™”ëœ í´ëž˜ìŠ¤ëŠ” ì´ í•¨ìˆ˜ë¥¼ ì‚¬ìš©í•  ìˆ˜ ì—†ë‹¤.
 	if (m_cType == DEF_XSOCK_LISTENSOCK) return FALSE;
 	if (m_Sock  != INVALID_SOCKET) closesocket(m_Sock);
 
@@ -136,11 +136,11 @@ BOOL XSocket::bConnect(char * pAddr, int iPort, unsigned int uiMsg)
 	if (m_Sock == INVALID_SOCKET) 
 		return FALSE;
 	
-	// ¼ÒÄÏÀ» ³íºí·ÏÅ· ¸ðµå·Î 
+	// ì†Œì¼“ì„ ë…¼ë¸”ë¡í‚¹ ëª¨ë“œë¡œ 
 	arg = 1;
 	ioctlsocket(m_Sock, FIONBIO, &arg);
 	
-	// ÁÖ¼Ò¸¦ ¹ÙÀÎµåÇÑ´Ù.
+	// ì£¼ì†Œë¥¼ ë°”ì¸ë“œí•œë‹¤.
 	memset(&saTemp,0,sizeof(saTemp));
 	saTemp.sin_family = AF_INET;
 	saTemp.sin_addr.s_addr = inet_addr(pAddr);
@@ -155,7 +155,7 @@ BOOL XSocket::bConnect(char * pAddr, int iPort, unsigned int uiMsg)
 	}
 
 	WSAAsyncSelect(m_Sock, m_hWnd, uiMsg, FD_CONNECT | FD_READ | FD_WRITE | FD_CLOSE);
-	// ¼ÒÄÏ ¿É¼ÇÀ» Á¶Á¤ÇÑ´Ù. 
+	// ì†Œì¼“ ì˜µì…˜ì„ ì¡°ì •í•œë‹¤. 
 	dwOpt = 8192*5;
 	setsockopt(m_Sock, SOL_SOCKET, SO_RCVBUF, (const char FAR *)&dwOpt, sizeof(dwOpt));
 	setsockopt(m_Sock, SOL_SOCKET, SO_SNDBUF, (const char FAR *)&dwOpt, sizeof(dwOpt));
@@ -189,7 +189,7 @@ int XSocket::_iOnRead()
 		}
 		else 
 		if (iRet == 0) {
-			// ¼ÒÄÏÀÌ ´ÝÇû´Ù. 
+			// ì†Œì¼“ì´ ë‹«í˜”ë‹¤. 
 			m_cType = DEF_XSOCK_SHUTDOWNEDSOCK;
 			return DEF_XSOCKEVENT_SOCKETCLOSED;
 		}
@@ -198,14 +198,14 @@ int XSocket::_iOnRead()
 		m_dwTotalReadSize += iRet;
 		
 		if (m_dwReadSize == 0) {
-			// Çì´õ¸¦ ´Ù ÀÐ¾ú´Ù. 
+			// í—¤ë”ë¥¼ ë‹¤ ì½ì—ˆë‹¤. 
 			m_cStatus = DEF_XSOCKSTATUS_READINGBODY;
-			// ÀÐ¾î¾ß ÇÒ ¸öÃ¼ »çÀÌÁî¸¦ °è»êÇÑ´Ù.
+			// ì½ì–´ì•¼ í•  ëª¸ì²´ ì‚¬ì´ì¦ˆë¥¼ ê³„ì‚°í•œë‹¤.
 			wp = (WORD *)(m_pRcvBuffer + 1);
-			m_dwReadSize = (int)(*wp - 3); // Çì´õ »çÀÌÁî´Â Æ÷ÇÔÇÏÁö ¾Ê´Â´Ù. 
+			m_dwReadSize = (int)(*wp - 3); // í—¤ë” ì‚¬ì´ì¦ˆëŠ” í¬í•¨í•˜ì§€ ì•ŠëŠ”ë‹¤. 
 			
 			if (m_dwReadSize == 0) {
-				// ¸öÃ¼ »çÀÌÁî°¡ 0ÀÌ¸é ¸öÃ¼ºÎºÐÀ» ÀÐÀ» ÇÊ¿ä°¡ ¾øÀ¸¹Ç·Î 
+				// ëª¸ì²´ ì‚¬ì´ì¦ˆê°€ 0ì´ë©´ ëª¸ì²´ë¶€ë¶„ì„ ì½ì„ í•„ìš”ê°€ ì—†ìœ¼ë¯€ë¡œ 
 				m_cStatus        = DEF_XSOCKSTATUS_READINGHEADER;
 				m_dwReadSize      = 3;
 				m_dwTotalReadSize = 0;
@@ -236,7 +236,7 @@ int XSocket::_iOnRead()
 		}
 		else 
 		if (iRet == 0) {
-			// ¼ÒÄÏÀÌ ´ÝÇû´Ù. 
+			// ì†Œì¼“ì´ ë‹«í˜”ë‹¤. 
 			m_cType = DEF_XSOCK_SHUTDOWNEDSOCK;
 			return DEF_XSOCKEVENT_SOCKETCLOSED;
 		}
@@ -245,7 +245,7 @@ int XSocket::_iOnRead()
 		m_dwTotalReadSize += iRet;
 		
 		if (m_dwReadSize == 0) {
-			// ¸öÃ¼¸¦ ´Ù ÀÐ¾ú´Ù. ´ÙÀ½¹ø ÀÌº¥Æ®¸¦ À§ÇØ »óÅÂ¸¦ ¹Ù²Û´Ù. 
+			// ëª¸ì²´ë¥¼ ë‹¤ ì½ì—ˆë‹¤. ë‹¤ìŒë²ˆ ì´ë²¤íŠ¸ë¥¼ ìœ„í•´ ìƒíƒœë¥¼ ë°”ê¾¼ë‹¤. 
 			m_cStatus        = DEF_XSOCKSTATUS_READINGHEADER;
 			m_dwReadSize      = 3;
 			m_dwTotalReadSize = 0;
@@ -253,7 +253,7 @@ int XSocket::_iOnRead()
 		else return DEF_XSOCKEVENT_ONREAD;
 	}
 
-	// ¸Þ½ÃÁö¸¦ ¸ðµÎ ÀÐ¾ú´Ù. ÀÌ ¸Þ½ÃÁö¸¦ ¹ÞÀ¸¸é Å¬·¡½º ¹öÆÛÀÇ ³»¿ëÀ» ÀÐ¾î Áï°¢ Ã³¸®ÇØ¾ß ÇÑ´Ù.
+	// ë©”ì‹œì§€ë¥¼ ëª¨ë‘ ì½ì—ˆë‹¤. ì´ ë©”ì‹œì§€ë¥¼ ë°›ìœ¼ë©´ í´ëž˜ìŠ¤ ë²„í¼ì˜ ë‚´ìš©ì„ ì½ì–´ ì¦‰ê° ì²˜ë¦¬í•´ì•¼ í•œë‹¤.
 	return DEF_XSOCKEVENT_READCOMPLETE;
 }
 
@@ -265,18 +265,18 @@ int XSocket::_iSend(char * cData, int iSize, BOOL bSaveFlag)
 
 	if (m_pUnsentDataList[m_sHead] != NULL) {
 		if (bSaveFlag == TRUE) {
-			// ¸¸¾à ´ë±â¿­¿¡ µ¥ÀÌÅÍ°¡ ³²¾Æ ÀÖ°í ²À º¸³»¾ß ÇÏ´Â µ¥ÀÌÅÍ¶ó¸é 
-			// ¸Þ½ÃÁöÀÇ ¼ø¼­¸¦ ¸ÂÃß±â À§ÇØ ¹«Á¶°Ç ´ë±â¿­¿¡ ÀúÀåÇØ¾ß ÇÑ´Ù. 
+			// ë§Œì•½ ëŒ€ê¸°ì—´ì— ë°ì´í„°ê°€ ë‚¨ì•„ ìžˆê³  ê¼­ ë³´ë‚´ì•¼ í•˜ëŠ” ë°ì´í„°ë¼ë©´ 
+			// ë©”ì‹œì§€ì˜ ìˆœì„œë¥¼ ë§žì¶”ê¸° ìœ„í•´ ë¬´ì¡°ê±´ ëŒ€ê¸°ì—´ì— ì €ìž¥í•´ì•¼ í•œë‹¤. 
 			iRet = _iRegisterUnsentData(cData, iSize);
 			switch (iRet) {
 			case -1:
-				// ÇÒ´çÇÒ ¸Þ¸ð¸®°¡ ¾ø´Ù. ÀÌ°æ¿ì´Â º¹±¸ÇÒ ¹æ¹ýÀÌ ¾ø´Ù.
+				// í• ë‹¹í•  ë©”ëª¨ë¦¬ê°€ ì—†ë‹¤. ì´ê²½ìš°ëŠ” ë³µêµ¬í•  ë°©ë²•ì´ ì—†ë‹¤.
 				return DEF_XSOCKEVENT_CRITICALERROR;
 			case 0:
-				// Å¥°¡ °¡µæÃ¡´Ù. ÀÌ ¼ÒÄÏ Å¬·¡½º´Â »èÁ¦µÇ¾î¾ß¸¸ ÇÑ´Ù.
+				// íê°€ ê°€ë“ì°¼ë‹¤. ì´ ì†Œì¼“ í´ëž˜ìŠ¤ëŠ” ì‚­ì œë˜ì–´ì•¼ë§Œ í•œë‹¤.
 				return DEF_XSOCKEVENT_QUENEFULL;
 			case 1:
-				// Á¤»óÀûÀ¸·Î µ¥ÀÌÅÍ¸¦ µî·ÏÇß´Ù.
+				// ì •ìƒì ìœ¼ë¡œ ë°ì´í„°ë¥¼ ë“±ë¡í–ˆë‹¤.
 				break;
 			}
 			return DEF_XSOCKEVENT_BLOCK;
@@ -292,25 +292,25 @@ int XSocket::_iSend(char * cData, int iSize, BOOL bSaveFlag)
 		if (iRet == SOCKET_ERROR) {
 			WSAErr = WSAGetLastError();
 			if (WSAErr != WSAEWOULDBLOCK) {
-				// ¼ÒÄÏ¿¡ ¿¡·¯°¡ ¹ß»ýÇß´Ù.
+				// ì†Œì¼“ì— ì—ëŸ¬ê°€ ë°œìƒí–ˆë‹¤.
 				m_WSAErr = WSAErr;
 				return DEF_XSOCKEVENT_SOCKETERROR;
 			}
 			else {
-				// ºí·°»óÅÂÀÌ¸é ´õÀÌ»ó º¸³¾ ¼ö ¾øÀ¸¹Ç·Î ³²¾ÆÀÖ´Â µ¥ÀÌÅÍ¸¦ ¸®½ºÆ®¿¡ µî·ÏÇÏ°í ¸®ÅÏ 
+				// ë¸”ëŸ­ìƒíƒœì´ë©´ ë”ì´ìƒ ë³´ë‚¼ ìˆ˜ ì—†ìœ¼ë¯€ë¡œ ë‚¨ì•„ìžˆëŠ” ë°ì´í„°ë¥¼ ë¦¬ìŠ¤íŠ¸ì— ë“±ë¡í•˜ê³  ë¦¬í„´ 
 				if (bSaveFlag == TRUE) {
 					iRet = _iRegisterUnsentData((cData + iOutLen), (iSize - iOutLen));
 					switch (iRet) {
 					case -1:
-						// ÇÒ´çÇÒ ¸Þ¸ð¸®°¡ ¾ø´Ù. ÀÌ°æ¿ì´Â º¹±¸ÇÒ ¹æ¹ýÀÌ ¾ø´Ù.
+						// í• ë‹¹í•  ë©”ëª¨ë¦¬ê°€ ì—†ë‹¤. ì´ê²½ìš°ëŠ” ë³µêµ¬í•  ë°©ë²•ì´ ì—†ë‹¤.
 						return DEF_XSOCKEVENT_CRITICALERROR;
 						break;
 					case 0:
-						// Å¥°¡ °¡µæÃ¡´Ù. ÀÌ ¼ÒÄÏ Å¬·¡½º´Â »èÁ¦µÇ¾î¾ß¸¸ ÇÑ´Ù.
+						// íê°€ ê°€ë“ì°¼ë‹¤. ì´ ì†Œì¼“ í´ëž˜ìŠ¤ëŠ” ì‚­ì œë˜ì–´ì•¼ë§Œ í•œë‹¤.
 						return DEF_XSOCKEVENT_QUENEFULL;
 						break;
 					case 1:
-						// Á¤»óÀûÀ¸·Î µ¥ÀÌÅÍ¸¦ µî·ÏÇß´Ù.
+						// ì •ìƒì ìœ¼ë¡œ ë°ì´í„°ë¥¼ ë“±ë¡í–ˆë‹¤.
 						break;
 					}
 				}
@@ -324,7 +324,7 @@ int XSocket::_iSend(char * cData, int iSize, BOOL bSaveFlag)
 }
 
 
-// ÀÌ ÇÔ¼ö´Â _SendUnsentData¿¡¼­¸¸ »ç¿ëÇÑ´Ù. ºí·ÏÀÌ ¾Æ´Ñ ¿¡·¯½Ã¿¡´Â À½¼ö°ªÀ», ºí·°»óÅÂ¸¦ Æ÷ÇÔÇÑ Àü¼Û»óÅÂ¿¡¼­´Â º¸³½ ¸¸Å­ÀÇ °ªÀ» ¹ÝÈ¯.
+// ì´ í•¨ìˆ˜ëŠ” _SendUnsentDataì—ì„œë§Œ ì‚¬ìš©í•œë‹¤. ë¸”ë¡ì´ ì•„ë‹Œ ì—ëŸ¬ì‹œì—ëŠ” ìŒìˆ˜ê°’ì„, ë¸”ëŸ­ìƒíƒœë¥¼ í¬í•¨í•œ ì „ì†¡ìƒíƒœì—ì„œëŠ” ë³´ë‚¸ ë§Œí¼ì˜ ê°’ì„ ë°˜í™˜.
 int XSocket::_iSend_ForInternalUse(char * cData, int iSize)
 {
  int  iOutLen, iRet, WSAErr;
@@ -337,12 +337,12 @@ int XSocket::_iSend_ForInternalUse(char * cData, int iSize)
 		if (iRet == SOCKET_ERROR) {
 			WSAErr = WSAGetLastError();
 			if (WSAErr != WSAEWOULDBLOCK) {
-				// ¼ÒÄÏ¿¡ ¿¡·¯°¡ ¹ß»ýÇß´Ù.
+				// ì†Œì¼“ì— ì—ëŸ¬ê°€ ë°œìƒí–ˆë‹¤.
 				m_WSAErr = WSAErr;
 				return DEF_XSOCKEVENT_SOCKETERROR;
 			}
 			else {
-				// ºí·°»óÅÂÀÌ¸é ´õÀÌ»ó º¸³¾ ¼ö ¾øÀ¸¹Ç·Î Áö±Ý±îÁö º¸³½ µ¥ÀÌÅÍ »çÀÌÁî¸¸À» ¹ÝÈ¯  
+				// ë¸”ëŸ­ìƒíƒœì´ë©´ ë”ì´ìƒ ë³´ë‚¼ ìˆ˜ ì—†ìœ¼ë¯€ë¡œ ì§€ê¸ˆê¹Œì§€ ë³´ë‚¸ ë°ì´í„° ì‚¬ì´ì¦ˆë§Œì„ ë°˜í™˜  
 				return iOutLen;
 			}
 		} else iOutLen += iRet;
@@ -355,17 +355,17 @@ int XSocket::_iSend_ForInternalUse(char * cData, int iSize)
 
 int XSocket::_iRegisterUnsentData(char * cData, int iSize)
 {
-	// Å¥°¡ °¡µæÂ÷¼­ ´õÀÌ»ó µ¥ÀÌÅÍ¸¦ ´ë±â¿­¿¡ ÀúÀåÇÒ ¼ö ¾ø´Ù.
+	// íê°€ ê°€ë“ì°¨ì„œ ë”ì´ìƒ ë°ì´í„°ë¥¼ ëŒ€ê¸°ì—´ì— ì €ìž¥í•  ìˆ˜ ì—†ë‹¤.
 	if (m_pUnsentDataList[m_sTail] != NULL) return 0;
 	
 	m_pUnsentDataList[m_sTail] = new char[iSize];
-	if (m_pUnsentDataList[m_sTail] == NULL) return -1; // ¸Þ¸ð¸® ÇÒ´ç¿¡ ½ÇÆÐÇß´Ù.
+	if (m_pUnsentDataList[m_sTail] == NULL) return -1; // ë©”ëª¨ë¦¬ í• ë‹¹ì— ì‹¤íŒ¨í–ˆë‹¤.
 
-	// µ¥ÀÌÅÍ ÀúÀå 
+	// ë°ì´í„° ì €ìž¥ 
 	memcpy(m_pUnsentDataList[m_sTail], cData, iSize);
 	m_iUnsentDataSize[m_sTail] = iSize;
 
-	// Å×ÀÏ Æ÷ÀÎÅÍ Áõ°¡ 
+	// í…Œì¼ í¬ì¸í„° ì¦ê°€ 
 	m_sTail++;
 	//if (m_sTail >= DEF_XSOCKBLOCKLIMIT) m_sTail = 0;
 	if (m_sTail >= m_iBlockLimit) m_sTail = 0;
@@ -380,27 +380,27 @@ int XSocket::_iSendUnsentData()
  int iRet;
  char * pTemp;
 	
-	// °¡´ÉÇÑ ÇÑ ´ë±â¿­ÀÇ µ¥ÀÌÅÍ¸¦ º¸³½´Ù. 
+	// ê°€ëŠ¥í•œ í•œ ëŒ€ê¸°ì—´ì˜ ë°ì´í„°ë¥¼ ë³´ë‚¸ë‹¤. 
 	while (m_pUnsentDataList[m_sHead] != NULL) {
 		
 		iRet = _iSend_ForInternalUse(m_pUnsentDataList[m_sHead], m_iUnsentDataSize[m_sHead]);
 
 		if (iRet == m_iUnsentDataSize[m_sHead]) {
-			// HeadÅ¥ÀÇ µ¥ÀÌÅÍ¸¦ ´Ù º¸³Â´Ù.	´ÙÀ½ µ¥ÀÌÅÍ¸¦ º¸³½´Ù.
+			// Headíì˜ ë°ì´í„°ë¥¼ ë‹¤ ë³´ëƒˆë‹¤.	ë‹¤ìŒ ë°ì´í„°ë¥¼ ë³´ë‚¸ë‹¤.
 			delete m_pUnsentDataList[m_sHead];
 			m_pUnsentDataList[m_sHead] = NULL;
 			m_iUnsentDataSize[m_sHead] = 0;
-			// Çìµå Æ÷ÀÎÅÍ Áõ°¡ 
+			// í—¤ë“œ í¬ì¸í„° ì¦ê°€ 
 			m_sHead++;
 			//if (m_sHead >= DEF_XSOCKBLOCKLIMIT) m_sHead = 0;
 			if (m_sHead >= m_iBlockLimit) m_sHead = 0;
 		}
 		else {
-			// º¸³»´ø Áß ¼ÒÄÏ ¿¡·¯°¡ ¹ß»ýÇÏ¸é ±×³É ¸®ÅÏÇÑ´Ù. (Á¦°ÅµÇ¾ß¸¸ ÇÑ´Ù)
+			// ë³´ë‚´ë˜ ì¤‘ ì†Œì¼“ ì—ëŸ¬ê°€ ë°œìƒí•˜ë©´ ê·¸ëƒ¥ ë¦¬í„´í•œë‹¤. (ì œê±°ë˜ì•¼ë§Œ í•œë‹¤)
 			if (iRet < 0) 
 				return iRet;
 
-			// µ¥ÀÌÅÍ¸¦ ´Ù º¸³»Áö ¸øÇÏ°í ¶Ç ºí·Ï »óÅÂ°¡ ¹ß»ýÇß´Ù. º¸³»Áö ¸øÇÑ µ¥ÀÌÅÍ¸¸ ³²°Ü³õ´Â´Ù.
+			// ë°ì´í„°ë¥¼ ë‹¤ ë³´ë‚´ì§€ ëª»í•˜ê³  ë˜ ë¸”ë¡ ìƒíƒœê°€ ë°œìƒí–ˆë‹¤. ë³´ë‚´ì§€ ëª»í•œ ë°ì´í„°ë§Œ ë‚¨ê²¨ë†“ëŠ”ë‹¤.
 			pTemp = new char[m_iUnsentDataSize[m_sHead] - iRet];
 			memcpy(pTemp, m_pUnsentDataList[m_sHead] + iRet, m_iUnsentDataSize[m_sHead] - iRet);
 
@@ -421,22 +421,22 @@ int XSocket::iSendMsg(char * cData, DWORD dwSize, char cKey)
  int    i, iRet;
 
 	//m_pSndBuffer = cData;
-	// ¸Þ½ÃÁö Å©±â°¡ ¹öÆÛº¸´Ù Å©¸é º¸³¾ ¼ö ¾ø´Ù.
+	// ë©”ì‹œì§€ í¬ê¸°ê°€ ë²„í¼ë³´ë‹¤ í¬ë©´ ë³´ë‚¼ ìˆ˜ ì—†ë‹¤.
 	if (dwSize > m_dwBufferSize) return DEF_XSOCKEVENT_MSGSIZETOOLARGE;
 
-	// ¸®½º´× ¼ÒÄÏ È¤Àº ´ÝÈù ¼ÒÄÏÀ¸·Î ¸Þ½ÃÁö¸¦ º¸³¾ ¼ö´Â ¾ø´Ù.
+	// ë¦¬ìŠ¤ë‹ ì†Œì¼“ í˜¹ì€ ë‹«ížŒ ì†Œì¼“ìœ¼ë¡œ ë©”ì‹œì§€ë¥¼ ë³´ë‚¼ ìˆ˜ëŠ” ì—†ë‹¤.
 	if (m_cType != DEF_XSOCK_NORMALSOCK) return DEF_XSOCKEVENT_SOCKETMISMATCH;
-	// ÃÊ±âÈ­ µÇÁö ¾Ê¾Æ¼­ ¸Þ½ÃÁö¸¦ º¸³¾ ¼ö ¾ø´Ù.
+	// ì´ˆê¸°í™” ë˜ì§€ ì•Šì•„ì„œ ë©”ì‹œì§€ë¥¼ ë³´ë‚¼ ìˆ˜ ì—†ë‹¤.
 	if (m_cType == NULL) return DEF_XSOCKEVENT_NOTINITIALIZED;
 
-	// Å° ÀÔ·Â 
+	// í‚¤ ìž…ë ¥ 
 	m_pSndBuffer[0] = cKey;
 
 	wp  = (WORD *)(m_pSndBuffer + 1);
 	*wp = dwSize + 3;
 
 	memcpy((char *)(m_pSndBuffer + 3), cData, dwSize);
-	// v.14 : m_pSndBuffer +3 ºÎÅÍ dwSize±îÁö cKey°¡ 0ÀÌ ¾Æ´Ï¶ó¸é ¾ÏÈ£È­ÇÑ´Ù.
+	// v.14 : m_pSndBuffer +3 ë¶€í„° dwSizeê¹Œì§€ cKeyê°€ 0ì´ ì•„ë‹ˆë¼ë©´ ì•”í˜¸í™”í•œë‹¤.
 	if (cKey != NULL) {//Encryption
 		for (i = 0; i < dwSize; i++) {
 			m_pSndBuffer[3+i] += (i ^ cKey);
@@ -460,12 +460,12 @@ BOOL XSocket::bListen(char * pAddr, int iPort, unsigned int uiMsg)
 	if (m_cType != NULL) return FALSE;
 	if (m_Sock  != INVALID_SOCKET) closesocket(m_Sock);
 
-	// ¼ÒÄÏÀ» »ý¼ºÇÑ´Ù. 
+	// ì†Œì¼“ì„ ìƒì„±í•œë‹¤. 
 	m_Sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (m_Sock == INVALID_SOCKET) 
 		return FALSE;
 	
-	// ÁÖ¼Ò¸¦ ¹ÙÀÎµåÇÑ´Ù.
+	// ì£¼ì†Œë¥¼ ë°”ì¸ë“œí•œë‹¤.
 	memset(&saTemp,0,sizeof(saTemp));
 	saTemp.sin_family = AF_INET;
 	saTemp.sin_addr.s_addr = inet_addr(pAddr);
@@ -499,7 +499,7 @@ BOOL XSocket::bAccept(class XSocket * pXSock, unsigned int uiMsg)
 	if (pXSock == NULL) return FALSE;
 
 	iLength = sizeof(Addr);
-	// Å¬¶óÀÌ¾ðÆ®ÀÇ Á¢¼ÓÀ» ¹Þ´Â´Ù . 
+	// í´ë¼ì´ì–¸íŠ¸ì˜ ì ‘ì†ì„ ë°›ëŠ”ë‹¤ . 
 	AcceptedSock = accept(m_Sock, (struct sockaddr FAR *)&Addr,(int FAR *)&iLength);
 	if (AcceptedSock == INVALID_SOCKET) 
 		return FALSE;
@@ -507,11 +507,11 @@ BOOL XSocket::bAccept(class XSocket * pXSock, unsigned int uiMsg)
 	pXSock->m_Sock = AcceptedSock;
 	WSAAsyncSelect(pXSock->m_Sock, m_hWnd, uiMsg, FD_READ | FD_WRITE | FD_CLOSE);
 
-	// AcceptµÈ ¼ÒÄÏÀº º¸Åë ¼ÒÄÏÀ¸·Î ÃÊ±âÈ­ µÈ´Ù.
+	// Acceptëœ ì†Œì¼“ì€ ë³´í†µ ì†Œì¼“ìœ¼ë¡œ ì´ˆê¸°í™” ëœë‹¤.
 	pXSock->m_uiMsg = uiMsg;
 	pXSock->m_cType = DEF_XSOCK_NORMALSOCK;
 
-	// ¼ÒÄÏ ¿É¼ÇÀ» Á¶Á¤ÇÑ´Ù. 
+	// ì†Œì¼“ ì˜µì…˜ì„ ì¡°ì •í•œë‹¤. 
 	dwOpt = 8192*5;
 	setsockopt(pXSock->m_Sock, SOL_SOCKET, SO_RCVBUF, (const char FAR *)&dwOpt, sizeof(dwOpt));
 	setsockopt(pXSock->m_Sock, SOL_SOCKET, SO_SNDBUF, (const char FAR *)&dwOpt, sizeof(dwOpt));
@@ -555,12 +555,12 @@ char * XSocket::pGetRcvDataPointer(DWORD * pMsgSize, char * pKey)
 	if (pKey != NULL) *pKey = cKey;		// v1.4
 
 	wp = (WORD *)(m_pRcvBuffer + 1);
-	*pMsgSize = (*wp) - 3;				// Çì´õÅ©±â´Â Á¦¿ÜÇØ¼­ ¹ÝÈ¯ÇÑ´Ù. 
+	*pMsgSize = (*wp) - 3;				// í—¤ë”í¬ê¸°ëŠ” ì œì™¸í•´ì„œ ë°˜í™˜í•œë‹¤. 
 	dwSize    = (*wp) - 3;
 
 	if (dwSize > DEF_MSGBUFFERSIZE) dwSize = DEF_MSGBUFFERSIZE;
 
-	// v.14 : m_pSndBuffer +3 ºÎÅÍ dwSize±îÁö cKey°¡ 0ÀÌ ¾Æ´Ï¶ó¸é ¾ÏÈ£È­¸¦ Ç¬´Ù.
+	// v.14 : m_pSndBuffer +3 ë¶€í„° dwSizeê¹Œì§€ cKeyê°€ 0ì´ ì•„ë‹ˆë¼ë©´ ì•”í˜¸í™”ë¥¼ í‘¼ë‹¤.
 	if (cKey != NULL) {//Encryption
 		for (i = 0; i < dwSize; i++) {
 			m_pRcvBuffer[3+i]  = m_pRcvBuffer[3+i] ^ (cKey ^ (dwSize - i));
@@ -576,7 +576,7 @@ BOOL _InitWinsock()
  WORD	 wVersionRequested;
  WSADATA wsaData;
 
-	// ¼ÒÄÏÀÇ ¹öÁ¯À» Ã¼Å©ÇÑ´Ù.
+	// ì†Œì¼“ì˜ ë²„ì ¼ì„ ì²´í¬í•œë‹¤.
 	wVersionRequested = MAKEWORD( 2, 2 ); 
 	iErrCode = WSAStartup( wVersionRequested, &wsaData );
 	if ( iErrCode ) return FALSE;

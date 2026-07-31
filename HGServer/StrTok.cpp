@@ -38,13 +38,13 @@ char * CStrTok::pGet()
 		else cNextData = NULL;
 
 		if (_bIsSeperator(m_pData[m_iCurLoc], cNextData) == FALSE) {
-			// separator°¡ ¾Æ´Ï¸é ÅäÅ«À» ÀÛ¼º  
+			// separatorê°€ ì•„ë‹ˆë©´ í† í°ì„ ì‘ì„±  
 			m_cToken[i] = m_pData[m_iCurLoc];
 			i++;
 			m_iCurLoc++;
 		}
 		else {
-			// ´ÙÀ½ ÅäÅ«±îÁö Æ÷ÀÎÅÍ¸¦ ÀÌµ¿½ÃÅ²ÈÄ ÅäÅ«À» ¹İÈ¯ÇÑ´Ù.
+			// ë‹¤ìŒ í† í°ê¹Œì§€ í¬ì¸í„°ë¥¼ ì´ë™ì‹œí‚¨í›„ í† í°ì„ ë°˜í™˜í•œë‹¤.
 			bFlag = FALSE;
 			while (bFlag == FALSE) {
 				if (m_iCurLoc <= (m_iDataLength - 2))

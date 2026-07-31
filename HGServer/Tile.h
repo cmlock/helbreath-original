@@ -23,7 +23,7 @@ public:
 	char  m_cOwnerClass;		// DEF_OT_PLAYER / DEF_OT_NPC
 	short m_sOwner;
 
-	char  m_cDeadOwnerClass;	// DEF_OT_PLAYER / DEF_OT_NPC Á×¾îÀÖ´Â ÇÃ·¹ÀÌ¾î´Â ÀÌ°÷¿¡ 
+	char  m_cDeadOwnerClass;	// DEF_OT_PLAYER / DEF_OT_NPC ì£½ì–´ìˆëŠ” í”Œë ˆì´ì–´ëŠ” ì´ê³³ì— 
 	short m_sDeadOwner;
 
 	class CItem * m_pItem[DEF_TILE_PER_ITEMS];
@@ -35,12 +35,12 @@ public:
 
 	BOOL  m_bIsMoveAllowed, m_bIsTeleport, m_bIsWater, m_bIsFarm, m_bIsTempMoveAllowed;
 
-	// Á¡·ÉÁö Ç¥½Ã¿ë 
-	int   m_iOccupyStatus;    // AresdenÀÌ¸é -°ªÀ¸·Î, ElvineÀÌ¸é +·Î ´õÇØÁø´Ù. ÃÑ ÇÕÀÌ ÀÌ Áö¿ªÀÇ °æÇâ¼º 
-	int   m_iOccupyFlagIndex; // ÀÌ Å¸ÀÏ À§¿¡ ¼­ ÀÖ´Â Á¡·É±ê¹ßÀÇ ÀÎµ¦½º 
+	// ì ë ¹ì§€ í‘œì‹œìš© 
+	int   m_iOccupyStatus;    // Aresdenì´ë©´ -ê°’ìœ¼ë¡œ, Elvineì´ë©´ +ë¡œ ë”í•´ì§„ë‹¤. ì´ í•©ì´ ì´ ì§€ì—­ì˜ ê²½í–¥ì„± 
+	int   m_iOccupyFlagIndex; // ì´ íƒ€ì¼ ìœ„ì— ì„œ ìˆëŠ” ì ë ¹ê¹ƒë°œì˜ ì¸ë±ìŠ¤ 
 
 	// Crusade
-	int	  m_iAttribute;		  // Å¸ÀÏÀÇ »óÅÂ ºñÆ®: Ã¹¹øÂ° ºñÆ®(¸¶¹ı º¸È£) µÎ¹øÂ° ºñÆ®(¹°¸® °ø°İ º¸È£) ¼¼¹øÂ° ºñÆ®(¾ÈÀüÁö´ë)
+	int	  m_iAttribute;		  // íƒ€ì¼ì˜ ìƒíƒœ ë¹„íŠ¸: ì²«ë²ˆì§¸ ë¹„íŠ¸(ë§ˆë²• ë³´í˜¸) ë‘ë²ˆì§¸ ë¹„íŠ¸(ë¬¼ë¦¬ ê³µê²© ë³´í˜¸) ì„¸ë²ˆì§¸ ë¹„íŠ¸(ì•ˆì „ì§€ëŒ€)
 	
 	
 };

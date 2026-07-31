@@ -333,7 +333,7 @@ void CMap::ClearOwner(int iDebugCode, short sOwnerH, char cOwnerType, short sX, 
  
 	pTile = (class CTile *)(m_pTile + sX + sY*m_sSizeY);
 
-	// Çö À§Ä¡¿¡ ÇÚµéÀÌ ÀÏÄ¡ÇÏ¸é ¸ğµÎ Å¬¸®¾îÇÑ´Ù. 
+	// í˜„ ìœ„ì¹˜ì— í•¸ë“¤ì´ ì¼ì¹˜í•˜ë©´ ëª¨ë‘ í´ë¦¬ì–´í•œë‹¤. 
 	if ((pTile->m_sOwner == sOwnerH) && (pTile->m_cOwnerClass == cOwnerType)) {
 		pTile->m_sOwner      = NULL;
 		pTile->m_cOwnerClass = NULL;
@@ -366,7 +366,7 @@ BOOL CMap::bSetItem(short sX, short sY, class CItem * pItem)
 
 	pTile = (class CTile *)(m_pTile + sX + sY*m_sSizeY);
 
-	// v1.4 ¸¶Áö¸· Å¸ÀÏ¿¡ ¾ÆÀÌÅÛÀÌ ÀÖ´Ù¸é »èÁ¦½ÃÅ°°í ÀÌµ¿ÇÑ´Ù. 
+	// v1.4 ë§ˆì§€ë§‰ íƒ€ì¼ì— ì•„ì´í…œì´ ìˆë‹¤ë©´ ì‚­ì œì‹œí‚¤ê³  ì´ë™í•œë‹¤. 
 	if (pTile->m_pItem[DEF_TILE_PER_ITEMS-1] != NULL) 
 		delete pTile->m_pItem[DEF_TILE_PER_ITEMS-1];
 	else pTile->m_cTotalItem++;
@@ -437,7 +437,7 @@ BOOL CMap::bIsValidLoc(short sX, short sY)
 BOOL CMap::bInit(char * pName)
 {
  int i;
-	// ¸ÊÆÄÀÏÀ» ·ÎµåÇÑ´Ù.
+	// ë§µíŒŒì¼ì„ ë¡œë“œí•œë‹¤.
 	ZeroMemory(m_cName, sizeof(m_cName));
 	strcpy(m_cName, pName);
 
@@ -476,9 +476,9 @@ BOOL CMap::_bDecodeMapDataFileContents()
 	ZeroMemory(cHeader, sizeof(cHeader));
 	ReadFile(hFile, (char *)cHeader, 256, &nRead, NULL);
 
-	// Çì´õÁ¤º¸¸¦ ºĞ¼®ÇÑ´Ù.
+	// í—¤ë”ì •ë³´ë¥¼ ë¶„ì„í•œë‹¤.
 
-	// ¸ÕÀú ³Î¹®ÀÚ¸¦ ¾ø¾Ø´Ù.
+	// ë¨¼ì € ë„ë¬¸ìë¥¼ ì—†ì•¤ë‹¤.
 	for (i = 0; i < 256; i++) 
 		if (cHeader[i] == NULL) cHeader[i] = ' ';
 
@@ -515,22 +515,22 @@ BOOL CMap::_bDecodeMapDataFileContents()
 		token = pStrTok->pGet();
 	}
 
-	// Å©±â¿¡ ¸Â°Ô Å¸ÀÏÀ» »ı¼ºÇÑ´Ù.
+	// í¬ê¸°ì— ë§ê²Œ íƒ€ì¼ì„ ìƒì„±í•œë‹¤.
 	m_pTile = (class CTile *)new class CTile[m_sSizeX * m_sSizeY];
 
-	// Å¸ÀÏÀÇ Á¤º¸¸¦ ÀĞ¾îµéÀÎ´Ù.
+	// íƒ€ì¼ì˜ ì •ë³´ë¥¼ ì½ì–´ë“¤ì¸ë‹¤.
 	for (iy = 0; iy < m_sSizeY; iy++)
 	for (ix = 0; ix < m_sSizeX; ix++) {
 		ReadFile(hFile, (char *)cTemp, m_sTileDataSize, &nRead, NULL);	
 		pTile = (class CTile *)(m_pTile + ix + iy*m_sSizeY);
 		if ((cTemp[8] & 0x80) != 0) {
-			// °¥¼ö¾ø´Â ¼Ó¼ºÀÌ ¼¼Æ®µÇ¾î ÀÖ´Ù.
+			// ê°ˆìˆ˜ì—†ëŠ” ì†ì„±ì´ ì„¸íŠ¸ë˜ì–´ ìˆë‹¤.
 			 pTile->m_bIsMoveAllowed = FALSE;
 		}
 		else pTile->m_bIsMoveAllowed = TRUE;
 
 		if ((cTemp[8] & 0x40) != 0) {
-			// ÅÚ·¹Æ÷Æ® ¼Ó¼ºÀÌ ¼¼Æ®µÇ¾î ÀÖ´Ù.
+			// í…”ë ˆí¬íŠ¸ ì†ì„±ì´ ì„¸íŠ¸ë˜ì–´ ìˆë‹¤.
 			 pTile->m_bIsTeleport = TRUE;
 		}
 		else pTile->m_bIsTeleport = FALSE;
@@ -542,7 +542,7 @@ BOOL CMap::_bDecodeMapDataFileContents()
 
 		sp = (short *)&cTemp[0];
 		if (*sp == 19) {
-			// ¹° Å¸ÀÏÀÌ´Ù. 
+			// ë¬¼ íƒ€ì¼ì´ë‹¤. 
 			 pTile->m_bIsWater = TRUE;
 		}
 		else pTile->m_bIsWater = FALSE;
@@ -563,7 +563,7 @@ BOOL CMap::bSearchTeleportDest(int sX, int sY, char * pMapName, int * pDx, int *
 
 	for (i = 0; i < DEF_MAXTELEPORTLOC; i++)
 	if ((m_pTeleportLoc[i] != NULL) && (m_pTeleportLoc[i]->m_sSrcX == sX) && (m_pTeleportLoc[i]->m_sSrcY == sY)) {
-		// °°Àº ÁÂÇ¥¸¦ °®´Â ÅÚ·¹Æ÷Æ® À§Ä¡¸¦ Ã£¾Ò´Ù. 	
+		// ê°™ì€ ì¢Œí‘œë¥¼ ê°–ëŠ” í…”ë ˆí¬íŠ¸ ìœ„ì¹˜ë¥¼ ì°¾ì•˜ë‹¤. 	
 		memcpy(pMapName, m_pTeleportLoc[i]->m_cDestMapName, 10);
 		*pDx  = m_pTeleportLoc[i]->m_sDestX;
 		*pDy  = m_pTeleportLoc[i]->m_sDestY;
@@ -636,7 +636,7 @@ BOOL CMap::bGetIsWater(short dX, short dY)
 	return TRUE;
 }
 
-//v2.19 2002-12-16 ³ó»ç ½ºÅ³ °ü·Ã
+//v2.19 2002-12-16 ë†ì‚¬ ìŠ¤í‚¬ ê´€ë ¨
 BOOL CMap::bRemoveCropsTotalSum()
 {
 	if(m_iTotalAgriculture < DEF_MAXAGRICULTURE)
@@ -651,7 +651,7 @@ BOOL CMap::bRemoveCropsTotalSum()
 	return FALSE;
 }
 
-//v2.19 2002-12-16 ³ó»ç ½ºÅ³ °ü·Ã
+//v2.19 2002-12-16 ë†ì‚¬ ìŠ¤í‚¬ ê´€ë ¨
 BOOL CMap::bAddCropsTotalSum()
 {
 	if(m_iTotalAgriculture < DEF_MAXAGRICULTURE)
@@ -679,10 +679,10 @@ int CMap::iAnalyze(char cType, int * pX, int * pY, int * pV1, int * pV2, int * p
 {
 
  
-	// ÇöÀç ¸ÊÀÇ »óÈ²À» ºĞ¼®ÇÏ¿© Äõ¸®¿¡ ¸Â´Â À§Ä¡¸¦ ¹İÈ¯ÇÑ´Ù. 
+	// í˜„ì¬ ë§µì˜ ìƒí™©ì„ ë¶„ì„í•˜ì—¬ ì¿¼ë¦¬ì— ë§ëŠ” ìœ„ì¹˜ë¥¼ ë°˜í™˜í•œë‹¤. 
 	switch (cType) {
 	case 1:
-		// ÇöÀç ±³ÀüÀÌ ¹ú¾îÁö°í ÀÖ´Â °÷ÀÇ À§Ä¡¸¦ Ã£´Â´Ù. 
+		// í˜„ì¬ êµì „ì´ ë²Œì–´ì§€ê³  ìˆëŠ” ê³³ì˜ ìœ„ì¹˜ë¥¼ ì°¾ëŠ”ë‹¤. 
 
 		break;
 
@@ -710,7 +710,7 @@ int CMap::iRegisterOccupyFlag(int dX, int dY, int iSide, int iEKNum, int iDOI)
 	
 	for (i = 1; i < DEF_MAXOCCUPYFLAG; i++) 
 	if (m_pOccupyFlag[i] == NULL) {
-		// °ªÀ» ÇÒ´çÇÏ°í ¹İÈ¯.
+		// ê°’ì„ í• ë‹¹í•˜ê³  ë°˜í™˜.
 		m_pOccupyFlag[i] = new class COccupyFlag(dX, dY, iSide, iEKNum, iDOI);
 		if (m_pOccupyFlag == NULL) return -1;
 		else return i;
@@ -756,19 +756,19 @@ void CMap::_SetupNoAttackArea()
 
 	for (i = 0; i < DEF_MAXNMR; i++) {
 		if ((m_rcNoAttackRect[i].top > 0)) {
-			// No-Magic-Area°¡ Á¤ÀÇµÇ¾î ÀÖ´Ù.
+			// No-Magic-Areaê°€ ì •ì˜ë˜ì–´ ìˆë‹¤.
 			for (ix = m_rcNoAttackRect[i].left; ix <= m_rcNoAttackRect[i].right; ix++)
 			for (iy = m_rcNoAttackRect[i].top; iy <= m_rcNoAttackRect[i].bottom; iy++) {
 				pTile = (class CTile *)(m_pTile + ix + iy*m_sSizeY);
-				pTile->m_iAttribute = pTile->m_iAttribute | 0x00000004;		// 3¹øÂ° ºñÆ®¸¦ ¼¼ÆÃÇÑ´Ù. ¾ÈÀüÁö´ë 
+				pTile->m_iAttribute = pTile->m_iAttribute | 0x00000004;		// 3ë²ˆì§¸ ë¹„íŠ¸ë¥¼ ì„¸íŒ…í•œë‹¤. ì•ˆì „ì§€ëŒ€ 
 			}
 		}
 		else if (m_rcNoAttackRect[i].top == -10) {
-			// Àü ¿µ¿ª °ø°İ ±İÁö´Ù.	
+			// ì „ ì˜ì—­ ê³µê²© ê¸ˆì§€ë‹¤.	
 			for (ix = 0; ix < m_sSizeX; ix++)
 			for (iy = 0; iy < m_sSizeY; iy++) {
 				pTile = (class CTile *)(m_pTile + ix + iy*m_sSizeY);
-				pTile->m_iAttribute = pTile->m_iAttribute | 0x00000004;		// 3¹øÂ° ºñÆ®¸¦ ¼¼ÆÃÇÑ´Ù. ¾ÈÀüÁö´ë
+				pTile->m_iAttribute = pTile->m_iAttribute | 0x00000004;		// 3ë²ˆì§¸ ë¹„íŠ¸ë¥¼ ì„¸íŒ…í•œë‹¤. ì•ˆì „ì§€ëŒ€
 			}
 		}
 	}

@@ -15,13 +15,13 @@
 
 #define DEF_MAXWAYPOINTS			10
 
-#define DEF_MOVETYPE_STOP			0		// Á¤ÁöÇØ ÀÖ´Â´Ù. ÃÊ±âÈ­µÈ NPCÀÇ ±âº» Çàµ¿.
-#define DEF_MOVETYPE_SEQWAYPOINT	1		// ÀÌµ¿°æ·Î¸¦ ¼øÂ÷ÀûÀ¸·Î ÀÌµ¿. ¸Ç ¸¶Áö¸· ÀÌµ¿°æ·Î¿¡¼­ ÇØ´ç Çàµ¿À» °è¼ÓÇÑ´Ù.
-#define DEF_MOVETYPE_RANDOMWAYPOINT	2		// ÀÌµ¿°æ·Î¸¦ ·£´ıÇÏ°Ô ¼±ÅÃÇÏ¿© ¿òÁ÷ÀÎ´Ù.
-#define DEF_MOVETYPE_FOLLOW			3		// Æ¯Á¤ ´ë»óÀ» µû¶ó ¿òÁ÷ÀÎ´Ù. 
-#define DEF_MOVETYPE_RANDOMAREA		4		// ÁöÁ¤µÈ ¿µ¿ª ¾È¿¡¼­ ·£´ıÇÑ °÷À¸·Î ¿òÁ÷ÀÎ´Ù.
-#define DEF_MOVETYPE_RANDOM			5		// ¸Ê ³»ÀÇ ¾Æ¹«¿µ¿ªÀ¸·Î³ª ¿òÁ÷ÀÎ´Ù.
-#define DEF_MOVETYPE_GUARD			6		// Ã³À½ »ı¼ºµÉ ´ç½ÃÀÇ À§Ä¡¿¡ Á¤ÁöÇØ ÀÖÀ¸³ª ¸ñÇ¥¹° ¹ß°ß½Ã´Â Ãß°İÇÑ´Ù.
+#define DEF_MOVETYPE_STOP			0		// ì •ì§€í•´ ìˆëŠ”ë‹¤. ì´ˆê¸°í™”ëœ NPCì˜ ê¸°ë³¸ í–‰ë™.
+#define DEF_MOVETYPE_SEQWAYPOINT	1		// ì´ë™ê²½ë¡œë¥¼ ìˆœì°¨ì ìœ¼ë¡œ ì´ë™. ë§¨ ë§ˆì§€ë§‰ ì´ë™ê²½ë¡œì—ì„œ í•´ë‹¹ í–‰ë™ì„ ê³„ì†í•œë‹¤.
+#define DEF_MOVETYPE_RANDOMWAYPOINT	2		// ì´ë™ê²½ë¡œë¥¼ ëœë¤í•˜ê²Œ ì„ íƒí•˜ì—¬ ì›€ì§ì¸ë‹¤.
+#define DEF_MOVETYPE_FOLLOW			3		// íŠ¹ì • ëŒ€ìƒì„ ë”°ë¼ ì›€ì§ì¸ë‹¤. 
+#define DEF_MOVETYPE_RANDOMAREA		4		// ì§€ì •ëœ ì˜ì—­ ì•ˆì—ì„œ ëœë¤í•œ ê³³ìœ¼ë¡œ ì›€ì§ì¸ë‹¤.
+#define DEF_MOVETYPE_RANDOM			5		// ë§µ ë‚´ì˜ ì•„ë¬´ì˜ì—­ìœ¼ë¡œë‚˜ ì›€ì§ì¸ë‹¤.
+#define DEF_MOVETYPE_GUARD			6		// ì²˜ìŒ ìƒì„±ë  ë‹¹ì‹œì˜ ìœ„ì¹˜ì— ì •ì§€í•´ ìˆìœ¼ë‚˜ ëª©í‘œë¬¼ ë°œê²¬ì‹œëŠ” ì¶”ê²©í•œë‹¤.
 
 #define DEF_BEHAVIOR_STOP			0
 #define DEF_BEHAVIOR_MOVE			1
@@ -38,15 +38,15 @@ public:
 	// Auras
 	char m_pMagicConfigList[100];
 
-	char  m_cNpcName[21]; // NPCÀÇ ÀÌ¸§. »ç¶÷ ÀÌ¸§°°Àº °Í
+	char  m_cNpcName[21]; // NPCì˜ ì´ë¦„. ì‚¬ëŒ ì´ë¦„ê°™ì€ ê²ƒ
 
-	char  m_cName[6];	// ÀÌ ÀÌ¸§Àº ÇÁ·Î±×·¥À» À§ÇÑ ½Äº°ÀÚÀÓ
+	char  m_cName[6];	// ì´ ì´ë¦„ì€ í”„ë¡œê·¸ë¨ì„ ìœ„í•œ ì‹ë³„ìì„
 	char  m_cMapIndex;
 	short m_sX, m_sY;
 	short m_dX, m_dY;
 	short m_vX, m_vY;
 	int   m_tmp_iError;
-	RECT  m_rcRandomArea;	// MOVETYPE_RANDOMAREAÀÏ¶§ ¿µ¿ªÁÂÇ¥
+	RECT  m_rcRandomArea;	// MOVETYPE_RANDOMAREAì¼ë•Œ ì˜ì—­ì¢Œí‘œ
 
 	char  m_cDir;
 	char  m_cAction;
@@ -63,78 +63,78 @@ public:
 	DWORD m_dwDeadTime, m_dwRegenTime;
 
 	int  m_iHP;						// Hit Point 
-	DWORD  m_iExp;                    // Á×¿´À» °æ¿ì ¾ò´Â °æÇèÄ¡. ExpDice¿¡ ÀÇÇØ °áÁ¤µÈ´Ù.
+	DWORD  m_iExp;                    // ì£½ì˜€ì„ ê²½ìš° ì–»ëŠ” ê²½í—˜ì¹˜. ExpDiceì— ì˜í•´ ê²°ì •ëœë‹¤.
 
-	int  m_iHitDice;				// ¸ó½ºÅÍÀÇ Hit Dice. ÀÌ°Í¿¡ ÀÇÇØ HP°¡ °áÁ¤µÈ´Ù.
+	int  m_iHitDice;				// ëª¬ìŠ¤í„°ì˜ Hit Dice. ì´ê²ƒì— ì˜í•´ HPê°€ ê²°ì •ëœë‹¤.
 	int  m_iDefenseRatio;			// Defense Ratio
 	int  m_iHitRatio;				// HitRatio
-	int  m_iMagicHitRatio;			// v1.4 ¸¶¹ı °ø°İ Ratio
-	int  m_iMinBravery;			    // ÃÖ¼Ò ¿ë°¨Ä¡ 
+	int  m_iMagicHitRatio;			// v1.4 ë§ˆë²• ê³µê²© Ratio
+	int  m_iMinBravery;			    // ìµœì†Œ ìš©ê°ì¹˜ 
 	DWORD  m_iExpDiceMin;
 	DWORD	 m_iExpDiceMax;
 	DWORD  m_iGoldDiceMin;
 	DWORD  m_iGoldDiceMax;
 
-	char m_cSide;					// NPC°¡ ¼ÓÇÑ ÆÀ 
-	char m_cActionLimit;            // ÀÌ °ªÀÌ 1ÀÌ¸é Move¸¸ °¡´ÉÇÏ¸ç Á×Áöµµ ¾Ê´Â´Ù.  ÀÌ °ªÀÌ 2¸é ¿òÁ÷ÀÌÁöµµ ¾ÊÀ¸¸ç Á×Áöµµ ¾Ê´Â´Ù. 3ÀÌ¸é Dummy´Ù. ¸Â´Â ¿ªÇÒ, 
-	                                // 4¸é ¿¡³ÊÁö ½ºÇÇ¾î, 5¸é °ÇÃà¹°   
+	char m_cSide;					// NPCê°€ ì†í•œ íŒ€ 
+	char m_cActionLimit;            // ì´ ê°’ì´ 1ì´ë©´ Moveë§Œ ê°€ëŠ¥í•˜ë©° ì£½ì§€ë„ ì•ŠëŠ”ë‹¤.  ì´ ê°’ì´ 2ë©´ ì›€ì§ì´ì§€ë„ ì•Šìœ¼ë©° ì£½ì§€ë„ ì•ŠëŠ”ë‹¤. 3ì´ë©´ Dummyë‹¤. ë§ëŠ” ì—­í• , 
+	                                // 4ë©´ ì—ë„ˆì§€ ìŠ¤í”¼ì–´, 5ë©´ ê±´ì¶•ë¬¼   
 
 	char m_cSize;					// 0: Small-Medium 1: Large
-	char m_cAttackDiceThrow;		// °ø°İÄ¡ ÁÖ»çÀ§ ´øÁö´Â È¸¼ö 
-	char m_cAttackDiceRange;		// °ø°İÄ¡ ÁÖ»çÀ§ ¹üÀ§ 
-	char m_cAttackBonus;			// °ø°İ º¸³Ê½º 
-	char m_cBravery;				// NPCÀÇ ¿ë°¨µµ 
-	char m_cResistMagic;			// ¸¶¹ı ÀúÇ× 
-	char m_cMagicLevel;				// ¸¶¹ı ·¹º§ 
-	char m_cDayOfWeekLimit;		    // »ı¼º½Ã ³¯Â¥ Á¦ÇÑ 
-	char m_cChatMsgPresence;		// ¿¬°áµÈ Chat Msg Á¸ÀçÀ¯¹« 
-	int  m_iMana;                   // ÃÖ´ë°ªÀº MagicLevel*30
-	int  m_iMaxMana;				// v1.4 »õ·Î Ãß°¡µÈ °Íµé.
+	char m_cAttackDiceThrow;		// ê³µê²©ì¹˜ ì£¼ì‚¬ìœ„ ë˜ì§€ëŠ” íšŒìˆ˜ 
+	char m_cAttackDiceRange;		// ê³µê²©ì¹˜ ì£¼ì‚¬ìœ„ ë²”ìœ„ 
+	char m_cAttackBonus;			// ê³µê²© ë³´ë„ˆìŠ¤ 
+	char m_cBravery;				// NPCì˜ ìš©ê°ë„ 
+	char m_cResistMagic;			// ë§ˆë²• ì €í•­ 
+	char m_cMagicLevel;				// ë§ˆë²• ë ˆë²¨ 
+	char m_cDayOfWeekLimit;		    // ìƒì„±ì‹œ ë‚ ì§œ ì œí•œ 
+	char m_cChatMsgPresence;		// ì—°ê²°ëœ Chat Msg ì¡´ì¬ìœ ë¬´ 
+	int  m_iMana;                   // ìµœëŒ€ê°’ì€ MagicLevel*30
+	int  m_iMaxMana;				// v1.4 ìƒˆë¡œ ì¶”ê°€ëœ ê²ƒë“¤.
 																    
-	char  m_cMoveType;				// NPCÀÇ ÀÌµ¿°æ·Î ¹æ½Ä 
-	char  m_cBehavior;				// NPCÀÇ Çàµ¿ 
-	short m_sBehaviorTurnCount;		// Çàµ¿ Ä«¿îÆ® 
-	char  m_cTargetSearchRange;		// NPC°ø°İ¸ñÇ¥ °Ë»ö ¹üÀ§ 
+	char  m_cMoveType;				// NPCì˜ ì´ë™ê²½ë¡œ ë°©ì‹ 
+	char  m_cBehavior;				// NPCì˜ í–‰ë™ 
+	short m_sBehaviorTurnCount;		// í–‰ë™ ì¹´ìš´íŠ¸ 
+	char  m_cTargetSearchRange;		// NPCê³µê²©ëª©í‘œ ê²€ìƒ‰ ë²”ìœ„ 
 
-	int   m_iFollowOwnerIndex;		// NPC°¡ µû¶ó°¡°í ÀÖ´Â °´Ã¼ ÀÎµ¦½º 
-	char  m_cFollowOwnerType;		// µû¶ó°¡´Â °´Ã¼ÀÇ Á¾·ù (NPC or Player)
-	BOOL  m_bIsSummoned;            // ¼ÒÈ¯µÈ NPC¶ó¸é HP°¡ ¿À¸£Áö ¾Ê´Â´Ù. 
-	DWORD m_dwSummonedTime;			// ¼ÒÈ¯¸÷ÀÌ »ı¼º½Ã°£ 
+	int   m_iFollowOwnerIndex;		// NPCê°€ ë”°ë¼ê°€ê³  ìˆëŠ” ê°ì²´ ì¸ë±ìŠ¤ 
+	char  m_cFollowOwnerType;		// ë”°ë¼ê°€ëŠ” ê°ì²´ì˜ ì¢…ë¥˜ (NPC or Player)
+	BOOL  m_bIsSummoned;            // ì†Œí™˜ëœ NPCë¼ë©´ HPê°€ ì˜¤ë¥´ì§€ ì•ŠëŠ”ë‹¤. 
+	DWORD m_dwSummonedTime;			// ì†Œí™˜ëª¹ì´ ìƒì„±ì‹œê°„ 
 
-	int   m_iTargetIndex;			// NPCÀÇ °ø°İ¸ñÇ¥ ÀÎµ¦½º
-	char  m_cTargetType;			// °ø°İ¸ñÇ¥ÀÇ Á¾·ù (NPC or Player)
-	char  m_cCurWaypoint;			// ÇöÀç ÀÌµ¿À§Ä¡ 
-	char  m_cTotalWaypoint;			// ÃÑ ÀÌµ¿À§Ä¡ °¹¼ö 
+	int   m_iTargetIndex;			// NPCì˜ ê³µê²©ëª©í‘œ ì¸ë±ìŠ¤
+	char  m_cTargetType;			// ê³µê²©ëª©í‘œì˜ ì¢…ë¥˜ (NPC or Player)
+	char  m_cCurWaypoint;			// í˜„ì¬ ì´ë™ìœ„ì¹˜ 
+	char  m_cTotalWaypoint;			// ì´ ì´ë™ìœ„ì¹˜ ê°¯ìˆ˜ 
 
-	int   m_iSpotMobIndex;			// spot-mob-generator¿¡¼­ ¸¸µé¾îÁ³´Ù¸é ÀÎµ¦½º¸¦ ÀúÀå 
+	int   m_iSpotMobIndex;			// spot-mob-generatorì—ì„œ ë§Œë“¤ì–´ì¡Œë‹¤ë©´ ì¸ë±ìŠ¤ë¥¼ ì €ì¥ 
 	int   m_iWayPointIndex[DEF_MAXWAYPOINTS+1];
 	char  m_cMagicEffectStatus[DEF_MAXMAGICEFFECTS];
 
-	BOOL  m_bIsPermAttackMode;		// ÀÌ ÇÃ·¡±×°¡ È°¼ºÈ­ µÇ¾î ÀÖÀ¸¸é °ø°İµµÁß ¸ñÇ¥¸¦ ¹Ù²ÙÁö ¾Ê´Â´Ù.
-   	DWORD   m_iNoDieRemainExp;		// Á×Áö ¾Ê°í ¸íÁß½Ã¿¡ ¾òÀ» ¼ö ÀÖ´Â °æÇèÄ¡ 
-	int   m_iAttackStrategy; 		// ÀüÅõ ±³¸® ÀÎ°øÁö´É Å¸ÀÔ  
-	int   m_iAILevel;				// Áö´É ·¹º§ 
+	BOOL  m_bIsPermAttackMode;		// ì´ í”Œë˜ê·¸ê°€ í™œì„±í™” ë˜ì–´ ìˆìœ¼ë©´ ê³µê²©ë„ì¤‘ ëª©í‘œë¥¼ ë°”ê¾¸ì§€ ì•ŠëŠ”ë‹¤.
+   	DWORD   m_iNoDieRemainExp;		// ì£½ì§€ ì•Šê³  ëª…ì¤‘ì‹œì— ì–»ì„ ìˆ˜ ìˆëŠ” ê²½í—˜ì¹˜ 
+	int   m_iAttackStrategy; 		// ì „íˆ¬ êµë¦¬ ì¸ê³µì§€ëŠ¥ íƒ€ì…  
+	int   m_iAILevel;				// ì§€ëŠ¥ ë ˆë²¨ 
 
-	int   m_iAttackRange;			// °ø°İ ¹üÀ§ 1ÀÌ»óÀÌ¸é ¿ø°Å¸® °ø°İÀÌ °¡´ÉÇÏ´Ù´Â °Í 
+	int   m_iAttackRange;			// ê³µê²© ë²”ìœ„ 1ì´ìƒì´ë©´ ì›ê±°ë¦¬ ê³µê²©ì´ ê°€ëŠ¥í•˜ë‹¤ëŠ” ê²ƒ 
 	/*
 		AI-Level 
-			1: º¸Åë Çàµ¿ 
-			2: ¿¡³ÊÁö°¡ °¡Àå ³·Àº ¸ñÇ¥¹°À» ÃßÀû 
-			3: ¸¶¹ı º¸È£ÁßÀÎ ¸ñÇ¥¹° ¸¶¹ı °ø°İ´ë»ó¿¡¼­ Á¦¿Ü 
+			1: ë³´í†µ í–‰ë™ 
+			2: ì—ë„ˆì§€ê°€ ê°€ì¥ ë‚®ì€ ëª©í‘œë¬¼ì„ ì¶”ì  
+			3: ë§ˆë²• ë³´í˜¸ì¤‘ì¸ ëª©í‘œë¬¼ ë§ˆë²• ê³µê²©ëŒ€ìƒì—ì„œ ì œì™¸ 
 	*/
-	int   m_iAttackCount;			// ¿¬¼Ó °ø°İ µ¿ÀÛ È½¼ö Ä«¿îÆ® 
+	int   m_iAttackCount;			// ì—°ì† ê³µê²© ë™ì‘ íšŸìˆ˜ ì¹´ìš´íŠ¸ 
 	BOOL  m_bIsKilled;
 	BOOL  m_bIsUnsummoned;
 
-	int   m_iLastDamage;			// ¸¶Áö¸· Á×±â Àü¿¡ ¾òÀº ´ë¹ÌÁö. ´ë¹ÌÁö°¡ ³Ê¹« Å©¸é ¿¬±İ¼ú Àç·á°¡ ¶³¾îÁöÁö ¾Ê´Â´Ù.
-	int   m_iSummonControlMode;		// ¼ÒÈ¯¸÷ Á¶Á¤ ¸ğµå: 0ÀÌ¸é Free, 1 Hold 2 Tgt 
-	char  m_cAttribute;				// ¸¶¹ı ¼Ó¼º:  ¶¥ 1 ÇÏ´Ã 2 ºÒ 3 ¹° 4  
-	int   m_iAbsDamage;				// ¾ç¼ö¸é ¸¶¹ı ´ë¹ÌÁö Àı°¨·ü, À½¼ö¸é ¹°¸® ´ë¹ÌÁö Àı°¨·ü 
+	int   m_iLastDamage;			// ë§ˆì§€ë§‰ ì£½ê¸° ì „ì— ì–»ì€ ëŒ€ë¯¸ì§€. ëŒ€ë¯¸ì§€ê°€ ë„ˆë¬´ í¬ë©´ ì—°ê¸ˆìˆ  ì¬ë£Œê°€ ë–¨ì–´ì§€ì§€ ì•ŠëŠ”ë‹¤.
+	int   m_iSummonControlMode;		// ì†Œí™˜ëª¹ ì¡°ì • ëª¨ë“œ: 0ì´ë©´ Free, 1 Hold 2 Tgt 
+	char  m_cAttribute;				// ë§ˆë²• ì†ì„±:  ë•… 1 í•˜ëŠ˜ 2 ë¶ˆ 3 ë¬¼ 4  
+	int   m_iAbsDamage;				// ì–‘ìˆ˜ë©´ ë§ˆë²• ëŒ€ë¯¸ì§€ ì ˆê°ë¥ , ìŒìˆ˜ë©´ ë¬¼ë¦¬ ëŒ€ë¯¸ì§€ ì ˆê°ë¥  
 
-	int   m_iItemRatio;				// Æ¯¼ö ¾ÆÀÌÅÛ È®·ü 
-	int   m_iAssignedItem;			// ÇÒ´çµÈ ¾ÆÀÌÅÛ 
+	int   m_iItemRatio;				// íŠ¹ìˆ˜ ì•„ì´í…œ í™•ë¥  
+	int   m_iAssignedItem;			// í• ë‹¹ëœ ì•„ì´í…œ 
 
-	char  m_cSpecialAbility;		// Æ¯¼ö ´É·Â 0: ¾øÀ½  
+	char  m_cSpecialAbility;		// íŠ¹ìˆ˜ ëŠ¥ë ¥ 0: ì—†ìŒ  
 
 									/*
 case 0: break;
@@ -147,14 +147,14 @@ case 6:  "Extremely Poisonous"
 case 7:  "Explosive"
 case 8:  "Hi-Explosive" 
 
- ¸¸¾à ÀÌ °ªÀÌ 60º¸´Ù Å©¸é NPCÀÇ È¿°ú¿Í´Â ¹«°üÇÏ¹Ç·Î ¹«½ÃÇÑ´Ù.
+ ë§Œì•½ ì´ ê°’ì´ 60ë³´ë‹¤ í¬ë©´ NPCì˜ íš¨ê³¼ì™€ëŠ” ë¬´ê´€í•˜ë¯€ë¡œ ë¬´ì‹œí•œë‹¤.
 									*/
 
-	int	  m_iBuildCount;			// °¡µå Å¸¿öµî ±¸Á¶¹°ÀÎ °æ¿ì ¿Ï¼ºµÉ ¶§±îÁö ³²Àº °î±ªÀÌÁú È½¼ö¸¦ ÀÇ¹Ì. ÃÊ±â°ªÀº m_iMinBraveryÀÌ´Ù.
-									// ÀÌ °ªÀÌ 0ÀÌ¾î¾ß¸¸ µ¿ÀÛÀ» ÇÑ´Ù.
-	int   m_iManaStock;				// ±×·£µå ¸ÅÁ÷ Á¦³×·¹ÀÌÅÍÀÇ °æ¿ì ¸¶³ªÃàÀû·® 
-	BOOL  m_bIsMaster;				// ¸¶½ºÅÍ ¸÷ÀÎÁöÀÇ ¿©ºÎ 
-	int   m_iGuildGUID;				// ÀüÀï¿ë À¯´ÏÆ®ÀÎ °æ¿ì ¼ÒÈ¯ÀÚÀÇ ±æµå ¾ÆÀÌµğ°¡ ÀÔ·ÂµÈ´Ù.
+	int	  m_iBuildCount;			// ê°€ë“œ íƒ€ì›Œë“± êµ¬ì¡°ë¬¼ì¸ ê²½ìš° ì™„ì„±ë  ë•Œê¹Œì§€ ë‚¨ì€ ê³¡ê´­ì´ì§ˆ íšŸìˆ˜ë¥¼ ì˜ë¯¸. ì´ˆê¸°ê°’ì€ m_iMinBraveryì´ë‹¤.
+									// ì´ ê°’ì´ 0ì´ì–´ì•¼ë§Œ ë™ì‘ì„ í•œë‹¤.
+	int   m_iManaStock;				// ê·¸ëœë“œ ë§¤ì§ ì œë„¤ë ˆì´í„°ì˜ ê²½ìš° ë§ˆë‚˜ì¶•ì ëŸ‰ 
+	BOOL  m_bIsMaster;				// ë§ˆìŠ¤í„° ëª¹ì¸ì§€ì˜ ì—¬ë¶€ 
+	int   m_iGuildGUID;				// ì „ìŸìš© ìœ ë‹ˆíŠ¸ì¸ ê²½ìš° ì†Œí™˜ìì˜ ê¸¸ë“œ ì•„ì´ë””ê°€ ì…ë ¥ëœë‹¤.
 	
 	char m_cCropType;
 	char m_cCropSkill;

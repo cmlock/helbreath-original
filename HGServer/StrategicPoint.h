@@ -18,9 +18,9 @@ public:
 	CStrategicPoint();
 	virtual ~CStrategicPoint();
 
-	int		m_iSide;			// Àü·«Àû ¿äÃæÁöÀÇ ¼Ò¼Ó: 0ÀÌ¸é Áß¸³
-	int     m_iValue;			// Áß¿äµµ
-	int		m_iX, m_iY;			// À§Ä¡ 
+	int		m_iSide;			// ì „ëµì  ìš”ì¶©ì§€ì˜ ì†Œì†: 0ì´ë©´ ì¤‘ë¦½
+	int     m_iValue;			// ì¤‘ìš”ë„
+	int		m_iX, m_iY;			// ìœ„ì¹˜ 
 };
 
 #endif // !defined(AFX_STRATEGICPOINT_H__FEF1CCB2_D12D_46AD_8034_4AC488E87D72__INCLUDED_)

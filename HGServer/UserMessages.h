@@ -7,7 +7,7 @@
 #define WM_ONGATESOCKETEVENT	WM_USER + 1000
 #define WM_ONBOTSOCKETEVENT		WM_USER + 2000
 
-// Ŭ���̾�Ʈ�� 1100�� ���ϸ� �����ϹǷ� �� ���ķ� �޽����� ���ǵǾ�� �ȵȴ�. 
+// 클라이언트가 1100번 이하를 점유하므로 이 이후로 메시지가 정의되어서는 안된다. 
 #define WM_ONCLIENTSOCKETEVENT	WM_USER + 1100
 
 												 

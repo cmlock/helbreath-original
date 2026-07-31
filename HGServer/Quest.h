@@ -16,55 +16,55 @@
 #include <memory.h>
 
 
-#define DEF_QUESTTYPE_MONSTERHUNT				1		// ÀÏ¹ÝÀûÀÎ ¸ó½ºÅÍ ÇåÆÃ 
-#define DEF_QUESTTYPE_MONSTERHUNT_TIMELIMIT		2		// ½Ã°£ Á¦ÇÑÀÌ °É·ÁÀÖ´Â ¸ó½ºÅÍ ÇåÆÃ 
-#define DEF_QUESTTYPE_ASSASSINATION 			3		// ¾Ï»ì 
-#define DEF_QUESTTYPE_DELIVERY					4		// ¹è´Þ: Æ¯Á¤ Àå¼Ò·Î ¾ÆÀÌÅÛÀ» ¹è´ÞÇÑ´Ù.
-#define DEF_QUESTTYPE_ESCORT					5		// º¸È£: Æ¯Á¤ Ä³¸¯ÅÍ¸¦ º¸È£ÇÑ´Ù.
-#define DEF_QUESTTYPE_GUARD						6		// Æ¯Á¤ Áö¿ªÀ» ÀûÀÇ °ø°ÝÀ¸·ÎºÎÅÍ ¹æ¾îÇÑ´Ù. 
-#define DEF_QUESTTYPE_GOPLACE					7		// Æ¯Á¤ Àå¼Ò·Î °£´Ù. Àû±¹ Ä§Åõ 
-#define DEF_QUESTTYPE_BUILDSTRUCTURE			8		// ±¸Á¶¹° ¼³Ä¡ ÀÓ¹«
-#define DEF_QUESTTYPE_SUPPLYBUILDSTRUCTURE		9		// ±¸Á¶¹° ¼³Ä¡ º¸±Þ ÀÓ¹«
-#define DEF_QUESTTYPE_STRATEGICSTRIKE			10		// Àü¼úÀû Æø°ÝÀÓ¹« 
-#define DEF_QUESTTYPE_SENDTOBATTLE				11		// °ð¹Ù·Î ±³ÀüÀå¼Ò Âü°¡ÇÏ´Â ÀÓ¹«
-#define DEF_QUESTTYPE_SETOCCUPYFLAG				12		// ¿µÅä Á¡·É ±ê¹ßÀ» ¼³Ä¡ÇÏ´Â ÀÓ¹« 
+#define DEF_QUESTTYPE_MONSTERHUNT				1		// ì¼ë°˜ì ì¸ ëª¬ìŠ¤í„° í—ŒíŒ… 
+#define DEF_QUESTTYPE_MONSTERHUNT_TIMELIMIT		2		// ì‹œê°„ ì œí•œì´ ê±¸ë ¤ìžˆëŠ” ëª¬ìŠ¤í„° í—ŒíŒ… 
+#define DEF_QUESTTYPE_ASSASSINATION 			3		// ì•”ì‚´ 
+#define DEF_QUESTTYPE_DELIVERY					4		// ë°°ë‹¬: íŠ¹ì • ìž¥ì†Œë¡œ ì•„ì´í…œì„ ë°°ë‹¬í•œë‹¤.
+#define DEF_QUESTTYPE_ESCORT					5		// ë³´í˜¸: íŠ¹ì • ìºë¦­í„°ë¥¼ ë³´í˜¸í•œë‹¤.
+#define DEF_QUESTTYPE_GUARD						6		// íŠ¹ì • ì§€ì—­ì„ ì ì˜ ê³µê²©ìœ¼ë¡œë¶€í„° ë°©ì–´í•œë‹¤. 
+#define DEF_QUESTTYPE_GOPLACE					7		// íŠ¹ì • ìž¥ì†Œë¡œ ê°„ë‹¤. ì êµ­ ì¹¨íˆ¬ 
+#define DEF_QUESTTYPE_BUILDSTRUCTURE			8		// êµ¬ì¡°ë¬¼ ì„¤ì¹˜ ìž„ë¬´
+#define DEF_QUESTTYPE_SUPPLYBUILDSTRUCTURE		9		// êµ¬ì¡°ë¬¼ ì„¤ì¹˜ ë³´ê¸‰ ìž„ë¬´
+#define DEF_QUESTTYPE_STRATEGICSTRIKE			10		// ì „ìˆ ì  í­ê²©ìž„ë¬´ 
+#define DEF_QUESTTYPE_SENDTOBATTLE				11		// ê³§ë°”ë¡œ êµì „ìž¥ì†Œ ì°¸ê°€í•˜ëŠ” ìž„ë¬´
+#define DEF_QUESTTYPE_SETOCCUPYFLAG				12		// ì˜í†  ì ë ¹ ê¹ƒë°œì„ ì„¤ì¹˜í•˜ëŠ” ìž„ë¬´ 
 
 class CQuest  
 {
 public:
 	
-	char m_cSide;				// ¾î´À Æí¿¡ ¼ÓÇÏ´Â ÀÓ¹«ÀÎ°¡? 
+	char m_cSide;				// ì–´ëŠ íŽ¸ì— ì†í•˜ëŠ” ìž„ë¬´ì¸ê°€? 
 	
-	int m_iType;				// Quest Á¾·ù 
-	int m_iTargetType;			// QuestÀÇ ¸ñÇ¥ Á¾·ù. °¢ Type¿¡ µû¶ó ´Ù¸¥ °ªÀÌ Á¤ÇØÁø´Ù. 
-	int m_iMaxCount;			// ÃÖ´ë ¸¸Á· È½¼ö 
+	int m_iType;				// Quest ì¢…ë¥˜ 
+	int m_iTargetType;			// Questì˜ ëª©í‘œ ì¢…ë¥˜. ê° Typeì— ë”°ë¼ ë‹¤ë¥¸ ê°’ì´ ì •í•´ì§„ë‹¤. 
+	int m_iMaxCount;			// ìµœëŒ€ ë§Œì¡± íšŸìˆ˜ 
 
-	int m_iFrom;				// Quest¸¦ ³»·ÁÁÖ´Â NPC Á¾·ù 
+	int m_iFrom;				// Questë¥¼ ë‚´ë ¤ì£¼ëŠ” NPC ì¢…ë¥˜ 
 	
-	int m_iMinLevel;			// Quest¸¦ ¹Þ±â À§ÇÑ ÃÖÀú ·¹º§. 
-	int m_iMaxLevel;			// Quest¸¦ ¹Þ±â À§ÇÑ ÃÖ´ë ·¹º§ 
+	int m_iMinLevel;			// Questë¥¼ ë°›ê¸° ìœ„í•œ ìµœì € ë ˆë²¨. 
+	int m_iMaxLevel;			// Questë¥¼ ë°›ê¸° ìœ„í•œ ìµœëŒ€ ë ˆë²¨ 
 
-	int m_iRequiredSkillNum;	// Á¶°Ç ÆÇ´Ü¿¡ ÇÊ¿äÇÑ ½ºÅ³ ¹øÈ£ 
-	int m_iRequiredSkillLevel;	// Á¶°Ç ÆÇ´Ü¿¡ ÇÊ¿äÇÑ ½ºÅ³ ·¹º§ 
+	int m_iRequiredSkillNum;	// ì¡°ê±´ íŒë‹¨ì— í•„ìš”í•œ ìŠ¤í‚¬ ë²ˆí˜¸ 
+	int m_iRequiredSkillLevel;	// ì¡°ê±´ íŒë‹¨ì— í•„ìš”í•œ ìŠ¤í‚¬ ë ˆë²¨ 
 
-	int m_iTimeLimit; 			// ½Ã°£ Á¦ÇÑ ÀÜÁ¸·® 
-	int m_iAssignType;			// Äù½ºÆ® ÇÒ´ç Å¸ÀÔ. -1ÀÌ¸é ¾Æ¹«¶§³ª. 1ÀÌ¸é Crusade Àü¸éÀüÀÏ¶§¸¸.
+	int m_iTimeLimit; 			// ì‹œê°„ ì œí•œ ìž”ì¡´ëŸ‰ 
+	int m_iAssignType;			// í€˜ìŠ¤íŠ¸ í• ë‹¹ íƒ€ìž…. -1ì´ë©´ ì•„ë¬´ë•Œë‚˜. 1ì´ë©´ Crusade ì „ë©´ì „ì¼ë•Œë§Œ.
 
-								// »óÇ° Á¾·ù ¹× ¼ö·®. 3°³ Áß 1°³°¡ ·£´ýÇÏ°Ô Á¤ÇØÁü. 0¹ø ÀÎµ¦½º´Â »ç¿ë ¾ÈÇÔ.
+								// ìƒí’ˆ ì¢…ë¥˜ ë° ìˆ˜ëŸ‰. 3ê°œ ì¤‘ 1ê°œê°€ ëžœë¤í•˜ê²Œ ì •í•´ì§. 0ë²ˆ ì¸ë±ìŠ¤ëŠ” ì‚¬ìš© ì•ˆí•¨.
 	int m_iRewardType[4]; 
 	int m_iRewardAmount[4];
 
-	int m_iContribution;		// °øÇåµµ 
-	int m_iContributionLimit;	// ÃÖ´ë °øÇåµµ Á¦ÇÑ 
+	int m_iContribution;		// ê³µí—Œë„ 
+	int m_iContributionLimit;	// ìµœëŒ€ ê³µí—Œë„ ì œí•œ 
 
-	int m_iResponseMode;		// ÀÀ´ä ¸ðµå: 0(ok) 1(Accept/Decline) 2(Next)
+	int m_iResponseMode;		// ì‘ë‹µ ëª¨ë“œ: 0(ok) 1(Accept/Decline) 2(Next)
 
-	char m_cTargetName[21];		// Äù½ºÆ®°¡ ÁöÁ¤µÈ ÀÌ¸§. ¸Ê È¤Àº Ä³¸¯ÅÍ ÀÌ¸§  
-	int  m_sX, m_sY, m_iRange;	// Äù½ºÆ®°¡ ÁöÁ¤µÈ ¸Ê Àå¼Ò 
+	char m_cTargetName[21];		// í€˜ìŠ¤íŠ¸ê°€ ì§€ì •ëœ ì´ë¦„. ë§µ í˜¹ì€ ìºë¦­í„° ì´ë¦„  
+	int  m_sX, m_sY, m_iRange;	// í€˜ìŠ¤íŠ¸ê°€ ì§€ì •ëœ ë§µ ìž¥ì†Œ 
 
-	int  m_iQuestID;			// Äù½ºÆ® ID. ¸¸¾à Äù½ºÆ®ÀÇ ³»¿ëÀÌ º¯°æµÇ¾úÀ» °æ¿ì¸¦ ´ëºñÇÑ °ÍÀÓ.
+	int  m_iQuestID;			// í€˜ìŠ¤íŠ¸ ID. ë§Œì•½ í€˜ìŠ¤íŠ¸ì˜ ë‚´ìš©ì´ ë³€ê²½ë˜ì—ˆì„ ê²½ìš°ë¥¼ ëŒ€ë¹„í•œ ê²ƒìž„.
 
-	int  m_iReqContribution;	// Äù½ºÆ®¸¦ ¸Ã±â À§ÇÑ ÃÖÀú °øÇåµµ Á¦ÇÑ. 
+	int  m_iReqContribution;	// í€˜ìŠ¤íŠ¸ë¥¼ ë§¡ê¸° ìœ„í•œ ìµœì € ê³µí—Œë„ ì œí•œ. 
 
 
 	//CQuest();

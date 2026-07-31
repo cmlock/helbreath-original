@@ -468,7 +468,7 @@ BOOL InitInstance( HINSTANCE hInstance, int nCmdShow )
  char cTitle[100];
 // HANDLE hFile;
  SYSTEMTIME SysTime;
-	// ¼­¹ö ºÎÆÃ½Ã°£ ±â·Ï 
+	// ì„œë²„ ë¶€íŒ…ì‹œê°„ ê¸°ë¡ 
 	
 	//hFile = hFile = CreateFile("HGserver.exe", GENERIC_READ, NULL, NULL, OPEN_EXISTING, NULL, NULL);
 	//if (hFile == INVALID_HANDLE_VALUE) return FALSE;
@@ -541,7 +541,7 @@ void Initialize()
 		return;
 	}
 
-	// °ÔÀÓ ÁøÇà¿ë Å¸ÀÌ¸Ó 
+	// ê²Œì„ ì§„í–‰ìš© íƒ€ì´ë¨¸ 
 	G_mmTimer = _StartTimer(300);
 
 	G_pListenSock = new class XSocket(G_hWnd, DEF_SERVERSOCKETBLOCKLIMIT);

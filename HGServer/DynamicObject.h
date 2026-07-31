@@ -26,8 +26,8 @@ public:
 	DWORD m_dwRegisterTime;
 	DWORD m_dwLastTime;
 
-	int   m_iCount;			// Æ¯¼ö ¿ÀºêÁ§Æ®ÀÇ °æ¿ì »ç¿ëÇÏ´Â Ä«¿îÅÍ º¯¼ö 
-	int   m_iV1;			// Ãß°¡ Á¤º¸¸¦ ³ÖÀ»¶§ »ç¿ëÇÑ´Ù.
+	int   m_iCount;			// íŠ¹ìˆ˜ ì˜¤ë¸Œì íŠ¸ì˜ ê²½ìš° ì‚¬ìš©í•˜ëŠ” ì¹´ìš´í„° ë³€ìˆ˜ 
+	int   m_iV1;			// ì¶”ê°€ ì •ë³´ë¥¼ ë„£ì„ë•Œ ì‚¬ìš©í•œë‹¤.
 };
 
 #endif // !defined(AFX_DYNAMICOBJECT_H__D8E4A581_0C95_11D3_8F1D_00001C7030A6__INCLUDED_)

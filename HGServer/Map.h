@@ -114,16 +114,16 @@ public:
 	int   m_iTotalAliveObject;
 	int   m_iMaximumObject;
 
-	char  m_cType;				// ¸ÊÀÇ Çü½Ä. 0ÀÌ¸é º¸Åë. 1ÀÌ¸é °ø°İÇàÀ§°¡ ¹üÁË°¡ ¾Æ´Ï´Ù.
+	char  m_cType;				// ë§µì˜ í˜•ì‹. 0ì´ë©´ ë³´í†µ. 1ì´ë©´ ê³µê²©í–‰ìœ„ê°€ ë²”ì£„ê°€ ì•„ë‹ˆë‹¤.
 
-	BOOL  m_bIsFixedDayMode;	// Ç×»ó ÁÖ°£¸ğµåÀÎÁö: °Ç¹° ³»ºÎ µî 
+	BOOL  m_bIsFixedDayMode;	// í•­ìƒ ì£¼ê°„ëª¨ë“œì¸ì§€: ê±´ë¬¼ ë‚´ë¶€ ë“± 
 
 	struct {		    
 		BOOL bDefined;
 		char cType;				// 1:RANDOMAREA   2:RANDOMWAYPOINT
 		
-		char cWaypoint[10];     // RANDOMWAYPOINT µî
-		RECT rcRect;			// RANDOMAREA¹ß»ıÀÇ °æ¿ì 
+		char cWaypoint[10];     // RANDOMWAYPOINT ë“±
+		RECT rcRect;			// RANDOMAREAë°œìƒì˜ ê²½ìš° 
 		
 		int  iTotalActiveMob;
 		int  iMobType;
@@ -155,11 +155,11 @@ public:
 	POINT m_MineralPointList[DEF_MAXMINERALPOINT];
 	int   m_iTotalMineralPoint, m_iMaxMineral, m_iCurMineral;
 
-	char  m_cWhetherStatus;		// ±â»ó »óÅÂ. 0ÀÌ¸é ¾øÀ½. 1~3 ºñ 4~6 ´« 7~9 ÆøÇ³ 
-	DWORD m_dwWhetherLastTime, m_dwWhetherStartTime;  // ³¯¾¾ Áö¼Ó, ½ÃÀÛ ½Ã°£ 
+	char  m_cWhetherStatus;		// ê¸°ìƒ ìƒíƒœ. 0ì´ë©´ ì—†ìŒ. 1~3 ë¹„ 4~6 ëˆˆ 7~9 í­í’ 
+	DWORD m_dwWhetherLastTime, m_dwWhetherStartTime;  // ë‚ ì”¨ ì§€ì†, ì‹œì‘ ì‹œê°„ 
 
 	int   m_iLevelLimit;
-	int   m_iUpperLevelLimit;	// »óÀ§ ·¾ Á¦ÇÑ 
+	int   m_iUpperLevelLimit;	// ìƒìœ„ ë ™ ì œí•œ 
 
 	class COccupyFlag * m_pOccupyFlag[DEF_MAXOCCUPYFLAG];
 	int   m_iTotalOccupyFlags;
@@ -194,7 +194,7 @@ public:
 		int m_iDynamicGateY;
 	} m_stDynamicGateCoords[DEF_MAXDYNAMICGATES];
 
-	// ÇöÀç ¸Ê¿¡¼­ÀÇ ÇÃ·¹ÀÌ¾îµéÀÇ È°µ¿ ¼ºÇâÀ» ÆÄ¾ÇÇÏ´Â Å×ÀÌºí.
+	// í˜„ì¬ ë§µì—ì„œì˜ í”Œë ˆì´ì–´ë“¤ì˜ í™œë™ ì„±í–¥ì„ íŒŒì•…í•˜ëŠ” í…Œì´ë¸”.
 	struct {
 		int iPlayerActivity;
 		int iNeutralActivity;
@@ -241,13 +241,13 @@ public:
 	} m_stStrikePoint[DEF_MAXSTRIKEPOINTS];
 	int m_iTotalStrikePoints;
 
-	BOOL m_bIsDisabled;		// Æø°İÀ¸·Î ±â´ÉÀÌ ¸¶ºñµÈ °æ¿ì 
+	BOOL m_bIsDisabled;		// í­ê²©ìœ¼ë¡œ ê¸°ëŠ¥ì´ ë§ˆë¹„ëœ ê²½ìš° 
 	int m_iTotalAgriculture;
 
 	struct {
-		char cType;			// ÀÌ°Ô NULLÀÌ¸é Á¤ÀÇµÇÁö ¾ÊÀº°ÍÀ» ÀÇ¹Ì.
-		char cSide;			// »çÀÌµå
-		short sX, sY;		// ¼³Ä¡µÈ À§Ä¡ 
+		char cType;			// ì´ê²Œ NULLì´ë©´ ì •ì˜ë˜ì§€ ì•Šì€ê²ƒì„ ì˜ë¯¸.
+		char cSide;			// ì‚¬ì´ë“œ
+		short sX, sY;		// ì„¤ì¹˜ëœ ìœ„ì¹˜ 
 	} m_stCrusadeStructureInfo[DEF_MAXCRUSADESTRUCTURES];
 	int m_iTotalCrusadeStructures;
 	BOOL m_bIsEnergySphereAutoCreation;
