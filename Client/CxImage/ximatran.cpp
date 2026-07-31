@@ -861,7 +861,7 @@ bool CxImage::Resample(long newx, long newy, int mode, CxImage* iDst)
 	}
 	default: // bilinear interpolation
 		if (!(head.biWidth>newx && head.biHeight>newy && head.biBitCount==24)) {
-			//© 1999 Steve McMahon (steve@dogma.demon.co.uk)
+			//Â© 1999 Steve McMahon (steve@dogma.demon.co.uk)
 			long ifX, ifY, ifX1, ifY1, xmax, ymax;
 			float ir1, ir2, ig1, ig2, ib1, ib2, dx, dy;
 			BYTE r,g,b;
