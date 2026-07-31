@@ -10720,9 +10720,34 @@ void CGame::RemoveFromTarget(short sTargetH, char cTargetType, int iCode)
 	}
 }
 
+// Resolves the client handle that should be credited with experience for damage/kills
+// dealt by (sAttackerH, cAttackerType). For a direct player attack this is just sAttackerH.
+// For a Summon Creature (or Summon War Unit) pet, credit flows to its owning player,
+// provided that player is still online and on the same map as their summon.
+BOOL CGame::bGetExpCreditHandle(short sAttackerH, char cAttackerType, short * psCreditH)
+{
+ short sCreditH;
+
+	if (cAttackerType == DEF_OWNERTYPE_PLAYER) {
+		sCreditH = sAttackerH;
+	}
+	else if ( (cAttackerType == DEF_OWNERTYPE_NPC) && (m_pNpcList[sAttackerH] != NULL) &&
+			  (m_pNpcList[sAttackerH]->m_bIsSummoned == TRUE) &&
+			  (m_pNpcList[sAttackerH]->m_cFollowOwnerType == DEF_OWNERTYPE_PLAYER) ) {
+		sCreditH = m_pNpcList[sAttackerH]->m_iFollowOwnerIndex;
+		if (m_pClientList[sCreditH] == NULL) return FALSE;
+		if (m_pClientList[sCreditH]->m_cMapIndex != m_pNpcList[sAttackerH]->m_cMapIndex) return FALSE;
+	}
+	else return FALSE;
+
+	if (m_pClientList[sCreditH] == NULL) return FALSE;
+
+	*psCreditH = sCreditH;
+	return TRUE;
+}
 void CGame::NpcKilledHandler(short sAttackerH, char cAttackerType, int iNpcH, short sDamage)
 {
- short  sAttackerWeapon;
+ short  sAttackerWeapon, sExpCreditH;
  int    * ip, i, iQuestIndex, iConstructionPoint, iWarContribution, iMapIndex;
  double dTmp1, dTmp2, dTmp3;
  char   * cp, cData[120], cQuestRemain;
@@ -10807,6 +10832,26 @@ void CGame::NpcKilledHandler(short sAttackerH, char cAttackerType, int iNpcH, sh
 		}
 	}
 
+	else if ( (m_pNpcList[iNpcH]->m_bIsSummoned != TRUE) && (cAttackerType == DEF_OWNERTYPE_NPC) &&
+			  (bGetExpCreditHandle(sAttackerH, cAttackerType, &sExpCreditH) == TRUE) ) {
+		// A player's summoned creature landed the kill; credit the owner with the kill exp.
+		iExp = (m_pNpcList[iNpcH]->m_iExp/3);
+		if (m_pNpcList[iNpcH]->m_iNoDieRemainExp > 0)
+			iExp += m_pNpcList[iNpcH]->m_iNoDieRemainExp;
+
+		if (m_pClientList[sExpCreditH]->m_iAddExp != NULL) {
+			dTmp1 = (double)m_pClientList[sExpCreditH]->m_iAddExp;
+			dTmp2 = (double)iExp;
+			dTmp3 = (dTmp1/100.0f)*dTmp2;
+			iExp += (DWORD)dTmp3;
+		}
+
+		if (m_bIsCrusadeMode == TRUE) {
+			if (iExp > 10) iExp = iExp/3;
+		}
+
+		GetExp(sExpCreditH, iExp, TRUE);
+	}
 	// v1.41
 	if (cAttackerType == DEF_OWNERTYPE_PLAYER) {
 		switch (m_pNpcList[iNpcH]->m_sType) {
@@ -27557,7 +27602,7 @@ void CGame::Effect_Damage_Spot(short sAttackerH, char cAttackerType, short sTarg
  char cAttackerSide, cDamageMoveDir;
  DWORD dwTime, iExp;
  register double dTmp1, dTmp2, dTmp3;
- short sAtkX, sAtkY, sTgtX, sTgtY, dX, dY, sItemIndex;
+ short sAtkX, sAtkY, sTgtX, sTgtY, dX, dY, sItemIndex, sExpCreditH;
 
  	if (cAttackerType == DEF_OWNERTYPE_PLAYER)
 		if (m_pClientList[sAttackerH] == NULL) return;
@@ -27978,20 +28023,19 @@ void CGame::Effect_Damage_Spot(short sAttackerH, char cAttackerType, short sTarg
 					bRemoveFromDelayEventList(sTargetH, DEF_OWNERTYPE_NPC, DEF_MAGICTYPE_HOLDOBJECT);
 				}
 
-				if ( (m_pNpcList[sTargetH]->m_iNoDieRemainExp > 0) && (m_pNpcList[sTargetH]->m_bIsSummoned != TRUE) && 
-					 (cAttackerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sAttackerH] != NULL) ) {
+				if ( (m_pNpcList[sTargetH]->m_iNoDieRemainExp > 0) && (m_pNpcList[sTargetH]->m_bIsSummoned != TRUE) && (bGetExpCreditHandle(sAttackerH, cAttackerType, &sExpCreditH) == TRUE) ) {
 					if (m_pNpcList[sTargetH]->m_iNoDieRemainExp > iDamage) {
 						iExp = iDamage;
 						if ((m_bIsCrusadeMode == TRUE) && (iExp > 10)) iExp = 10;
 
-						if (m_pClientList[sAttackerH]->m_iAddExp > 0) {
-							dTmp1 = (double)m_pClientList[sAttackerH]->m_iAddExp;
+						if (m_pClientList[sExpCreditH]->m_iAddExp > 0) {
+							dTmp1 = (double)m_pClientList[sExpCreditH]->m_iAddExp;
 							dTmp2 = (double)iExp;
 							dTmp3 = (dTmp1/100.0f)*dTmp2;
 							iExp += (DWORD)dTmp3;
 						}
 
-						if (m_pClientList[sAttackerH]->m_iLevel > 100 ) {
+						if (m_pClientList[sExpCreditH]->m_iLevel > 100 ) {
 							switch (m_pNpcList[sTargetH]->m_sType) {
 							case 55:
 							case 56:
@@ -28002,22 +28046,22 @@ void CGame::Effect_Damage_Spot(short sAttackerH, char cAttackerType, short sTarg
 						}
 											
 						if (bExp == TRUE) 
-							 GetExp(sAttackerH, iExp, TRUE);
-						else GetExp(sAttackerH, (iExp/2), TRUE);
+							 GetExp(sExpCreditH, iExp, TRUE);
+						else GetExp(sExpCreditH, (iExp/2), TRUE);
 						m_pNpcList[sTargetH]->m_iNoDieRemainExp -= iDamage;
 					}
 					else {
 						iExp = m_pNpcList[sTargetH]->m_iNoDieRemainExp;
 						if ((m_bIsCrusadeMode == TRUE) && (iExp > 10)) iExp = 10;
 
-						if (m_pClientList[sAttackerH]->m_iAddExp > 0) {
-							dTmp1 = (double)m_pClientList[sAttackerH]->m_iAddExp;
+						if (m_pClientList[sExpCreditH]->m_iAddExp > 0) {
+							dTmp1 = (double)m_pClientList[sExpCreditH]->m_iAddExp;
 							dTmp2 = (double)iExp;
 							dTmp3 = (dTmp1/100.0f)*dTmp2;
 							iExp += (DWORD)dTmp3;
 						}
 
-						if (m_pClientList[sAttackerH]->m_iLevel > 100 ) {
+						if (m_pClientList[sExpCreditH]->m_iLevel > 100 ) {
 							switch (m_pNpcList[sTargetH]->m_sType) {
 							case 55:
 							case 56:
@@ -28028,8 +28072,8 @@ void CGame::Effect_Damage_Spot(short sAttackerH, char cAttackerType, short sTarg
 						}
 						
 						if (bExp == TRUE) 
-							 GetExp(sAttackerH, iExp, TRUE);
-						else GetExp(sAttackerH, (iExp/2), TRUE);
+							 GetExp(sExpCreditH, iExp, TRUE);
+						else GetExp(sExpCreditH, (iExp/2), TRUE);
 						m_pNpcList[sTargetH]->m_iNoDieRemainExp = 0;
 					}
 				}
@@ -28045,7 +28089,7 @@ void CGame::Effect_Damage_Spot_Type2(short sAttackerH, char cAttackerType, short
  char cAttackerSide, cDamageMoveDir, cDamageMinimum;
  DWORD dwTime, iExp;
  register double dTmp1, dTmp2, dTmp3;
- short sTgtX, sTgtY, sItemIndex;
+ short sTgtX, sTgtY, sItemIndex, sExpCreditH;
 
 	if ((cAttackerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sAttackerH] == NULL)) return;
 	if ((cAttackerType == DEF_OWNERTYPE_NPC) && (m_pNpcList[sAttackerH] == NULL)) return;
@@ -28423,19 +28467,19 @@ void CGame::Effect_Damage_Spot_Type2(short sAttackerH, char cAttackerType, short
 					bRemoveFromDelayEventList(sTargetH, DEF_OWNERTYPE_NPC, DEF_MAGICTYPE_HOLDOBJECT);
 				}
 
-				if ((m_pNpcList[sTargetH]->m_iNoDieRemainExp > 0) && (m_pNpcList[sTargetH]->m_bIsSummoned != TRUE) && (cAttackerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sAttackerH] != NULL)) {
+				if ((m_pNpcList[sTargetH]->m_iNoDieRemainExp > 0) && (m_pNpcList[sTargetH]->m_bIsSummoned != TRUE) && (bGetExpCreditHandle(sAttackerH, cAttackerType, &sExpCreditH) == TRUE)) {
 					if (m_pNpcList[sTargetH]->m_iNoDieRemainExp > iDamage) {
 						iExp = iDamage;
 						if ((m_bIsCrusadeMode == TRUE) && (iExp > 10)) iExp = 10;
 
-						if (m_pClientList[sAttackerH]->m_iAddExp > 0) {
-							dTmp1 = (double)m_pClientList[sAttackerH]->m_iAddExp;
+						if (m_pClientList[sExpCreditH]->m_iAddExp > 0) {
+							dTmp1 = (double)m_pClientList[sExpCreditH]->m_iAddExp;
 							dTmp2 = (double)iExp;
 							dTmp3 = (dTmp1/100.0f)*dTmp2;
 							iExp += (DWORD)dTmp3;
 						}
 
-						if (m_pClientList[sAttackerH]->m_iLevel > 100 ) {
+						if (m_pClientList[sExpCreditH]->m_iLevel > 100 ) {
 							switch (m_pNpcList[sTargetH]->m_sType) {
 							case 55:
 							case 56:
@@ -28446,22 +28490,22 @@ void CGame::Effect_Damage_Spot_Type2(short sAttackerH, char cAttackerType, short
 						}
 											
 						if (bExp == TRUE) 
-							 GetExp(sAttackerH, iExp, TRUE);
-						else GetExp(sAttackerH, (iExp/2), TRUE);
+							 GetExp(sExpCreditH, iExp, TRUE);
+						else GetExp(sExpCreditH, (iExp/2), TRUE);
 						m_pNpcList[sTargetH]->m_iNoDieRemainExp -= iDamage;
 					}
 					else {
 						iExp = m_pNpcList[sTargetH]->m_iNoDieRemainExp;
 						if ((m_bIsCrusadeMode == TRUE) && (iExp > 10)) iExp = 10;
 
-						if (m_pClientList[sAttackerH]->m_iAddExp > 0) {
-							dTmp1 = (double)m_pClientList[sAttackerH]->m_iAddExp;
+						if (m_pClientList[sExpCreditH]->m_iAddExp > 0) {
+							dTmp1 = (double)m_pClientList[sExpCreditH]->m_iAddExp;
 							dTmp2 = (double)iExp;
 							dTmp3 = (dTmp1/100.0f)*dTmp2;
 							iExp += (DWORD)dTmp3;
 						}
 
-						if (m_pClientList[sAttackerH]->m_iLevel > 100 ) {
+						if (m_pClientList[sExpCreditH]->m_iLevel > 100 ) {
 							switch (m_pNpcList[sTargetH]->m_sType) {
 							case 55:
 							case 56:
@@ -28472,8 +28516,8 @@ void CGame::Effect_Damage_Spot_Type2(short sAttackerH, char cAttackerType, short
 						}
 						
 						if (bExp == TRUE) 
-							 GetExp(sAttackerH, iExp, TRUE);
-						else GetExp(sAttackerH, (iExp/2), TRUE);
+							 GetExp(sExpCreditH, iExp, TRUE);
+						else GetExp(sExpCreditH, (iExp/2), TRUE);
 						m_pNpcList[sTargetH]->m_iNoDieRemainExp = 0;
 					}
 				}
@@ -28490,7 +28534,7 @@ void CGame::Effect_Damage_Spot_DamageMove(short sAttackerH, char cAttackerType, 
  char cAttackerSide, cDamageMoveDir;
  register double dTmp1, dTmp2, dTmp3;
  int iPartyID, iMoveDamage;
- short sTgtX, sTgtY;
+ short sTgtX, sTgtY, sExpCreditH;
 
 	if (cAttackerType == DEF_OWNERTYPE_PLAYER)
 		if (m_pClientList[sAttackerH] == NULL) return;
@@ -28916,8 +28960,7 @@ EDSD_SKIPDAMAGEMOVE:;
 				DWORD iExp;
 
 				// NPC에 대한 공격이 성공했으므로 공격자가 플레이어라면 입힌 대미지 만큼의 경험치를 공격자에게 준다. 
-				if ( (m_pNpcList[sTargetH]->m_iNoDieRemainExp > 0) && (m_pNpcList[sTargetH]->m_bIsSummoned != TRUE) && 
-					 (cAttackerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sAttackerH] != NULL) ) {
+				if ( (m_pNpcList[sTargetH]->m_iNoDieRemainExp > 0) && (m_pNpcList[sTargetH]->m_bIsSummoned != TRUE) && (bGetExpCreditHandle(sAttackerH, cAttackerType, &sExpCreditH) == TRUE) ) {
 					// ExpStock을 올린다. 단 소환몹인 경우 경험치를 올리지 않는다.
 					if (m_pNpcList[sTargetH]->m_iNoDieRemainExp > iDamage) {
 						// Crusade
@@ -28925,15 +28968,15 @@ EDSD_SKIPDAMAGEMOVE:;
 						if ((m_bIsCrusadeMode == TRUE) && (iExp > 10)) iExp = 10;
 
 						//v2.03 918 경험치 증가 
-						if (m_pClientList[sAttackerH]->m_iAddExp > 0) {
-							dTmp1 = (double)m_pClientList[sAttackerH]->m_iAddExp;
+						if (m_pClientList[sExpCreditH]->m_iAddExp > 0) {
+							dTmp1 = (double)m_pClientList[sExpCreditH]->m_iAddExp;
 							dTmp2 = (double)iExp;
 							dTmp3 = (dTmp1/100.0f)*dTmp2;
 							iExp += (DWORD)dTmp3;
 						}
 						
 						// v2.17 2002-8-6 공격자의 레벨이 100 이상이면 토끼나 고양이를 잡을때 경험치가 올라가지 않는다.
-						if (m_pClientList[sAttackerH]->m_iLevel > 100 ) {
+						if (m_pClientList[sExpCreditH]->m_iLevel > 100 ) {
 							switch (m_pNpcList[sTargetH]->m_sType) {
 							case 55:
 							case 56:
@@ -28944,8 +28987,8 @@ EDSD_SKIPDAMAGEMOVE:;
 						}
 
 						if (bExp == TRUE) 
-							 GetExp(sAttackerH, iExp); //m_pClientList[sAttackerH]->m_iExpStock += iExp;     //iDamage;
-						else GetExp(sAttackerH, (iExp/2)); //m_pClientList[sAttackerH]->m_iExpStock += (iExp/2); //(iDamage/2);
+							 GetExp(sExpCreditH, iExp); //m_pClientList[sAttackerH]->m_iExpStock += iExp;     //iDamage;
+						else GetExp(sExpCreditH, (iExp/2)); //m_pClientList[sAttackerH]->m_iExpStock += (iExp/2); //(iDamage/2);
 						m_pNpcList[sTargetH]->m_iNoDieRemainExp -= iDamage;
 					}
 					else {
@@ -28954,15 +28997,15 @@ EDSD_SKIPDAMAGEMOVE:;
 						if ((m_bIsCrusadeMode == TRUE) && (iExp > 10)) iExp = 10;
 
 						//v2.03 918 경험치 증가 
-						if (m_pClientList[sAttackerH]->m_iAddExp > 0) {
-							dTmp1 = (double)m_pClientList[sAttackerH]->m_iAddExp;
+						if (m_pClientList[sExpCreditH]->m_iAddExp > 0) {
+							dTmp1 = (double)m_pClientList[sExpCreditH]->m_iAddExp;
 							dTmp2 = (double)iExp;
 							dTmp3 = (dTmp1/100.0f)*dTmp2;
 							iExp += (DWORD)dTmp3;
 						}
 
 						// v2.17 2002-8-6 공격자의 레벨이 100 이상이면 토끼나 고양이를 잡을때 경험치가 올라가지 않는다.
-						if (m_pClientList[sAttackerH]->m_iLevel > 100 ) {
+						if (m_pClientList[sExpCreditH]->m_iLevel > 100 ) {
 							switch (m_pNpcList[sTargetH]->m_sType) {
 							case 55:
 							case 56:
@@ -28974,8 +29017,8 @@ EDSD_SKIPDAMAGEMOVE:;
 
 
 						if (bExp == TRUE) 
-							 GetExp(sAttackerH, iExp); //m_pClientList[sAttackerH]->m_iExpStock += iExp;     //m_pNpcList[sTargetH]->m_iNoDieRemainExp;
-						else GetExp(sAttackerH, (iExp/2)); //m_pClientList[sAttackerH]->m_iExpStock += (iExp/2); //(m_pNpcList[sTargetH]->m_iNoDieRemainExp/2);
+							 GetExp(sExpCreditH, iExp); //m_pClientList[sAttackerH]->m_iExpStock += iExp;     //m_pNpcList[sTargetH]->m_iNoDieRemainExp;
+						else GetExp(sExpCreditH, (iExp/2)); //m_pClientList[sAttackerH]->m_iExpStock += (iExp/2); //(m_pNpcList[sTargetH]->m_iNoDieRemainExp/2);
 						m_pNpcList[sTargetH]->m_iNoDieRemainExp = 0;
 					}
 				}
