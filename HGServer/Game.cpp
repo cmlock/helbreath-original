@@ -17050,6 +17050,25 @@ int CGame::iClientMotion_Magic_Handler(int iClientH, short sX, short sY, char cD
 }
 
 /*********************************************************************************************************************
+**  DWORD CGame::dwGetBeneficialMagicDuration(int iClientH, DWORD dwBaseDuration)									**
+**  description			:: scales a beneficial spell's duration by the caster's Mag stat, up to +100% at max stat	**
+**	return value		:: scaled duration, in the same units as dwBaseDuration									**
+**********************************************************************************************************************/
+DWORD CGame::dwGetBeneficialMagicDuration(int iClientH, DWORD dwBaseDuration)
+{
+	double dRatio;
+
+	if (m_pClientList[iClientH] == NULL) return dwBaseDuration;
+	if (m_sCharStatLimit <= 0) return dwBaseDuration;
+
+	dRatio = (double)(m_pClientList[iClientH]->m_iMag + m_pClientList[iClientH]->m_iAngelicMag) / (double)m_sCharStatLimit;
+	if (dRatio > 1.0) dRatio = 1.0;
+	if (dRatio < 0.0) dRatio = 0.0;
+
+	return (DWORD)((double)dwBaseDuration * (1.0 + dRatio));
+}
+
+/*********************************************************************************************************************
 **  void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL bItemEffect, int iV1)			**
 **  description			:: handles all magic related items/spells													**
 **  last updated		:: November 22, 2004; 5:45 PM; Hypnotoad													**
@@ -18872,7 +18891,7 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 					}
 
 					// ÂºÂ¸ÃˆÂ£ ÃˆÂ¿Â°ÃºÂ°Â¡ Ã‡Ã˜ÃÂ¦ÂµÃ‰ Â¶Â§ Â¹ÃŸÂ»Ã½Ã‡Ã’ ÂµÃ´Â·Â¹Ã€ÃŒ Ã€ÃŒÂºÂ¥Ã†Â®Â¸Â¦ ÂµÃ®Â·ÃÃ‡Ã‘Â´Ã™.
-					bRegisterDelayEvent(DEF_DELAYEVENTTYPE_MAGICRELEASE, DEF_MAGICTYPE_PROTECT, dwTime + (m_pMagicConfigList[sType]->m_dwLastTime*1000), 
+					bRegisterDelayEvent(DEF_DELAYEVENTTYPE_MAGICRELEASE, DEF_MAGICTYPE_PROTECT, dwTime + dwGetBeneficialMagicDuration(iClientH, m_pMagicConfigList[sType]->m_dwLastTime*1000),
 						sOwnerH, cOwnerType, NULL, NULL, NULL, m_pMagicConfigList[sType]->m_sValue4, NULL, NULL);
 
 					// ÃˆÂ¿Â°ÃºÂ°Â¡ Â»Ã½Â°Ã¥Ã€Â½Ã€Â» Â¾Ã‹Â·ÃÃÃ˜Â´Ã™.
@@ -18980,7 +18999,7 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 							}
 
 							// ÃˆÂ¿Â°ÃºÂ°Â¡ Ã‡Ã˜ÃÂ¦ÂµÃ‰ Â¶Â§ Â¹ÃŸÂ»Ã½Ã‡Ã’ ÂµÃ´Â·Â¹Ã€ÃŒ Ã€ÃŒÂºÂ¥Ã†Â®Â¸Â¦ ÂµÃ®Â·ÃÃ‡Ã‘Â´Ã™.
-							bRegisterDelayEvent(DEF_DELAYEVENTTYPE_MAGICRELEASE, DEF_MAGICTYPE_INVISIBILITY, dwTime + (m_pMagicConfigList[sType]->m_dwLastTime*1000), 
+							bRegisterDelayEvent(DEF_DELAYEVENTTYPE_MAGICRELEASE, DEF_MAGICTYPE_INVISIBILITY, dwTime + dwGetBeneficialMagicDuration(iClientH, m_pMagicConfigList[sType]->m_dwLastTime*1000),
 								sOwnerH, cOwnerType, NULL, NULL, NULL, m_pMagicConfigList[sType]->m_sValue4, NULL, NULL);
 
 							if (cOwnerType == DEF_OWNERTYPE_PLAYER)
@@ -19430,7 +19449,7 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 							}
 
 							// ÃˆÂ¿Â°ÃºÂ°Â¡ Ã‡Ã˜ÃÂ¦ÂµÃ‰ Â¶Â§ Â¹ÃŸÂ»Ã½Ã‡Ã’ ÂµÃ´Â·Â¹Ã€ÃŒ Ã€ÃŒÂºÂ¥Ã†Â®Â¸Â¦ ÂµÃ®Â·ÃÃ‡Ã‘Â´Ã™.
-							bRegisterDelayEvent(DEF_DELAYEVENTTYPE_MAGICRELEASE, DEF_MAGICTYPE_BERSERK, dwTime + (m_pMagicConfigList[sType]->m_dwLastTime*1000), 
+							bRegisterDelayEvent(DEF_DELAYEVENTTYPE_MAGICRELEASE, DEF_MAGICTYPE_BERSERK, dwTime + dwGetBeneficialMagicDuration(iClientH, m_pMagicConfigList[sType]->m_dwLastTime*1000),
 								sOwnerH, cOwnerType, NULL, NULL, NULL, m_pMagicConfigList[sType]->m_sValue4, NULL, NULL);
 
 							if (cOwnerType == DEF_OWNERTYPE_PLAYER)
