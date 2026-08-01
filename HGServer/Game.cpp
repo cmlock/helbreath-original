@@ -45187,14 +45187,6 @@ int iTotalPartyMembers;
 		dV1 = (dV2 + 1.025f)*dV3;
 		iExp = (DWORD)dV1;
 	}
-	else { //Lower exp
-		if ((m_pClientList[iClientH]->m_iLevel >= 80) &&((strcmp(m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cName, "aresdend1") == 0) || (strcmp(m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cName, "elvined1") == 0))) {
-			iExp = (iExp/10);
-		 }
-		else if ((strcmp(m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cName, "aresdend1") == 0) || (strcmp(m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cName, "elvined1") == 0)) {
-			iExp = (iExp*1/4);
-		}
-	}
 
 	//Check for party status, else give exp to player
 	if ((m_pClientList[iClientH]->m_iPartyID != NULL) && (m_pClientList[iClientH]->m_iPartyStatus == DEF_PARTYSTATUS_CONFIRM)) {
