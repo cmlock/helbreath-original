@@ -807,14 +807,36 @@ void PutLogEventFileList(char * cStr)
  FILE * pFile;
  char cBuffer[512];
  SYSTEMTIME SysTime;
-	
+
 	pFile = fopen("GameLogs\\LogEvents.log", "at");
 	if (pFile == NULL) return;
 
 	ZeroMemory(cBuffer, sizeof(cBuffer));
-	
+
 	GetLocalTime(&SysTime);
 	wsprintf(cBuffer, "(%4d:%2d:%2d:%2d:%2d) - ", SysTime.wYear, SysTime.wMonth, SysTime.wDay, SysTime.wHour, SysTime.wMinute);
+	strcat(cBuffer, cStr);
+	strcat(cBuffer, "\n");
+
+	fwrite(cBuffer, 1, strlen(cBuffer), pFile);
+	fclose(pFile);
+}
+
+// Temporary diagnostic log for summoned-creature AI decisions (following/attacking/wandering).
+// Every line is tagged SUMMON-AI so it can be isolated with: findstr SUMMON-AI GameLogs\SummonAI.log
+void PutSummonLogFileList(char * cStr)
+{
+ FILE * pFile;
+ char cBuffer[512];
+ SYSTEMTIME SysTime;
+
+	pFile = fopen("GameLogs\\SummonAI.log", "at");
+	if (pFile == NULL) return;
+
+	ZeroMemory(cBuffer, sizeof(cBuffer));
+
+	GetLocalTime(&SysTime);
+	wsprintf(cBuffer, "(%4d:%2d:%2d:%2d:%2d:%2d) - SUMMON-AI: ", SysTime.wYear, SysTime.wMonth, SysTime.wDay, SysTime.wHour, SysTime.wMinute, SysTime.wSecond);
 	strcat(cBuffer, cStr);
 	strcat(cBuffer, "\n");
 

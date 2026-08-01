@@ -16,6 +16,7 @@ extern void PutItemLogFileList(char * cStr);
 extern void PutLogEventFileList(char * cStr);
 extern void PutHackLogFileList(char * cStr);
 extern void PutPvPLogFileList(char * cStr);
+extern void PutSummonLogFileList(char * cStr);
 
 // extern void PutDebugMsg(char * cStr);	// 2002-09-09 #2
 
@@ -8365,17 +8366,27 @@ NEXT_STEP_SNFM1:;
 	case DEF_OWNERTYPE_NPC:
 		for (i = 1; i < DEF_MAXNPCS; i++)
 		if ((m_pNpcList[i] != NULL) && (memcmp(m_pNpcList[i]->m_cName, pFollowName, 5) == 0) ) {
-			if (m_pNpcList[i]->m_cMapIndex != iMapIndex) return FALSE;
+			if (m_pNpcList[i]->m_cMapIndex != iMapIndex) {
+				wsprintf(G_cTxt, "FOLLOWMODE-SETUP: '%s' -> Npc-owner '%s' FAILED (different map: pet map=%d owner map=%d)",
+					pName, pFollowName, iMapIndex, m_pNpcList[i]->m_cMapIndex);
+				PutSummonLogFileList(G_cTxt);
+				return FALSE;
+			}
 			iFollowIndex = i;
 			cFollowSide = m_pNpcList[i]->m_cSide;
 			goto NEXT_STEP_SNFM2;
 		}
 		break;
-	
+
 	case DEF_OWNERTYPE_PLAYER:
 		for (i = 1; i < DEF_MAXCLIENTS; i++)
 		if ((m_pClientList[i] != NULL) && (memcmp(m_pClientList[i]->m_cCharName, pFollowName, 10) == 0) ) {
-			if (m_pClientList[i]->m_cMapIndex != iMapIndex) return FALSE;
+			if (m_pClientList[i]->m_cMapIndex != iMapIndex) {
+				wsprintf(G_cTxt, "FOLLOWMODE-SETUP: '%s' -> Player-owner '%s' FAILED (different map: pet map=%d owner map=%d)",
+					pName, pFollowName, iMapIndex, m_pClientList[i]->m_cMapIndex);
+				PutSummonLogFileList(G_cTxt);
+				return FALSE;
+			}
 			iFollowIndex = i;
 			cFollowSide = m_pClientList[i]->m_cSide;
 			goto NEXT_STEP_SNFM2;
@@ -8385,13 +8396,23 @@ NEXT_STEP_SNFM1:;
 
 NEXT_STEP_SNFM2:;
 
-	if ((iIndex == -1) || (iFollowIndex == -1)) return FALSE;
+	if ((iIndex == -1) || (iFollowIndex == -1)) {
+		wsprintf(G_cTxt, "FOLLOWMODE-SETUP: '%s' -> '%s' FAILED (iIndex=%d iFollowIndex=%d, lookup did not match)",
+			pName, pFollowName, iIndex, iFollowIndex);
+		PutSummonLogFileList(G_cTxt);
+		return FALSE;
+	}
 
 	m_pNpcList[iIndex]->m_cMoveType = DEF_MOVETYPE_FOLLOW;
 	m_pNpcList[iIndex]->m_cFollowOwnerType  = cFollowOwnerType;
 	m_pNpcList[iIndex]->m_iFollowOwnerIndex = iFollowIndex;
 	m_pNpcList[iIndex]->m_cSide             = cFollowSide;
 
+	if (m_pNpcList[iIndex]->m_bIsSummoned == TRUE) {
+		wsprintf(G_cTxt, "FOLLOWMODE-SETUP: Npc#%d '%s' OK -> following %s#%d (side=%d), cMoveType now FOLLOW",
+			iIndex, pName, (cFollowOwnerType == DEF_OWNERTYPE_PLAYER) ? "Player" : "Npc", iFollowIndex, cFollowSide);
+		PutSummonLogFileList(G_cTxt);
+	}
 
 	return TRUE;
 }
@@ -8758,10 +8779,9 @@ void CGame::NpcProcess()
 				
 				iMaxHP = iDice(m_pNpcList[i]->m_iHitDice, 8) + m_pNpcList[i]->m_iHitDice;
 				if (m_pNpcList[i]->m_iHP < iMaxHP) {
-					
-					if (m_pNpcList[i]->m_bIsSummoned == FALSE)
-						m_pNpcList[i]->m_iHP += iDice(1, m_pNpcList[i]->m_iHitDice); // Hit Point
-					
+
+					m_pNpcList[i]->m_iHP += iDice(1, m_pNpcList[i]->m_iHitDice); // Hit Point
+
 					if (m_pNpcList[i]->m_iHP > iMaxHP) m_pNpcList[i]->m_iHP = iMaxHP;
 					if (m_pNpcList[i]->m_iHP <= 0)     m_pNpcList[i]->m_iHP = 1;
 				}
@@ -8789,7 +8809,7 @@ void CGame::NpcProcess()
 			if ((m_pNpcList[i] != NULL) && (m_pNpcList[i]->m_iHP != 0) && (m_pNpcList[i]->m_bIsSummoned == TRUE)) {
 				switch (m_pNpcList[i]->m_sType) {
 				case 29:
-					if ((dwTime - m_pNpcList[i]->m_dwSummonedTime) > 1000*90) 
+					if ((dwTime - m_pNpcList[i]->m_dwSummonedTime) > 1000*60*5)
 						NpcKilledHandler(NULL, NULL, i, 0);
 					break;
 				
@@ -9988,7 +10008,8 @@ void CGame::NpcBehavior_Move(int iNpcH)
  short sX, sY, dX, dY, absX, absY;
  short sTarget, sDistance;
  char  cTargetType;
-	
+ short sOwnerX, sOwnerY; // SUMMON-AI diagnostics only
+
 	if (m_pNpcList[iNpcH] == NULL) return;
 	if (m_pNpcList[iNpcH]->m_bIsKilled == TRUE) return;
 	if ((m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) && 
@@ -10027,20 +10048,38 @@ void CGame::NpcBehavior_Move(int iNpcH)
 		m_pNpcList[iNpcH]->m_vY = m_pNpcList[iNpcH]->m_sY;
 	}
 
-	TargetSearch(iNpcH, &sTarget, &cTargetType);				
+	TargetSearch(iNpcH, &sTarget, &cTargetType);
 	if (sTarget != NULL) {
 		if (m_pNpcList[iNpcH]->m_dwActionTime < 1000) {
 			if (iDice(1,3) == 3) {
+				if (m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) {
+					wsprintf(G_cTxt, "Npc#%d '%s' pos=(%d,%d) map=%d: TargetSearch found %s#%d, MOVE->ATTACK (fast-actor dice hit)",
+						iNpcH, m_pNpcList[iNpcH]->m_cNpcName, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY, m_pNpcList[iNpcH]->m_cMapIndex,
+						(cTargetType == DEF_OWNERTYPE_PLAYER) ? "Player" : "Npc", sTarget);
+					PutSummonLogFileList(G_cTxt);
+				}
 				m_pNpcList[iNpcH]->m_cBehavior          = DEF_BEHAVIOR_ATTACK;
-				m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;		
+				m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;
 				m_pNpcList[iNpcH]->m_iTargetIndex = sTarget;
 				m_pNpcList[iNpcH]->m_cTargetType  = cTargetType;
 				return;
 			}
+			else if (m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) {
+				wsprintf(G_cTxt, "Npc#%d '%s' pos=(%d,%d) map=%d: TargetSearch found %s#%d but hesitated (fast-actor dice miss), staying MOVE",
+					iNpcH, m_pNpcList[iNpcH]->m_cNpcName, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY, m_pNpcList[iNpcH]->m_cMapIndex,
+					(cTargetType == DEF_OWNERTYPE_PLAYER) ? "Player" : "Npc", sTarget);
+				PutSummonLogFileList(G_cTxt);
+			}
 		}
 		else {
+			if (m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) {
+				wsprintf(G_cTxt, "Npc#%d '%s' pos=(%d,%d) map=%d: TargetSearch found %s#%d, MOVE->ATTACK",
+					iNpcH, m_pNpcList[iNpcH]->m_cNpcName, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY, m_pNpcList[iNpcH]->m_cMapIndex,
+					(cTargetType == DEF_OWNERTYPE_PLAYER) ? "Player" : "Npc", sTarget);
+				PutSummonLogFileList(G_cTxt);
+			}
 			m_pNpcList[iNpcH]->m_cBehavior          = DEF_BEHAVIOR_ATTACK;
-			m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;		
+			m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;
 			m_pNpcList[iNpcH]->m_iTargetIndex = sTarget;
 			m_pNpcList[iNpcH]->m_cTargetType  = cTargetType;
 			return;
@@ -10055,6 +10094,11 @@ void CGame::NpcBehavior_Move(int iNpcH)
 		switch (m_pNpcList[iNpcH]->m_cFollowOwnerType) {
 		case DEF_OWNERTYPE_PLAYER:
 			if (m_pClientList[m_pNpcList[iNpcH]->m_iFollowOwnerIndex] == NULL) {
+				if (m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) {
+					wsprintf(G_cTxt, "Npc#%d '%s' pos=(%d,%d): follow owner Player#%d not found (logged out?), FOLLOW->RANDOM",
+						iNpcH, m_pNpcList[iNpcH]->m_cNpcName, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY, m_pNpcList[iNpcH]->m_iFollowOwnerIndex);
+					PutSummonLogFileList(G_cTxt);
+				}
 				m_pNpcList[iNpcH]->m_cMoveType = DEF_MOVETYPE_RANDOM;
 				return;
 			}
@@ -10064,30 +10108,52 @@ void CGame::NpcBehavior_Move(int iNpcH)
 			break;
 		case DEF_OWNERTYPE_NPC:
 			if (m_pNpcList[m_pNpcList[iNpcH]->m_iFollowOwnerIndex] == NULL) {
+				if (m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) {
+					wsprintf(G_cTxt, "Npc#%d '%s' pos=(%d,%d): follow owner Npc#%d not found, FOLLOW->RANDOM",
+						iNpcH, m_pNpcList[iNpcH]->m_cNpcName, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY, m_pNpcList[iNpcH]->m_iFollowOwnerIndex);
+					PutSummonLogFileList(G_cTxt);
+				}
 				m_pNpcList[iNpcH]->m_cMoveType = DEF_MOVETYPE_RANDOM;
 				m_pNpcList[iNpcH]->m_iFollowOwnerIndex = NULL;
 				//bSerchMaster(iNpcH);
 				return;
 			}
-			
+
 			dX = m_pNpcList[m_pNpcList[iNpcH]->m_iFollowOwnerIndex]->m_sX;
 			dY = m_pNpcList[m_pNpcList[iNpcH]->m_iFollowOwnerIndex]->m_sY;
 			break;
 		}
 
-		if (abs(sX - dX) >= abs(sY - dY)) 
+		sOwnerX = dX;
+		sOwnerY = dY;
+
+		if (abs(sX - dX) >= abs(sY - dY))
 			 sDistance = abs(sX - dX);
 		else sDistance = abs(sY - dY);
 
 		if (sDistance >= 3) {
 			cDir = cGetNextMoveDir(sX, sY, dX, dY, m_pNpcList[iNpcH]->m_cMapIndex, m_pNpcList[iNpcH]->m_cTurn, &m_pNpcList[iNpcH]->m_tmp_iError);
 			if (cDir == 0) {
+				if (m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) {
+					wsprintf(G_cTxt, "Npc#%d '%s' pos=(%d,%d): FOLLOW owner %s#%d at (%d,%d) dist=%d, but no walkable direction found (blocked)",
+						iNpcH, m_pNpcList[iNpcH]->m_cNpcName, sX, sY,
+						(m_pNpcList[iNpcH]->m_cFollowOwnerType == DEF_OWNERTYPE_PLAYER) ? "Player" : "Npc",
+						m_pNpcList[iNpcH]->m_iFollowOwnerIndex, sOwnerX, sOwnerY, sDistance);
+					PutSummonLogFileList(G_cTxt);
+				}
 			}
 			else {
 				dX = m_pNpcList[iNpcH]->m_sX + _tmp_cTmpDirX[cDir];
 				dY = m_pNpcList[iNpcH]->m_sY + _tmp_cTmpDirY[cDir];
 				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->ClearOwner(3, iNpcH, DEF_OWNERTYPE_NPC, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY);
 				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->SetOwner(iNpcH, DEF_OWNERTYPE_NPC, dX, dY);
+				if (m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) {
+					wsprintf(G_cTxt, "Npc#%d '%s' FOLLOW: owner %s#%d at (%d,%d) dist=%d, stepped (%d,%d)->(%d,%d) dir=%d",
+						iNpcH, m_pNpcList[iNpcH]->m_cNpcName,
+						(m_pNpcList[iNpcH]->m_cFollowOwnerType == DEF_OWNERTYPE_PLAYER) ? "Player" : "Npc",
+						m_pNpcList[iNpcH]->m_iFollowOwnerIndex, sOwnerX, sOwnerY, sDistance, sX, sY, dX, dY, cDir);
+					PutSummonLogFileList(G_cTxt);
+				}
 				m_pNpcList[iNpcH]->m_sX   = dX;
 				m_pNpcList[iNpcH]->m_sY   = dY;
 				m_pNpcList[iNpcH]->m_cDir = cDir;
@@ -10095,20 +10161,41 @@ void CGame::NpcBehavior_Move(int iNpcH)
 			}
 		}
 	}
-	else 
+	else
 	{
-		cDir = cGetNextMoveDir(m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY, 
-			                   m_pNpcList[iNpcH]->m_dX, m_pNpcList[iNpcH]->m_dY, 
+		if (m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) {
+			wsprintf(G_cTxt, "Npc#%d '%s' pos=(%d,%d) map=%d: NOT in FOLLOW mode (cMoveType=%d), wandering toward waypoint (%d,%d)",
+				iNpcH, m_pNpcList[iNpcH]->m_cNpcName, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY, m_pNpcList[iNpcH]->m_cMapIndex,
+				m_pNpcList[iNpcH]->m_cMoveType, m_pNpcList[iNpcH]->m_dX, m_pNpcList[iNpcH]->m_dY);
+			PutSummonLogFileList(G_cTxt);
+		}
+
+		cDir = cGetNextMoveDir(m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY,
+			                   m_pNpcList[iNpcH]->m_dX, m_pNpcList[iNpcH]->m_dY,
 				     	       m_pNpcList[iNpcH]->m_cMapIndex, m_pNpcList[iNpcH]->m_cTurn, &m_pNpcList[iNpcH]->m_tmp_iError);
-						
+
 		if (cDir == 0) {
-			if (iDice(1,10) == 3) CalcNextWayPointDestination(iNpcH);
+			if (iDice(1,10) == 3) {
+				CalcNextWayPointDestination(iNpcH);
+				if (m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) {
+					wsprintf(G_cTxt, "Npc#%d '%s' pos=(%d,%d): picked new random waypoint (%d,%d)",
+						iNpcH, m_pNpcList[iNpcH]->m_cNpcName, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY,
+						m_pNpcList[iNpcH]->m_dX, m_pNpcList[iNpcH]->m_dY);
+					PutSummonLogFileList(G_cTxt);
+				}
+			}
 		}
 		else {
 			dX = m_pNpcList[iNpcH]->m_sX + _tmp_cTmpDirX[cDir];
 			dY = m_pNpcList[iNpcH]->m_sY + _tmp_cTmpDirY[cDir];
 			m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->ClearOwner(4, iNpcH, DEF_OWNERTYPE_NPC, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY);
 			m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->SetOwner(iNpcH, DEF_OWNERTYPE_NPC, dX, dY);
+			if (m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) {
+				wsprintf(G_cTxt, "Npc#%d '%s' wander: stepped (%d,%d)->(%d,%d) dir=%d toward waypoint (%d,%d)",
+					iNpcH, m_pNpcList[iNpcH]->m_cNpcName, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY, dX, dY, cDir,
+					m_pNpcList[iNpcH]->m_dX, m_pNpcList[iNpcH]->m_dY);
+				PutSummonLogFileList(G_cTxt);
+			}
 			m_pNpcList[iNpcH]->m_sX   = dX;
 			m_pNpcList[iNpcH]->m_sY   = dY;
 			m_pNpcList[iNpcH]->m_cDir = cDir;
@@ -10251,9 +10338,16 @@ void CGame::NpcBehavior_Attack(int iNpcH)
 	m_pNpcList[iNpcH]->m_sBehaviorTurnCount++;
 	if (m_pNpcList[iNpcH]->m_sBehaviorTurnCount > 20) {
 		m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;
-		
-		if ((m_pNpcList[iNpcH]->m_bIsPermAttackMode == FALSE))
+
+		if ((m_pNpcList[iNpcH]->m_bIsPermAttackMode == FALSE)) {
+			if (m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) {
+				wsprintf(G_cTxt, "Npc#%d '%s' pos=(%d,%d): ATTACK timed out after 20 turns on %s#%d, ATTACK->MOVE",
+					iNpcH, m_pNpcList[iNpcH]->m_cNpcName, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY,
+					(m_pNpcList[iNpcH]->m_cTargetType == DEF_OWNERTYPE_PLAYER) ? "Player" : "Npc", m_pNpcList[iNpcH]->m_iTargetIndex);
+				PutSummonLogFileList(G_cTxt);
+			}
 			m_pNpcList[iNpcH]->m_cBehavior    = DEF_BEHAVIOR_MOVE;
+		}
 
 		return;
 	}
@@ -10264,6 +10358,11 @@ void CGame::NpcBehavior_Attack(int iNpcH)
 	switch (m_pNpcList[iNpcH]->m_cTargetType) {
 	case DEF_OWNERTYPE_PLAYER:
 		if (m_pClientList[m_pNpcList[iNpcH]->m_iTargetIndex] == NULL) {
+			if (m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) {
+				wsprintf(G_cTxt, "Npc#%d '%s' pos=(%d,%d): target Player#%d gone, ATTACK->MOVE",
+					iNpcH, m_pNpcList[iNpcH]->m_cNpcName, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY, m_pNpcList[iNpcH]->m_iTargetIndex);
+				PutSummonLogFileList(G_cTxt);
+			}
 			m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;
 			m_pNpcList[iNpcH]->m_cBehavior    = DEF_BEHAVIOR_MOVE;
 			return;
@@ -10271,9 +10370,14 @@ void CGame::NpcBehavior_Attack(int iNpcH)
 		dX = m_pClientList[m_pNpcList[iNpcH]->m_iTargetIndex]->m_sX;
 		dY = m_pClientList[m_pNpcList[iNpcH]->m_iTargetIndex]->m_sY;
 		break;
-	
+
 	case DEF_OWNERTYPE_NPC:
 		if (m_pNpcList[m_pNpcList[iNpcH]->m_iTargetIndex] == NULL) {
+			if (m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) {
+				wsprintf(G_cTxt, "Npc#%d '%s' pos=(%d,%d): target Npc#%d gone (killed/removed), ATTACK->MOVE",
+					iNpcH, m_pNpcList[iNpcH]->m_cNpcName, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY, m_pNpcList[iNpcH]->m_iTargetIndex);
+				PutSummonLogFileList(G_cTxt);
+			}
 			m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;
 			m_pNpcList[iNpcH]->m_cBehavior    = DEF_BEHAVIOR_MOVE;
 			return;
@@ -10283,11 +10387,17 @@ void CGame::NpcBehavior_Attack(int iNpcH)
 		break;
 	}
 
-	if ( (iGetDangerValue(iNpcH, dX, dY) > m_pNpcList[iNpcH]->m_cBravery) && 
+	if ( (iGetDangerValue(iNpcH, dX, dY) > m_pNpcList[iNpcH]->m_cBravery) &&
 		 (m_pNpcList[iNpcH]->m_bIsPermAttackMode == FALSE) &&
 		 (m_pNpcList[iNpcH]->m_cActionLimit != 5)) {
-		
-		m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;		
+
+		if (m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) {
+			wsprintf(G_cTxt, "Npc#%d '%s' pos=(%d,%d): danger too high near target %s#%d at (%d,%d), ATTACK->FLEE",
+				iNpcH, m_pNpcList[iNpcH]->m_cNpcName, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY,
+				(m_pNpcList[iNpcH]->m_cTargetType == DEF_OWNERTYPE_PLAYER) ? "Player" : "Npc", m_pNpcList[iNpcH]->m_iTargetIndex, dX, dY);
+			PutSummonLogFileList(G_cTxt);
+		}
+		m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;
 		m_pNpcList[iNpcH]->m_cBehavior          = DEF_BEHAVIOR_FLEE;
 		return;
 	}
@@ -10296,7 +10406,12 @@ void CGame::NpcBehavior_Attack(int iNpcH)
 		 (m_pNpcList[iNpcH]->m_bIsPermAttackMode == FALSE) &&
 		 (m_pNpcList[iNpcH]->m_cActionLimit != 5)) {
 
-		m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;		
+		if (m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) {
+			wsprintf(G_cTxt, "Npc#%d '%s' pos=(%d,%d): low HP (%d), ATTACK->FLEE",
+				iNpcH, m_pNpcList[iNpcH]->m_cNpcName, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY, m_pNpcList[iNpcH]->m_iHP);
+			PutSummonLogFileList(G_cTxt);
+		}
+		m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;
 		m_pNpcList[iNpcH]->m_cBehavior          = DEF_BEHAVIOR_FLEE;
 		return;
 	}
@@ -10704,6 +10819,12 @@ void CGame::RemoveFromTarget(short sTargetH, char cTargetType, int iCode)
 				if (m_pNpcList[i]->m_cSpecialAbility == 1) {
 				}
 				else {
+					if (m_pNpcList[i]->m_bIsSummoned == TRUE) {
+						wsprintf(G_cTxt, "Npc#%d '%s' pos=(%d,%d): RemoveFromTarget(reason=INVISIBILITY) cleared target %s#%d, ->MOVE",
+							i, m_pNpcList[i]->m_cNpcName, m_pNpcList[i]->m_sX, m_pNpcList[i]->m_sY,
+							(cTargetType == DEF_OWNERTYPE_PLAYER) ? "Player" : "Npc", sTargetH);
+						PutSummonLogFileList(G_cTxt);
+					}
 					m_pNpcList[i]->m_cBehavior = DEF_BEHAVIOR_MOVE;
 					m_pNpcList[i]->m_iTargetIndex = NULL;
 					m_pNpcList[i]->m_cTargetType  = NULL;
@@ -10711,6 +10832,12 @@ void CGame::RemoveFromTarget(short sTargetH, char cTargetType, int iCode)
 				break;
 
 			default:
+				if (m_pNpcList[i]->m_bIsSummoned == TRUE) {
+					wsprintf(G_cTxt, "Npc#%d '%s' pos=(%d,%d): RemoveFromTarget(reason=%d, likely target defeated) cleared target %s#%d, ->MOVE",
+						i, m_pNpcList[i]->m_cNpcName, m_pNpcList[i]->m_sX, m_pNpcList[i]->m_sY, iCode,
+						(cTargetType == DEF_OWNERTYPE_PLAYER) ? "Player" : "Npc", sTargetH);
+					PutSummonLogFileList(G_cTxt);
+				}
 				m_pNpcList[i]->m_cBehavior = DEF_BEHAVIOR_MOVE;
 				m_pNpcList[i]->m_iTargetIndex = NULL;
 				m_pNpcList[i]->m_cTargetType  = NULL;
@@ -18722,13 +18849,13 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 					break;
 
 				case DEF_MAGICTYPE_SUMMON:
-					// 쩌횘횊짱쨍쨋쨔첵 
+					// Summon Magic
 
-					// Â»Ã§Ã…ÃµÃ€Ã¥ Â³Â»Â¿Â¡Â¼Â­Â´Ã‚ Â¼Ã’ÃˆÂ¯Â¸Â¶Â¹Ã½Ã€ÃŒ ÂºÃ’Â°Â¡Â´Ã‰.
+					// Summon magic is not possible within the Fight Zone.
 					if (m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_bIsFightZone == TRUE) return;
 
 					m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, dX, dY);
-					// 횁철횁짚쨉횊 Owner째징 Master째징 쨉횊쨈횢. 
+					// The designated Owner becomes the Master.
 					if ((sOwnerH != NULL) && (cOwnerType == DEF_OWNERTYPE_PLAYER)) {
 						// MasterÂ·ÃŽ ÃÃ¶ÃÂ¤ÂµÃˆ Â´Ã«Â»Ã³Ã€Â» ÂµÃ»Â¶Ã³Â´Ã™Â´ÃÂ°Ã­ Ã€Ã–Â´Ã‚ Â°Â´ÃƒÂ¼ Â¼Ã¶Â¸Â¦ Â°Ã¨Â»ÃªÃ‡Ã‘Â´Ã™. 
 						iFollowersNum = iGetFollowerNumber(sOwnerH, cOwnerType);
