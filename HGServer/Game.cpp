@@ -1306,8 +1306,9 @@ int CGame::iClientMotion_Move_Handler(int iClientH, short sX, short sY, char cDi
 			return 0;
 		}
 
-		// QoL: 걸어서 Gold가 있는 타일에 들어가면 자동으로 습득한다.
+		// QoL: automatically pick up Gold when the player walks onto it.
 		_AutoPickupGold(iClientH, dX, dY);
+		if (m_pClientList[iClientH] == NULL) return 0;
 
 		/*if (m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->3CA18h == TRUE) {
 			
@@ -12374,12 +12375,12 @@ void CGame::_AutoPickupGold(int iClientH, short sX, short sY)
 	if (m_pClientList[iClientH] == NULL) return;
 	if (m_pMapList[m_pClientList[iClientH]->m_cMapIndex] == NULL) return;
 
-	// 타일의 아이템 스택 어디에 있든 Gold를 찾아서 습득한다.
+	// Find Gold in the tile's item stack, wherever it is, and pick it up.
 	pItem = m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->pGetGoldItem(sX, sY, &sRemainItemSprite, &sRemainItemSpriteFrame, &cRemainItemColor);
 	if (pItem == NULL) return;
 
 	if (_bAddClientItemList(iClientH, pItem, &iEraseReq) == FALSE) {
-		// 중량 초과등의 문제로 습득 실패. 바닥에 그대로 둔다.
+		// Couldn't carry it (over weight, etc). Leave it on the ground.
 		m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->bSetItem(sX, sY, pItem);
 		return;
 	}

@@ -366,10 +366,10 @@ BOOL CMap::bSetItem(short sX, short sY, class CItem * pItem)
 
 	pTile = (class CTile *)(m_pTile + sX + sY*m_sSizeY);
 
-	// 이미 바닥에 Gold가 있다면 새로 합쳐서 스택으로 만든다.
-	if (memcmp(pItem->m_cName, "Gold", 4) == 0) {
+	// If Gold is already on the ground here, merge onto the existing pile instead of taking another slot.
+	if (pItem->m_sIDnum == 90) { // Gold
 		for (i = 0; i < DEF_TILE_PER_ITEMS; i++) {
-			if ((pTile->m_pItem[i] != NULL) && (memcmp(pTile->m_pItem[i]->m_cName, "Gold", 4) == 0)) {
+			if ((pTile->m_pItem[i] != NULL) && (pTile->m_pItem[i]->m_sIDnum == 90)) { // Gold
 				pTile->m_pItem[i]->m_dwCount += pItem->m_dwCount;
 				delete pItem;
 				return TRUE;
@@ -435,10 +435,10 @@ class CItem * CMap::pGetGoldItem(short sX, short sY, short * pRemainItemSprite, 
 	pTile = (class CTile *)(m_pTile + sX + sY*m_sSizeY);
 	if (pTile->m_cTotalItem == 0) return NULL;
 
-	// 스택 내 위치에 상관없이 Gold를 찾는다.
+	// Find Gold in the stack regardless of its position (later drops can bury it).
 	iFoundIndex = -1;
 	for (i = 0; i < pTile->m_cTotalItem; i++) {
-		if ((pTile->m_pItem[i] != NULL) && (memcmp(pTile->m_pItem[i]->m_cName, "Gold", 4) == 0)) {
+		if ((pTile->m_pItem[i] != NULL) && (pTile->m_pItem[i]->m_sIDnum == 90)) { // Gold
 			iFoundIndex = i;
 			break;
 		}
