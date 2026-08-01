@@ -1305,6 +1305,10 @@ int CGame::iClientMotion_Move_Handler(int iClientH, short sX, short sY, char cDi
 			DeleteClient(iClientH, TRUE, TRUE);
 			return 0;
 		}
+
+		// QoL: 걸어서 Gold가 있는 타일에 들어가면 자동으로 습득한다.
+		_AutoPickupGold(iClientH, dX, dY);
+
 		/*if (m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->3CA18h == TRUE) {
 			
 			.text:00406037                 mov     [ebp+var_C1C], 0
@@ -12350,6 +12354,111 @@ int CGame::iClientMotion_GetItem_Handler(int iClientH, short sX, short sY, char 
 	}
 
 	return 1;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+//  void CGame::_AutoPickupGold(int iClientH, short sX, short sY)
+//  description			:: QoL - automatically pick up Gold when a player walks onto it
+/////////////////////////////////////////////////////////////////////////////////////
+void CGame::_AutoPickupGold(int iClientH, short sX, short sY)
+{
+ class CItem * pItem;
+ short sRemainItemSprite, sRemainItemSpriteFrame;
+ char  cRemainItemColor, cData[100];
+ DWORD * dwp;
+ WORD  * wp;
+ char  * cp;
+ short * sp;
+ int   iRet, iEraseReq;
+
+	if (m_pClientList[iClientH] == NULL) return;
+	if (m_pMapList[m_pClientList[iClientH]->m_cMapIndex] == NULL) return;
+
+	// 타일의 아이템 스택 어디에 있든 Gold를 찾아서 습득한다.
+	pItem = m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->pGetGoldItem(sX, sY, &sRemainItemSprite, &sRemainItemSpriteFrame, &cRemainItemColor);
+	if (pItem == NULL) return;
+
+	if (_bAddClientItemList(iClientH, pItem, &iEraseReq) == FALSE) {
+		// 중량 초과등의 문제로 습득 실패. 바닥에 그대로 둔다.
+		m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->bSetItem(sX, sY, pItem);
+		return;
+	}
+
+	_bItemLog(DEF_ITEMLOG_GET, iClientH, NULL, pItem);
+
+	dwp  = (DWORD *)(cData + DEF_INDEX4_MSGID);
+	*dwp = MSGID_NOTIFY;
+	wp   = (WORD *)(cData + DEF_INDEX2_MSGTYPE);
+	*wp  = DEF_NOTIFY_ITEMOBTAINED;
+
+	cp = (char *)(cData + DEF_INDEX2_MSGTYPE + 2);
+
+	*cp = 1;
+	cp++;
+
+	memcpy(cp, pItem->m_cName, 20);
+	cp += 20;
+
+	dwp  = (DWORD *)cp;
+	*dwp = pItem->m_dwCount;
+	cp += 4;
+
+	*cp = pItem->m_cItemType;
+	cp++;
+
+	*cp = pItem->m_cEquipPos;
+	cp++;
+
+	*cp = (char)0;
+	cp++;
+
+	sp  = (short *)cp;
+	*sp = pItem->m_sLevelLimit;
+	cp += 2;
+
+	*cp = pItem->m_cGenderLimit;
+	cp++;
+
+	wp = (WORD *)cp;
+	*wp = pItem->m_wCurLifeSpan;
+	cp += 2;
+
+	wp = (WORD *)cp;
+	*wp = pItem->m_wWeight;
+	cp += 2;
+
+	sp  = (short *)cp;
+	*sp = pItem->m_sSprite;
+	cp += 2;
+
+	sp  = (short *)cp;
+	*sp = pItem->m_sSpriteFrame;
+	cp += 2;
+
+	*cp = pItem->m_cItemColor;
+	cp++;
+
+	*cp = (char)pItem->m_sItemSpecEffectValue2;
+	cp++;
+
+	dwp = (DWORD *)cp;
+	*dwp = pItem->m_dwAttribute;
+	cp += 4;
+
+	if (iEraseReq == 1) delete pItem;
+
+	SendEventToNearClient_TypeB(MSGID_EVENT_COMMON, DEF_COMMONTYPE_SETITEM, m_pClientList[iClientH]->m_cMapIndex,
+		                        sX, sY, sRemainItemSprite, sRemainItemSpriteFrame, cRemainItemColor);
+
+	iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 53);
+	switch (iRet) {
+	case DEF_XSOCKEVENT_QUENEFULL:
+	case DEF_XSOCKEVENT_SOCKETERROR:
+	case DEF_XSOCKEVENT_CRITICALERROR:
+	case DEF_XSOCKEVENT_SOCKETCLOSED:
+		DeleteClient(iClientH, TRUE, TRUE);
+		break;
+	}
 }
 
 BOOL CGame::_bAddClientItemList(int iClientH, class CItem * pItem, int * pDelReq)

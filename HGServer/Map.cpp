@@ -366,8 +366,19 @@ BOOL CMap::bSetItem(short sX, short sY, class CItem * pItem)
 
 	pTile = (class CTile *)(m_pTile + sX + sY*m_sSizeY);
 
-	// v1.4 마지막 타일에 아이템이 있다면 삭제시키고 이동한다. 
-	if (pTile->m_pItem[DEF_TILE_PER_ITEMS-1] != NULL) 
+	// 이미 바닥에 Gold가 있다면 새로 합쳐서 스택으로 만든다.
+	if (memcmp(pItem->m_cName, "Gold", 4) == 0) {
+		for (i = 0; i < DEF_TILE_PER_ITEMS; i++) {
+			if ((pTile->m_pItem[i] != NULL) && (memcmp(pTile->m_pItem[i]->m_cName, "Gold", 4) == 0)) {
+				pTile->m_pItem[i]->m_dwCount += pItem->m_dwCount;
+				delete pItem;
+				return TRUE;
+			}
+		}
+	}
+
+	// v1.4 마지막 타일에 아이템이 있다면 삭제시키고 이동한다.
+	if (pTile->m_pItem[DEF_TILE_PER_ITEMS-1] != NULL)
 		delete pTile->m_pItem[DEF_TILE_PER_ITEMS-1];
 	else pTile->m_cTotalItem++;
 	
@@ -400,6 +411,50 @@ class CItem * CMap::pGetItem(short sX, short sY, short * pRemainItemSprite, shor
 	if (pTile->m_pItem[0] == NULL) {
 		*pRemainItemSprite      = 0;
 		*pRemainItemSpriteFrame = 0;	
+		*pRemainItemColor       = 0;
+	}
+	else
+	{
+		*pRemainItemSprite      = pTile->m_pItem[0]->m_sSprite;
+		*pRemainItemSpriteFrame = pTile->m_pItem[0]->m_sSpriteFrame;
+		*pRemainItemColor       = pTile->m_pItem[0]->m_cItemColor;
+	}
+
+	return pItem;
+}
+
+
+class CItem * CMap::pGetGoldItem(short sX, short sY, short * pRemainItemSprite, short * pRemainItemSpriteFrame, char * pRemainItemColor)
+{
+ class CTile * pTile;
+ class CItem * pItem;
+ register int i, iFoundIndex;
+
+	if ((sX < 0) || (sX >= m_sSizeX) || (sY < 0) || (sY >= m_sSizeY)) return NULL;
+
+	pTile = (class CTile *)(m_pTile + sX + sY*m_sSizeY);
+	if (pTile->m_cTotalItem == 0) return NULL;
+
+	// 스택 내 위치에 상관없이 Gold를 찾는다.
+	iFoundIndex = -1;
+	for (i = 0; i < pTile->m_cTotalItem; i++) {
+		if ((pTile->m_pItem[i] != NULL) && (memcmp(pTile->m_pItem[i]->m_cName, "Gold", 4) == 0)) {
+			iFoundIndex = i;
+			break;
+		}
+	}
+	if (iFoundIndex == -1) return NULL;
+
+	pItem = pTile->m_pItem[iFoundIndex];
+
+	for (i = iFoundIndex; i <= DEF_TILE_PER_ITEMS-2; i++)
+		pTile->m_pItem[i] = pTile->m_pItem[i+1];
+	pTile->m_cTotalItem--;
+	pTile->m_pItem[pTile->m_cTotalItem] = NULL;
+
+	if (pTile->m_pItem[0] == NULL) {
+		*pRemainItemSprite      = 0;
+		*pRemainItemSpriteFrame = 0;
 		*pRemainItemColor       = 0;
 	}
 	else

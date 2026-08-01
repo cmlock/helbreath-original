@@ -83,6 +83,7 @@ public:
 	BOOL bInit(char * pName);
 	BOOL bIsValidLoc(short sX, short sY);
 	class CItem * pGetItem(short sX, short sY, short * pRemainItemSprite, short * pRemainItemSpriteFrame, char * pRemainItemColor);
+	class CItem * pGetGoldItem(short sX, short sY, short * pRemainItemSprite, short * pRemainItemSpriteFrame, char * pRemainItemColor);
 	BOOL bSetItem(short sX, short sY, class CItem * pItem);
 	void ClearDeadOwner(short sX, short sY);
 	void ClearOwner(int iDebugCode, short sOwnerH, char cOwnerType, short sX, short sY);

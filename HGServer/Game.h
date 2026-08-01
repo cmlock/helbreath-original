@@ -637,6 +637,7 @@ public:
 	BOOL bEquipItemHandler(int iClientH, short sItemIndex, BOOL bNotify = TRUE);
 	BOOL _bAddClientItemList(int iClientH, class CItem * pItem, int * pDelReq);
 	int  iClientMotion_GetItem_Handler(int iClientH, short sX, short sY, char cDir);
+	void _AutoPickupGold(int iClientH, short sX, short sY);
 	void DropItemHandler(int iClientH, short sItemIndex, int iAmount, char * pItemName, BOOL bByPlayer = TRUE);
 	void ClientCommonHandler(int iClientH, char * pData);
 	BOOL __fastcall bGetMsgQuene(char * pFrom, char * pData, DWORD * pMsgSize, int * pIndex, char * pKey);
