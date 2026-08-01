@@ -10400,30 +10400,21 @@ void CGame::NpcBehavior_Attack(int iNpcH)
 		break;
 	}
 
-	if ( (iGetDangerValue(iNpcH, dX, dY) > m_pNpcList[iNpcH]->m_cBravery) &&
+	if ( (m_pNpcList[iNpcH]->m_bIsSummoned == FALSE) &&
+		 (iGetDangerValue(iNpcH, dX, dY) > m_pNpcList[iNpcH]->m_cBravery) &&
 		 (m_pNpcList[iNpcH]->m_bIsPermAttackMode == FALSE) &&
 		 (m_pNpcList[iNpcH]->m_cActionLimit != 5)) {
 
-		if (m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) {
-			wsprintf(G_cTxt, "Npc#%d '%s' pos=(%d,%d): danger too high near target %s#%d at (%d,%d), ATTACK->FLEE",
-				iNpcH, m_pNpcList[iNpcH]->m_cNpcName, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY,
-				(m_pNpcList[iNpcH]->m_cTargetType == DEF_OWNERTYPE_PLAYER) ? "Player" : "Npc", m_pNpcList[iNpcH]->m_iTargetIndex, dX, dY);
-			PutSummonLogFileList(G_cTxt);
-		}
 		m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;
 		m_pNpcList[iNpcH]->m_cBehavior          = DEF_BEHAVIOR_FLEE;
 		return;
 	}
 
-	if ( (m_pNpcList[iNpcH]->m_iHP <= 2) && (iDice(1,m_pNpcList[iNpcH]->m_cBravery) <= 3) &&
+	if ( (m_pNpcList[iNpcH]->m_bIsSummoned == FALSE) &&
+		 (m_pNpcList[iNpcH]->m_iHP <= 2) && (iDice(1,m_pNpcList[iNpcH]->m_cBravery) <= 3) &&
 		 (m_pNpcList[iNpcH]->m_bIsPermAttackMode == FALSE) &&
 		 (m_pNpcList[iNpcH]->m_cActionLimit != 5)) {
 
-		if (m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) {
-			wsprintf(G_cTxt, "Npc#%d '%s' pos=(%d,%d): low HP (%d), ATTACK->FLEE",
-				iNpcH, m_pNpcList[iNpcH]->m_cNpcName, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY, m_pNpcList[iNpcH]->m_iHP);
-			PutSummonLogFileList(G_cTxt);
-		}
 		m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;
 		m_pNpcList[iNpcH]->m_cBehavior          = DEF_BEHAVIOR_FLEE;
 		return;
