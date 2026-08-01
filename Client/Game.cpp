@@ -12888,7 +12888,7 @@ void CGame::_ReadMapData(short sPivotX, short sPivotY, char * pData)
 				memcpy(cName, cp, 10);
 				cp    += 10;
 			}else // NPC
-			{	sAppr1 = sAppr3 = sAppr4 = 0;
+			{	sAppr1 = sAppr3 = sAppr4 = iApprColor = 0;
 				sp  = (short *)cp;
 				sAppr2 = *sp;// Appearance2
 				cp += 2;
@@ -12939,7 +12939,7 @@ void CGame::_ReadMapData(short sPivotX, short sPivotY, char * pData)
 				memcpy(cName, cp, 10);
 				cp    += 10;
 			}else 	// NPC
-			{	sAppr1 = sAppr3 = sAppr4 = 0;
+			{	sAppr1 = sAppr3 = sAppr4 = iApprColor = 0;
 				sp  = (short *)cp;
 				sAppr2 = *sp;// Appearance2
 				cp += 2;
@@ -13023,7 +13023,7 @@ void CGame::LogEventHandler(char * pData)
 	}else 	// NPC
 	{	memcpy(cName, cp, 5);
 		cp += 5;
-		sAppr1 = sAppr3 = sAppr4 = 0;
+		sAppr1 = sAppr3 = sAppr4 = iApprColor = 0;
 		sp  = (short *)cp;
 		sAppr2 = *sp;
 		cp += 2;
@@ -14499,6 +14499,10 @@ BOOL CGame::bEffectFrameCounter()
 				bAddNewEffect(110, m_pEffectList[i]->m_sX, m_pEffectList[i]->m_sY,
 						               m_pEffectList[i]->m_dX +1, m_pEffectList[i]->m_dY +1, 0);
 				bAddNewEffect(8, m_pEffectList[i]->m_mX + (rand() % 20) - 10, m_pEffectList[i]->m_mY + (rand() % 20) - 10, NULL, NULL, -1*(rand() % 4));
+				sAbsX = abs(((m_sViewPointX / 32) + 12) - m_pEffectList[i]->m_dX);
+				sAbsY = abs(((m_sViewPointY / 32) + 9)  - m_pEffectList[i]->m_dY);
+				if (sAbsX > sAbsY) sDist = sAbsX;
+				else sDist = sAbsY;
 				lPan = -(((m_sViewPointX / 32) + 12) - m_pEffectList[i]->m_dX)*800;
 				PlaySound('E', 1, sDist, lPan);
 				bAddNewEffect(7, m_pEffectList[i]->m_dX*32, m_pEffectList[i]->m_dY*32, NULL, NULL, 0);
@@ -39475,6 +39479,10 @@ void CGame::MotionEventHandler(char * pData)
 	ZeroMemory(cName, sizeof(cName));
 	sV1 = sV2 = sV3 = NULL;
 	iNpcHP = iNpcMaxHP = -1;
+	// Not set on the wObjectID >= 30000 (effect) path below; bSetOwner() discards these
+	// for any sAction != DEF_OBJECTNULLACTION, but they're still read to build the call.
+	sX = sY = sType = sAppr1 = sAppr2 = sAppr3 = sAppr4 = NULL;
+	iApprColor = iStatus = NULL;
 	wp   = (WORD *)(pData + DEF_INDEX2_MSGTYPE);
 	wEventType = *wp;
 	cp = (char *)(pData + DEF_INDEX2_MSGTYPE + 2);
