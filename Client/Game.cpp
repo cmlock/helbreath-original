@@ -41123,10 +41123,6 @@ void CGame::UseMagic(int iMagicNo)
 	if (m_iHP <= 0) return;
 	if (m_bIsGetPointingMode == TRUE) return;
 	if (iGetManaCost(iMagicNo) > m_iMP) return;
-	if (_bIsItemOnHand() == TRUE)
-	{	AddEventList(DLGBOX_CLICK_MAGIC1, 10);
-		return;
-	}
 	if (m_bSkillUsingStatus == TRUE)
 	{	AddEventList(DLGBOX_CLICK_MAGIC2, 10);
 		return;

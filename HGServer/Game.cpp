@@ -17380,16 +17380,6 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 			return;
 	}
 
-	if (m_pClientList[iClientH]->m_sItemEquipmentStatus[DEF_EQUIPPOS_RHAND] != -1) {
-		wWeaponType = ((m_pClientList[iClientH]->m_sAppr2 & 0x0FF0) >> 4);		
-		if ((wWeaponType >= 34) && (wWeaponType <= 39)) {
-		}
-		else return;
-	}
-
-	if ((m_pClientList[iClientH]->m_sItemEquipmentStatus[DEF_EQUIPPOS_LHAND]   != -1) ||
-		(m_pClientList[iClientH]->m_sItemEquipmentStatus[DEF_EQUIPPOS_TWOHAND] != -1)) return;
-
 	if ((m_pClientList[iClientH]->m_iSpellCount > 1) && (bItemEffect == FALSE)) {
 		try
 		{
