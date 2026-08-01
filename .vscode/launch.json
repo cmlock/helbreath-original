@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Client (Game.exe)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}\\Client\\Debug\\Game.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}\\Helbreath",
+            "stopAtEntry": false,
+            "symbolSearchPath": "${workspaceFolder}\\Client\\Debug",
+            "preLaunchTask": "Build Client (Debug)"
+        }
+    ]
+}
