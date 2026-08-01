@@ -159,6 +159,17 @@
 //============================
 
 //============================
+// Past this level, iGetLevelExp() eases the difficulty term toward a ceiling instead of
+// letting it keep compounding. Set to 80 to match GetExp()'s low-level bonus multiplier
+// (Game.cpp, GetExp()), which tapers to zero exactly at level 80 - past that point players
+// get no reward-side assist, so the cost curve shouldn't keep accelerating either.
+// DEF_LEVELCURVE_SOFTCAP_K controls how tight the ceiling is (smaller = flattens sooner/harder).
+// Value at the seam matches the pre-softcap formula exactly, whatever START is set to.
+#define DEF_LEVELCURVE_SOFTCAP_START	80
+#define DEF_LEVELCURVE_SOFTCAP_K		3.0
+//============================
+
+//============================
 // New Changed 12/05/2004
 #define DEF_GMGMANACONSUMEUNIT	15			// Grand Magic Generator 마나 흡수 단위.
 //============================

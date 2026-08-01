@@ -23618,10 +23618,23 @@ void CGame::Quit()
 DWORD CGame::iGetLevelExp(int iLevel)
 {
  DWORD iRet;
-	
+ double dLevelTerm;
+
 	if (iLevel == 0) return 0;
-	
-	iRet = iGetLevelExp(iLevel - 1) + iLevel * ( 50 + (iLevel * (iLevel / 17) * (iLevel / 17) ) );
+
+	if (iLevel <= DEF_LEVELCURVE_SOFTCAP_START) {
+		dLevelTerm = (double)(iLevel / 17);
+	}
+	else {
+		// Ease the (iLevel/17) difficulty term toward a ceiling instead of letting it keep
+		// climbing every 17 levels forever. Anchored at DEF_LEVELCURVE_SOFTCAP_START/17 so
+		// there's no jump at the seam, whatever that level is set to.
+		double dDiff     = (double)(iLevel - DEF_LEVELCURVE_SOFTCAP_START) / 17.0;
+		double dSoftDiff = dDiff / (1.0 + dDiff / DEF_LEVELCURVE_SOFTCAP_K);
+		dLevelTerm = (double)(DEF_LEVELCURVE_SOFTCAP_START / 17) + dSoftDiff;
+	}
+
+	iRet = iGetLevelExp(iLevel - 1) + (DWORD)((double)iLevel * (50.0 + (double)iLevel * dLevelTerm * dLevelTerm));
 
 	return iRet;
 }
