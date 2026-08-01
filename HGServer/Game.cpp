@@ -19005,9 +19005,9 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 										case 5: strcpy(cNpcName, "Skeleton"); break;
 										case 6:	strcpy(cNpcName, "Clay-Golem"); break;
 										case 7:	strcpy(cNpcName, "Stone-Golem"); break;
-										case 8: strcpy(cNpcName, "Orc-Mage"); break;
-										case 9:	strcpy(cNpcName, "Hellbound"); break;
-										case 10:strcpy(cNpcName, "Cyclops"); break;
+										case 8: strcpy(cNpcName, "Hellbound"); break;
+										case 9:	strcpy(cNpcName, "Cyclops"); break;
+										case 10:strcpy(cNpcName, "Orge"); break;
 									}
 									break;
 
