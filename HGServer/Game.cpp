@@ -3126,6 +3126,14 @@ void CGame::SendEventToNearClient_TypeA(short sOwnerH, char cOwnerType, DWORD dw
 		*sp = sY;
 		cp_s += 2;
 
+		// Current/Max HP trailer for the client health bar - piggybacks on the DAMAGE/DAMAGEMOVE/DYING packets below
+		ip  = (int *)cp_s;
+		*ip = m_pNpcList[sOwnerH]->m_iHP;
+		cp_s += 4;
+		ip  = (int *)cp_s;
+		*ip = m_pNpcList[sOwnerH]->m_iMaxHP;
+		cp_s += 4;
+
 		wp  = (WORD *)cp_sv;
 		*wp = sOwnerH + 40000;
 		cp_sv += 2;
@@ -3174,12 +3182,12 @@ void CGame::SendEventToNearClient_TypeA(short sOwnerH, char cOwnerType, DWORD dw
 							break;
 
 						case DEF_OBJECTDYING:
-							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 15, cKey);
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 23, cKey);
 							break;
 
 						case DEF_OBJECTDAMAGE:
 						case DEF_OBJECTDAMAGEMOVE:
-							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 11, cKey);
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 23, cKey);
 							break;
 
 						case DEF_OBJECTATTACK:
@@ -3202,12 +3210,12 @@ void CGame::SendEventToNearClient_TypeA(short sOwnerH, char cOwnerType, DWORD dw
 							break;
 
 						case DEF_OBJECTDYING:
-							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 15, cKey);
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 23, cKey);
 							break;
 
 						case DEF_OBJECTDAMAGE:
 						case DEF_OBJECTDAMAGEMOVE:
-							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 11, cKey);
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 23, cKey);
 							break;
 
 						case DEF_OBJECTATTACK:
@@ -8777,7 +8785,7 @@ void CGame::NpcProcess()
 			if (((dwTime - m_pNpcList[i]->m_dwHPupTime) > DEF_HPUPTIME) && (m_pNpcList[i]->m_bIsKilled == FALSE)) {
 				m_pNpcList[i]->m_dwHPupTime = dwTime;	
 				
-				iMaxHP = iDice(m_pNpcList[i]->m_iHitDice, 8) + m_pNpcList[i]->m_iHitDice;
+				iMaxHP = m_pNpcList[i]->m_iMaxHP;
 				if (m_pNpcList[i]->m_iHP < iMaxHP) {
 
 					m_pNpcList[i]->m_iHP += iDice(1, m_pNpcList[i]->m_iHitDice); // Hit Point
@@ -16538,7 +16546,11 @@ BOOL CGame::_bInitNpcAttr(class CNpc * pNpc, char * pNpcName, short sClass, char
 				 pNpc->m_iHP  = (iDice(m_pNpcConfigList[i]->m_iHitDice, 4) + m_pNpcConfigList[i]->m_iHitDice);
 			else pNpc->m_iHP  = ((m_pNpcConfigList[i]->m_iHitDice * 4) + m_pNpcConfigList[i]->m_iHitDice + iDice(1, m_pNpcConfigList[i]->m_iHitDice));
 			// v1.4 확인코드
-			if (pNpc->m_iHP == 0) pNpc->m_iHP = 1; 
+			if (pNpc->m_iHP == 0) pNpc->m_iHP = 1;
+
+			// Stable HP cap for this spawn, reported to clients as HP% (matches the regen cap formula below)
+			pNpc->m_iMaxHP = iDice(m_pNpcConfigList[i]->m_iHitDice, 8) + m_pNpcConfigList[i]->m_iHitDice;
+			if (pNpc->m_iMaxHP <= 0) pNpc->m_iMaxHP = 1;
 
 			pNpc->m_iExpDiceMin		 = m_pNpcConfigList[i]->m_iExpDiceMin;
 			pNpc->m_iExpDiceMax		 = m_pNpcConfigList[i]->m_iExpDiceMax;

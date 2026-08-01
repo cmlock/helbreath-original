@@ -169,6 +169,8 @@ CGame::CGame()
 	m_cWhisperIndex = DEF_MAXWHISPERMSG;
 	m_cGameModeCount = 0;
 	ZeroMemory(m_cMapName, sizeof(m_cMapName));
+	ZeroMemory(m_iNpcHP, sizeof(m_iNpcHP));
+	ZeroMemory(m_iNpcMaxHP, sizeof(m_iNpcMaxHP));
 	m_pGSock   = NULL;
 	m_pLSock   = NULL;
 	m_pMapData = NULL;
@@ -2091,6 +2093,12 @@ void CGame::DrawObjects(short sPivotX, short sPivotY, short sDivX, short sDivY, 
 					case DEF_OBJECTDYING:
 						bContact = DrawObject_OnDying(indexX, indexY, ix, iy, FALSE, dwTime, msX, msY);
 						break;
+					}
+
+					if ((_tmp_wObjectID >= 10000) && (_tmp_wObjectID < 10000 + DEF_MAXNPCS))
+					{	int iNpcH = _tmp_wObjectID - 10000;
+						if ((m_iNpcMaxHP[iNpcH] > 0) && (m_iNpcHP[iNpcH] > 0))
+							DrawNpcHPBar(ix, iy, m_iNpcHP[iNpcH], m_iNpcMaxHP[iNpcH]);
 					}
 
 					if ((bContact == TRUE) && (msY <= res_msy))
@@ -20608,6 +20616,33 @@ void CGame::DlgBoxClick_ShutDownMsg(short msX, short msY)
 		DisableDialogBox(25);
 		PlaySound('E', 14, 5);
 	}
+}
+
+void CGame::DrawNpcHPBar(int sX, int sY, int iHP, int iMaxHP)
+{
+ int iBarWidth = 26, iBarHeight = 3;
+ int iX0, iY0, iX, iY, iFillWidth, iPercent;
+ char cTxt[32];
+
+	if (iMaxHP <= 0) return;
+	iPercent = (iHP * 100) / iMaxHP;
+	if (iPercent < 0) iPercent = 0;
+	if (iPercent > 100) iPercent = 100;
+
+	iX0 = sX - (iBarWidth / 2);
+	iY0 = sY - 46;
+	iFillWidth = (iBarWidth * iPercent) / 100;
+
+	for (iY = 0; iY < iBarHeight; iY++)
+	for (iX = 0; iX < iBarWidth; iX++)
+	{	if (iX < iFillWidth)
+			 m_DDraw.PutPixel(iX0 + iX, iY0 + iY, 40, 200, 40);
+		else m_DDraw.PutPixel(iX0 + iX, iY0 + iY, 60, 20, 20);
+	}
+
+	// Debug: raw current/max HP next to the bar
+	wsprintf(cTxt, "%d/%d", iHP, iMaxHP);
+	PutString2(iX0 + iBarWidth + 4, iY0 - 5, cTxt, 255, 255, 0);
 }
 
 void CGame::DrawLine(int x0, int y0, int x1, int y1, int iR, int iG, int iB)
@@ -39436,8 +39471,10 @@ void CGame::MotionEventHandler(char * pData)
  int   * ip, iApprColor, iLoc;
  char    cTxt[120];
  int i;
+ int iNpcHP, iNpcMaxHP;
 	ZeroMemory(cName, sizeof(cName));
 	sV1 = sV2 = sV3 = NULL;
+	iNpcHP = iNpcMaxHP = -1;
 	wp   = (WORD *)(pData + DEF_INDEX2_MSGTYPE);
 	wEventType = *wp;
 	cp = (char *)(pData + DEF_INDEX2_MSGTYPE + 2);
@@ -39510,6 +39547,14 @@ void CGame::MotionEventHandler(char * pData)
 	}else
 	{	switch (wEventType) {
 		case DEF_OBJECTMAGIC:
+			cDir = *cp;
+			cp++;
+			sV1 = (short)*cp; //Damage
+			cp++;
+			sV2 = (short)*cp; //
+			cp++;
+  			break;
+
 		case DEF_OBJECTDAMAGEMOVE:
 		case DEF_OBJECTDAMAGE:
 			cDir = *cp;
@@ -39518,6 +39563,15 @@ void CGame::MotionEventHandler(char * pData)
 			cp++;
 			sV2 = (short)*cp; //
 			cp++;
+			if (wObjectID >= 40000) // Npc: current/max HP trail the position for the health bar
+			{	cp += 4; // skip sX, sY (unused here)
+				ip  = (int *)cp;
+				iNpcHP = *ip;
+				cp += 4;
+				ip  = (int *)cp;
+				iNpcMaxHP = *ip;
+				cp += 4;
+			}
   			break;
 
 		case DEF_OBJECTDYING:
@@ -39533,6 +39587,14 @@ void CGame::MotionEventHandler(char * pData)
 			sp  = (short *)cp;
 			sY = *sp;
 			cp += 2;
+			if (wObjectID >= 40000) // Npc: current/max HP trail the position (current will read 0 - the npc just died)
+			{	ip  = (int *)cp;
+				iNpcHP = *ip;
+				cp += 4;
+				ip  = (int *)cp;
+				iNpcMaxHP = *ip;
+				cp += 4;
+			}
 			break;
 
 		case DEF_OBJECTATTACK:
@@ -39552,6 +39614,11 @@ void CGame::MotionEventHandler(char * pData)
 			cp++;
 			break;
 	}	}
+
+	if ((iNpcHP >= 0) && (wObjectID >= 40000) && ((wObjectID - 40000) < DEF_MAXNPCS))
+	{	m_iNpcHP[wObjectID - 40000]    = iNpcHP;
+		m_iNpcMaxHP[wObjectID - 40000] = iNpcMaxHP;
+	}
 
 	if ((wEventType == DEF_OBJECTNULLACTION) && (memcmp(cName, m_cPlayerName, 10) == 0))
 	{	m_sPlayerType   = sType;

@@ -71,6 +71,7 @@
 #define DEF_MAXEFFECTSPR		300
 #define DEF_MAXSOUNDEFFECTS		200		// 110   //Snoopy: Adjusted!
 #define DEF_MAXCHATMSGS			500
+#define DEF_MAXNPCS				5000	// Must match HGServer's DEF_MAXNPCS - npc handles index m_iNpcHP/m_iNpcMaxHP
 #define DEF_MAXWHISPERMSG		5
 #define DEF_MAXCHATSCROLLMSGS	80
 #define DEF_MAXEFFECTS			300	//600 <- original
@@ -421,6 +422,7 @@ public:
 	void _DrawThunderEffect(int sX, int sY, int dX, int dY, int rX, int rY, char cType);
 	void DrawLine2(int x0, int y0, int x1, int y1, int iR, int iG, int iB);
 	void DrawLine(int x0, int y0, int x1, int y1, int iR, int iG, int iB);
+	void DrawNpcHPBar(int sX, int sY, int iHP, int iMaxHP);
 	void SetWhetherStatus(BOOL bStart, char cType);
 	void WhetherObjectFrameCounter();
 	void DrawWhetherEffects();
@@ -682,6 +684,7 @@ public:
 	class XSocket * m_pGSock;
 	class XSocket * m_pLSock;
 	class CMsg    * m_pChatMsgList[DEF_MAXCHATMSGS];
+	int m_iNpcHP[DEF_MAXNPCS], m_iNpcMaxHP[DEF_MAXNPCS]; // Indexed by npc handle, updated from DAMAGE/DAMAGEMOVE/DYING packets
 	class CMsg    * m_pChatScrollList[DEF_MAXCHATSCROLLMSGS];
 	class CMsg    * m_pWhisperMsg[DEF_MAXWHISPERMSG];
 	class CEffect * m_pEffectList[DEF_MAXEFFECTS];

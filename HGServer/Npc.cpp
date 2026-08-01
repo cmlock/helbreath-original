@@ -38,6 +38,7 @@ CNpc::CNpc(char * pName5)
 	m_cSpecialAbility = 0;
 	
 	m_iExp = 0;
+	m_iMaxHP = 0;
 
 	m_iBuildCount = 0;
 	m_iManaStock  = 0;
