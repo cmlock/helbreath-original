@@ -15,6 +15,10 @@ Run from anywhere; paths are resolved relative to this script's location
 (Files/), so it must stay in Files/ alongside GameServers/. The build output
 is expected at ..\HGServer\<Configuration>\HGserver.exe relative to this
 script, matching the OutDir set in HGserver.vcxproj.
+
+Each zone's GameLogs\*.log files are cleared right before it's relaunched,
+so every restart starts with a fresh log instead of appending to the
+previous run's.
 #>
 
 param(
@@ -58,6 +62,15 @@ function Wait-ForProcessExit {
         Start-Sleep -Milliseconds 250
     }
     return $false
+}
+
+function Clear-GameLogs {
+    param([string]$Zone)
+
+    $logsDir = Join-Path $root "GameServers\$Zone\GameLogs"
+    if (Test-Path $logsDir) {
+        Get-ChildItem -Path $logsDir -File | Remove-Item -Force
+    }
 }
 
 function Copy-WithRetry {
@@ -126,6 +139,8 @@ foreach ($zone in $targetZones) {
         Write-Warning "$zone`: copy failed, not relaunching. $($_.Exception.Message)"
         continue
     }
+
+    Clear-GameLogs -Zone $zone
 
     $workDir = Split-Path $resolvedExe -Parent
     Start-Process -FilePath $resolvedExe -WorkingDirectory $workDir | Out-Null
