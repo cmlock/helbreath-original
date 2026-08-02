@@ -18961,10 +18961,16 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 					// The designated Owner becomes the Master.
 					if ((sOwnerH != NULL) && (cOwnerType == DEF_OWNERTYPE_PLAYER)) {
 						// MasterÂ·ÃŽ ÃÃ¶ÃÂ¤ÂµÃˆ Â´Ã«Â»Ã³Ã€Â» ÂµÃ»Â¶Ã³Â´Ã™Â´ÃÂ°Ã­ Ã€Ã–Â´Ã‚ Â°Â´ÃƒÂ¼ Â¼Ã¶Â¸Â¦ Â°Ã¨Â»ÃªÃ‡Ã‘Â´Ã™. 
+						if (sType == 97) {
+							// Summon-Demon: capped at 1 active demon per player, independent of the Magery follower cap.
+							if (iGetDemonFollowerNumber(sOwnerH, cOwnerType) >= 1) break;
+						}
+						else {
 						iFollowersNum = iGetFollowerNumber(sOwnerH, cOwnerType);
 
 						// Â¼Ã’ÃˆÂ¯Â¸Â¶Â¹Ã½Ã€Â» CastingÃ‡Ã‘ Ã€ÃšÃ€Ã‡ Magery/20 Â¸Â¸Ã…Â­Ã€Ã‡ Â¸Ã³Â½ÂºÃ…ÃÂ¸Â¦ Â¼Ã’ÃˆÂ¯Ã‡Ã’ Â¼Ã¶ Ã€Ã–Â´Ã™.
 						if (iFollowersNum >= (m_pClientList[iClientH]->m_cSkillMastery[4]/20)) break;
+						}
 
 						iNamingValue = m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->iGetEmptyNamingValue();
 						if (iNamingValue == -1) {
@@ -18980,25 +18986,78 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 							// MageryÂ¿Â¡ ÂµÃ»Â¶Ã³ Â¼Ã’ÃˆÂ¯ÂµÃ‡Â´Ã‚ Â¸Ã³Â½ÂºÃ…ÃÃ€Ã‡ ÂµÃ®Â±ÃžÃ€ÃŒ Â´ÃžÂ¶Ã³ÃÃ¸Â´Ã™.
 							ZeroMemory(cNpcName, sizeof(cNpcName));
 
+							if (sType == 97) {
+								strcpy(cNpcName, "Demon");
+							}
+							else
 							switch (iV1) {
 								case NULL: // Ã€ÃÂ¹ÃÃ€Ã»Ã€ÃŽ Â°Ã¦Â¿Ã¬ 
-									iResult = iDice(1, m_pClientList[iClientH]->m_cSkillMastery[4] / 10);
-
-									// v1.42 ÃƒÃ–Ã€Ãº Â¸Ã· Â·Â¹ÂºÂ§Ã€Â» Ã€Ã”Â·Ã‚ 
-									if (iResult < m_pClientList[iClientH]->m_cSkillMastery[4] / 20) 
-										iResult = m_pClientList[iClientH]->m_cSkillMastery[4] / 20;
-
+									// Bucket the Magery ordinal (1-10) into 6 power tiers.
+									iResult = m_pClientList[iClientH]->m_cSkillMastery[4] / 10;
 									switch (iResult) {
-										case 1: strcpy(cNpcName, "Slime"); break;
-										case 2: strcpy(cNpcName, "Giant-Ant"); break;
-										case 3: strcpy(cNpcName, "Amphis"); break;
-										case 4: strcpy(cNpcName, "Orc"); break;
-										case 5: strcpy(cNpcName, "Skeleton"); break;
-										case 6:	strcpy(cNpcName, "Clay-Golem"); break;
-										case 7:	strcpy(cNpcName, "Stone-Golem"); break;
-										case 8: strcpy(cNpcName, "Hellbound"); break;
-										case 9:	strcpy(cNpcName, "Cyclops"); break;
-										case 10:strcpy(cNpcName, "Orge"); break;
+										case 0: case 1: case 2:   iResult = 1; break;
+										case 3: case 4:            iResult = 2; break;
+										case 5:                     iResult = 3; break;
+										case 6: case 7:            iResult = 4; break;
+										case 8:                     iResult = 5; break;
+										default:                    iResult = 6; break;
+									}
+
+									// Prefer the top tier you've unlocked; occasionally roll one or two tiers weaker.
+									switch (iDice(1, 10)) {
+										case 1: case 2: case 3: case 4: case 5:
+											break;                 // 50%: top tier
+										case 6: case 7: case 8:
+											iResult -= 1;          // 30%: one tier down
+											break;
+										default:
+											iResult -= 2;          // 20%: two tiers down
+											break;
+									}
+									if (iResult < 1) iResult = 1;
+
+									// Within a tier, every member is an equally likely pick.
+									switch (iResult) {
+										case 1:
+											switch (iDice(1, 2)) {
+												case 1: strcpy(cNpcName, "Slime"); break;
+												case 2: strcpy(cNpcName, "Giant-Ant"); break;
+											}
+											break;
+										case 2:
+											switch (iDice(1, 3)) {
+												case 1: strcpy(cNpcName, "Amphis"); break;
+												case 2: strcpy(cNpcName, "Orc"); break;
+												case 3: strcpy(cNpcName, "Scorpion"); break;
+											}
+											break;
+										case 3:
+											switch (iDice(1, 3)) {
+												case 1: strcpy(cNpcName, "Skeleton"); break;
+												case 2: strcpy(cNpcName, "Orc-Mage"); break;
+												case 3: strcpy(cNpcName, "Zombie"); break;
+											}
+											break;
+										case 4:
+											switch (iDice(1, 3)) {
+												case 1: strcpy(cNpcName, "Clay-Golem"); break;
+												case 2: strcpy(cNpcName, "Stone-Golem"); break;
+												case 3: strcpy(cNpcName, "Hellbound"); break;
+											}
+											break;
+										case 5:
+											switch (iDice(1, 3)) {
+												case 1: strcpy(cNpcName, "Troll"); break;
+												case 2: strcpy(cNpcName, "Cyclops"); break;
+												case 3: strcpy(cNpcName, "Ice-Golem"); break;
+											}
+											break;
+										case 6:
+											switch (iDice(1, 2)) {
+												case 1: strcpy(cNpcName, "Orge"); break;
+												case 2: strcpy(cNpcName, "Liche"); break;
+											}
+											break;
 									}
 									break;
 
@@ -29826,8 +29885,24 @@ int CGame::iGetFollowerNumber(short sOwnerH, char cOwnerType)
 
 	iTotal = 0;
 
-	for (i = 1; i < DEF_MAXNPCS; i++) 
+	for (i = 1; i < DEF_MAXNPCS; i++)
 	if ( (m_pNpcList[i] != NULL) && (m_pNpcList[i]->m_cMoveType == DEF_MOVETYPE_FOLLOW) ) {
+
+		if ((m_pNpcList[i]->m_iFollowOwnerIndex == sOwnerH) && (m_pNpcList[i]->m_cFollowOwnerType == cOwnerType))
+			iTotal++;
+	}
+
+	return iTotal;
+}
+
+int CGame::iGetDemonFollowerNumber(short sOwnerH, char cOwnerType)
+{
+ register int i, iTotal;
+
+	iTotal = 0;
+
+	for (i = 1; i < DEF_MAXNPCS; i++)
+	if ( (m_pNpcList[i] != NULL) && (m_pNpcList[i]->m_cMoveType == DEF_MOVETYPE_FOLLOW) && (m_pNpcList[i]->m_sType == 31) ) {
 
 		if ((m_pNpcList[i]->m_iFollowOwnerIndex == sOwnerH) && (m_pNpcList[i]->m_cFollowOwnerType == cOwnerType))
 			iTotal++;
