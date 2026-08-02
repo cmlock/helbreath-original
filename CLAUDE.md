@@ -36,7 +36,7 @@ The code that started the Helbreath private server revolution.
 ### `Files/` — deployable server runtime
 Executables, configs, and per-world data used to run a live server.
 - `GateServer.exe`, `MainLServer.exe`, `WorldLServer.exe` — gate, login, and world server binaries.
-- `*.cfg` — server configuration: gate/login/world servers, items, magic, NPCs, quests, skills.
+- `*.cfg` — server configuration: gate/login/world servers, items, magic, NPCs, quests, skills. Before reading or editing `NPC.cfg`, read [`Files/NPC.cfg.md`](Files/NPC.cfg.md) for its field layout — the file's own header comment has two columns mislabeled.
 - `GameData/` — shared faction/occupy-flag data (Aresden and Elvine).
 - `Account/`, `Character/` — account and character save data, bucketed into `AscIIxxx` folders by name hash.
 - `GameServers/` — per-zone HGServer instances, one folder each: `Aresden/`, `Elvine/`, `Middleland/`, `Dungeons/`, `Heldenian/`, `Apocalypse/`, `Neutrals/`, `Huntzones/`, `ToH/`. Each contains:
