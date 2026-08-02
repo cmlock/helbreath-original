@@ -66,7 +66,9 @@ CMap::CMap(class CGame * pGame)
 		m_stEnergySphereCreationList[i].cType = NULL;
 		m_stEnergySphereGoalList[i].cResult   = NULL;
 	}
-	
+
+	ZeroMemory(m_stItemEventList, sizeof(m_stItemEventList));
+
 	m_bIsHeldenianMap = FALSE;
 	m_iTotalActiveObject = 0;
 	m_iTotalAliveObject  = 0;
