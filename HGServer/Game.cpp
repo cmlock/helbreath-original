@@ -318,10 +318,11 @@ BOOL CGame::bAccept(class XSocket * pXSock)
 		
 		m_pClientList[i] = new class CClient(m_hWnd);
 		bAddClientShortCut(i);
-		m_pClientList[i]->m_dwSPTime = m_pClientList[i]->m_dwMPTime = 
-			m_pClientList[i]->m_dwHPTime = m_pClientList[i]->m_dwAutoSaveTime = 
-				m_pClientList[i]->m_dwTime = m_pClientList[i]->m_dwHungerTime = m_pClientList[i]->m_dwExpStockTime = 
-					m_pClientList[i]->m_dwRecentAttackTime = m_pClientList[i]->m_dwAutoExpTime = m_pClientList[i]->m_dwSpeedHackCheckTime = timeGetTime();
+		m_pClientList[i]->m_dwSPTime = m_pClientList[i]->m_dwMPTime =
+			m_pClientList[i]->m_dwHPTime = m_pClientList[i]->m_dwAutoSaveTime =
+				m_pClientList[i]->m_dwTime = m_pClientList[i]->m_dwHungerTime = m_pClientList[i]->m_dwExpStockTime =
+					m_pClientList[i]->m_dwRecentAttackTime = m_pClientList[i]->m_dwAutoExpTime = m_pClientList[i]->m_dwSpeedHackCheckTime =
+						m_pClientList[i]->m_dwLastMagicCastTime = timeGetTime();
 		
 		pXSock->bAccept(m_pClientList[i]->m_pXSock, WM_ONCLIENTSOCKETEVENT + i); 
 	
@@ -17341,7 +17342,10 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 	if ((dX < 0) || (dX >= m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_sSizeX) ||
 		(dY < 0) || (dY >= m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_sSizeY)) return;
 
-	if (((dwTime - m_pClientList[iClientH]->m_dwRecentAttackTime) < 1000) && (bItemEffect == 0)) {
+	// v382: 100% Magic mastery halves the client's cast animation delay (MapData.cpp DEF_OBJECTMAGIC iDelay=-17),
+	// so a maxed caster's legitimate back-to-back cast rate is far above the base floor below - allow for it.
+	DWORD dwMinMagicCastInterval = (m_pClientList[iClientH]->m_cSkillMastery[4] == 100) ? 550 : 1000;
+	if (((dwTime - m_pClientList[iClientH]->m_dwLastMagicCastTime) < dwMinMagicCastInterval) && (bItemEffect == 0)) {
 		try
 		{
 			wsprintf(G_cTxt, "3.51 Detection: (%s) Player: (%s) - Magic casting speed is too fast! Hack?", m_pClientList[iClientH]->m_cIPaddress, m_pClientList[iClientH]->m_cCharName);
@@ -17353,7 +17357,7 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 		}
 		return;
 	}
-	m_pClientList[iClientH]->m_dwRecentAttackTime = dwTime;
+	m_pClientList[iClientH]->m_dwLastMagicCastTime = dwTime;
 	m_pClientList[iClientH]->m_dwLastActionTime = dwTime;
 
 	if (m_pClientList[iClientH]->m_cMapIndex < 0) return;
@@ -46371,7 +46375,9 @@ BOOL CGame::bCheckClientMagicFrequency(int iClientH, DWORD dwClientTime)
 		dwTimeGap = dwClientTime - m_pClientList[iClientH]->m_dwMagicFreqTime;
 		m_pClientList[iClientH]->m_dwMagicFreqTime = dwClientTime;
 
-		if ((dwTimeGap < 1500) && (m_pClientList[iClientH]->m_bMagicConfirm == TRUE)) {
+		// v382: 100% Magic mastery halves the cast animation delay client-side - lower the floor to match.
+		DWORD dwMinMagicMotionInterval = (m_pClientList[iClientH]->m_cSkillMastery[4] == 100) ? 550 : 1500;
+		if ((dwTimeGap < dwMinMagicMotionInterval) && (m_pClientList[iClientH]->m_bMagicConfirm == TRUE)) {
 			try
 			{
 				wsprintf(G_cTxt, "Speed Cast: (%s) Player: (%s) - casting magic at irregular rates. ", m_pClientList[iClientH]->m_cIPaddress, m_pClientList[iClientH]->m_cCharName);

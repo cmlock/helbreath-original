@@ -49,6 +49,7 @@ public:
 
 	// Hack Checkers
 	DWORD m_dwMagicFreqTime, m_dwMoveFreqTime, m_dwAttackFreqTime;
+	DWORD m_dwLastMagicCastTime; // separate from m_dwRecentAttackTime so melee swings don't gate spellcasting cadence
 	BOOL m_bIsMoveBlocked, m_bMagicItem;
 	DWORD dwClientTime;
 	BOOL m_bMagicConfirm;
