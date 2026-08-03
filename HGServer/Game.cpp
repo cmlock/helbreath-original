@@ -10399,6 +10399,14 @@ void CGame::NpcBehavior_Attack(int iNpcH)
 		dX = m_pNpcList[m_pNpcList[iNpcH]->m_iTargetIndex]->m_sX;
 		dY = m_pNpcList[m_pNpcList[iNpcH]->m_iTargetIndex]->m_sY;
 		break;
+
+	default:
+		// m_cTargetType is stale/cleared (e.g. the target died while this Npc was mid-FLEE and
+		// the hit-and-run resume clobbered the MOVE state RemoveFromTarget had just set). dX/dY
+		// would otherwise be left uninitialized, sending the Npc off toward a garbage coordinate.
+		m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;
+		m_pNpcList[iNpcH]->m_cBehavior    = DEF_BEHAVIOR_MOVE;
+		return;
 	}
 
 	if ( (m_pNpcList[iNpcH]->m_bIsSummoned == FALSE) &&
@@ -11196,8 +11204,20 @@ void CGame::NpcBehavior_Flee(int iNpcH)
 	case DEF_ATTACKAI_EXCHANGEATTACK:
 	case DEF_ATTACKAI_TWOBYONEATTACK:
 		if (m_pNpcList[iNpcH]->m_sBehaviorTurnCount >= 2) {
-			m_pNpcList[iNpcH]->m_cBehavior          = DEF_BEHAVIOR_ATTACK;
 			m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;
+
+			// The hit that triggered this flee may also have killed the target, which clears
+			// m_iTargetIndex/m_cTargetType via RemoveFromTarget before this resume runs. Resuming
+			// ATTACK on a stale/cleared target left NpcBehavior_Attack's dX/dY uninitialized,
+			// sending the Npc walking toward a garbage coordinate for up to 20 turns. Verify the
+			// target is still actually there before resuming the attack.
+			if ( ((m_pNpcList[iNpcH]->m_cTargetType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[m_pNpcList[iNpcH]->m_iTargetIndex] != NULL)) ||
+				 ((m_pNpcList[iNpcH]->m_cTargetType == DEF_OWNERTYPE_NPC)    && (m_pNpcList[m_pNpcList[iNpcH]->m_iTargetIndex] != NULL)) ) {
+				m_pNpcList[iNpcH]->m_cBehavior = DEF_BEHAVIOR_ATTACK;
+			}
+			else {
+				m_pNpcList[iNpcH]->m_cBehavior = DEF_BEHAVIOR_MOVE;
+			}
 			return;
 		}
 		break;
