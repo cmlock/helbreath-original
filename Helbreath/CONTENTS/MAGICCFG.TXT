@@ -75,6 +75,7 @@ magic = 96 Earth-Shock-Wave         180    200     -1     4 5 6  0
 magic = 95 Mass-Illusion-Movement   200    200    27000   4 5 6  1  
 magic = 94 Resurrection	            200      0     -1     4 5 6  0
 magic = 97 Summon-Demon             150      165    60000   4 5 6  1
+magic = 98 Summon-Unicorn           150      165    60000   4 5 6  1
 
 
 //-----Num-Name-----------------ManaCost--ReqInt--Cost-----------OnMenu

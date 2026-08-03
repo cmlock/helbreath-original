@@ -5730,6 +5730,7 @@ void CGame::bAddNewEffect(short sType, int sX, int sY, int dX, int dY, char cSta
 		case 131: // Summon
 		case 132: // Invi
 		case 197: // Summon-Demon
+		case 198: // Summon-Unicorn
 			m_pEffectList[i]->m_cMaxFrame   = 12;
 			m_pEffectList[i]->m_dwFrameTime = 80;
 			lPan = -(((m_sViewPointX / 32) + fixx) - sX) * fixpan;
@@ -6631,6 +6632,7 @@ void CGame::DrawEffects()
 		case 131: // Summon-Creature
 		case 132: // Invisibility
 		case 197: // Summon-Demon
+		case 198: // Summon-Unicorn
 			cTempFrame = m_pEffectList[i]->m_cFrame;
 			if (cTempFrame < 0) break;
 			dX  = (m_pEffectList[i]->m_dX*32)  - m_sViewPointX;
@@ -14839,6 +14841,7 @@ BOOL CGame::bEffectFrameCounter()
 			case 136:
 			case 142:
 			case 197: // Summon-Demon
+			case 198: // Summon-Unicorn
 			case 144:
 			case 150: // Berserk : Cirlcle 6 magic
 			case 152: // Polymorph

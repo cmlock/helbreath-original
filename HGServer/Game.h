@@ -556,6 +556,7 @@ public:
 	BOOL bRegisterDelayEvent(int iDelayType, int iEffectType, DWORD dwLastTime, int iTargetH, char cTargetType, char cMapIndex, int dX, int dY, int iV1, int iV2, int iV3);
 	int iGetFollowerNumber(short sOwnerH, char cOwnerType);
 	int iGetDemonFollowerNumber(short sOwnerH, char cOwnerType);
+	int iGetUnicornFollowerNumber(short sOwnerH, char cOwnerType);
 	int  _iCalcSkillSSNpoint(int iLevel);
 	void OnKeyUp(WPARAM wParam, LPARAM lParam);
 	void OnKeyDown(WPARAM wParam, LPARAM lParam);

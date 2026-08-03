@@ -18989,6 +18989,10 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 							// Summon-Demon: capped at 1 active demon per player, independent of the Magery follower cap.
 							if (iGetDemonFollowerNumber(sOwnerH, cOwnerType) >= 1) break;
 						}
+						else if (sType == 98) {
+							// Summon-Unicorn: capped at 1 active unicorn per player, independent of the Magery follower cap.
+							if (iGetUnicornFollowerNumber(sOwnerH, cOwnerType) >= 1) break;
+						}
 						else {
 						iFollowersNum = iGetFollowerNumber(sOwnerH, cOwnerType);
 
@@ -19012,6 +19016,9 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 
 							if (sType == 97) {
 								strcpy(cNpcName, "Demon");
+							}
+							else if (sType == 98) {
+								strcpy(cNpcName, "Unicorn");
 							}
 							else
 							switch (iV1) {
@@ -29927,6 +29934,22 @@ int CGame::iGetDemonFollowerNumber(short sOwnerH, char cOwnerType)
 
 	for (i = 1; i < DEF_MAXNPCS; i++)
 	if ( (m_pNpcList[i] != NULL) && (m_pNpcList[i]->m_cMoveType == DEF_MOVETYPE_FOLLOW) && (m_pNpcList[i]->m_sType == 31) ) {
+
+		if ((m_pNpcList[i]->m_iFollowOwnerIndex == sOwnerH) && (m_pNpcList[i]->m_cFollowOwnerType == cOwnerType))
+			iTotal++;
+	}
+
+	return iTotal;
+}
+
+int CGame::iGetUnicornFollowerNumber(short sOwnerH, char cOwnerType)
+{
+ register int i, iTotal;
+
+	iTotal = 0;
+
+	for (i = 1; i < DEF_MAXNPCS; i++)
+	if ( (m_pNpcList[i] != NULL) && (m_pNpcList[i]->m_cMoveType == DEF_MOVETYPE_FOLLOW) && (m_pNpcList[i]->m_sType == 32) ) {
 
 		if ((m_pNpcList[i]->m_iFollowOwnerIndex == sOwnerH) && (m_pNpcList[i]->m_cFollowOwnerType == cOwnerType))
 			iTotal++;
