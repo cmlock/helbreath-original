@@ -20072,9 +20072,11 @@ void CGame::NpcMagicHandler(int iNpcH, short dX, short dY, short sType)
 			break;
 
 		case DEF_MAGICTYPE_HOLDOBJECT:
-			// 오브젝트의 움직임을 봉쇄한다. 
+			// 오브젝트의 움직임을 봉쇄한다.
 			m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, dX, dY);
-			if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE) {
+			// 소환/사역된 NPC의 마법은 자신의 주인을 공격하지 않는다.
+			if ( ((m_pNpcList[iNpcH]->m_bIsSummoned != TRUE) || (m_pNpcList[iNpcH]->m_cFollowOwnerType != cOwnerType) || (m_pNpcList[iNpcH]->m_iFollowOwnerIndex != sOwnerH)) &&
+				 (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE) ) {
 				
 				switch (cOwnerType) {
 				case DEF_OWNERTYPE_PLAYER:
@@ -27962,15 +27964,19 @@ void CGame::Effect_Damage_Spot(short sAttackerH, char cAttackerType, short sTarg
 	if (cAttackerType == DEF_OWNERTYPE_NPC)
 		if (m_pNpcList[sAttackerH] == NULL) return;
 
-	if ((cAttackerType == DEF_OWNERTYPE_PLAYER) && (m_pMapList[m_pClientList[sAttackerH]->m_cMapIndex] != 0) && 
+	if ((cAttackerType == DEF_OWNERTYPE_PLAYER) && (m_pMapList[m_pClientList[sAttackerH]->m_cMapIndex] != 0) &&
 		(m_pMapList[m_pClientList[sAttackerH]->m_cMapIndex]->m_bIsHeldenianMap == 1) && (m_bHeldenianInitiated == TRUE)) return;
-	
+
+	// 소환/사역된 NPC의 마법은 자신의 주인을 공격하지 않는다.
+	if ((cAttackerType == DEF_OWNERTYPE_NPC) && (m_pNpcList[sAttackerH]->m_bIsSummoned == TRUE) &&
+		(m_pNpcList[sAttackerH]->m_cFollowOwnerType == cTargetType) && (m_pNpcList[sAttackerH]->m_iFollowOwnerIndex == sTargetH)) return;
+
 	dwTime = timeGetTime();
 	iDamage = iDice(sV1, sV2) + sV3;
 	if (iDamage <= 0) iDamage = 0;
 
 	switch (cAttackerType) {
-	case DEF_OWNERTYPE_PLAYER:	
+	case DEF_OWNERTYPE_PLAYER:
 		if ((m_bAdminSecurity == TRUE) && (m_pClientList[sAttackerH]->m_iAdminUserLevel > 0)) return;
 		if (m_pClientList[sAttackerH]->m_cHeroArmourBonus == 2) iDamage += 4;
 		if ((m_pClientList[sAttackerH]->m_sItemEquipmentStatus[DEF_EQUIPPOS_LHAND] == -1) || (m_pClientList[sAttackerH]->m_sItemEquipmentStatus[DEF_EQUIPPOS_TWOHAND] == -1)) {
@@ -28445,9 +28451,13 @@ void CGame::Effect_Damage_Spot_Type2(short sAttackerH, char cAttackerType, short
 
 	if ((cAttackerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sAttackerH] == NULL)) return;
 	if ((cAttackerType == DEF_OWNERTYPE_NPC) && (m_pNpcList[sAttackerH] == NULL)) return;
-	if ((cAttackerType == DEF_OWNERTYPE_PLAYER) && (m_pMapList[m_pClientList[sAttackerH]->m_cMapIndex] != 0) && 
+	if ((cAttackerType == DEF_OWNERTYPE_PLAYER) && (m_pMapList[m_pClientList[sAttackerH]->m_cMapIndex] != 0) &&
 		(m_pMapList[m_pClientList[sAttackerH]->m_cMapIndex]->m_bIsHeldenianMap == 1) && (m_bHeldenianInitiated == TRUE)) return;
-	
+
+	// 소환/사역된 NPC의 마법은 자신의 주인을 공격하지 않는다.
+	if ((cAttackerType == DEF_OWNERTYPE_NPC) && (m_pNpcList[sAttackerH]->m_bIsSummoned == TRUE) &&
+		(m_pNpcList[sAttackerH]->m_cFollowOwnerType == cTargetType) && (m_pNpcList[sAttackerH]->m_iFollowOwnerIndex == sTargetH)) return;
+
 	dwTime = timeGetTime();
 	sTgtX = 0;
 	sTgtY = 0;
@@ -28894,11 +28904,15 @@ void CGame::Effect_Damage_Spot_DamageMove(short sAttackerH, char cAttackerType, 
 	if (cAttackerType == DEF_OWNERTYPE_NPC)
 		if (m_pNpcList[sAttackerH] == NULL) return;
 
+	// 소환/사역된 NPC의 마법은 자신의 주인을 공격하지 않는다.
+	if ((cAttackerType == DEF_OWNERTYPE_NPC) && (m_pNpcList[sAttackerH]->m_bIsSummoned == TRUE) &&
+		(m_pNpcList[sAttackerH]->m_cFollowOwnerType == cTargetType) && (m_pNpcList[sAttackerH]->m_iFollowOwnerIndex == sTargetH)) return;
+
 	dwTime = timeGetTime();
 	sTgtX = 0;
 	sTgtY = 0;
-	
-	// 해당 타켓에게 대미지를 먹인다. 
+
+	// 해당 타켓에게 대미지를 먹인다.
 	iDamage = iDice(sV1, sV2) + sV3;
 	if (iDamage <= 0) iDamage = 0;
 
@@ -29426,6 +29440,10 @@ void CGame::Effect_SpDown_Spot(short sAttackerH, char cAttackerType, short sTarg
 
 	if (cAttackerType == DEF_OWNERTYPE_PLAYER)
 		if (m_pClientList[sAttackerH] == NULL) return;
+
+	// 소환/사역된 NPC의 마법은 자신의 주인을 공격하지 않는다.
+	if ((cAttackerType == DEF_OWNERTYPE_NPC) && (m_pNpcList[sAttackerH] != NULL) && (m_pNpcList[sAttackerH]->m_bIsSummoned == TRUE) &&
+		(m_pNpcList[sAttackerH]->m_cFollowOwnerType == cTargetType) && (m_pNpcList[sAttackerH]->m_iFollowOwnerIndex == sTargetH)) return;
 
 	// 해당 타켓의 Sp를 내린다.
 	iSP = iDice(sV1, sV2) + sV3;
