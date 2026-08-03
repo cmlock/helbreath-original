@@ -140,3 +140,6 @@ Item  = KnightFullHelm(W)     1     1     2    12 22 0  0 0 0   2000      0     
 Item  = Horned-Helm(W)        1    1    2     17 24 0 0 0 0    3500      0      21   2    4000 16000    5     0   120
 Item  = Wings-Helm(W)         1    1    2     15 22 0 0 0 0    2500      0      21   3    5000 13000    6     0   100
 
+Item  = StoneOfXelima        0     0     0     0 0 0 0 0 0     3      0      6    128    100000  4000    -1     0      0
+Item  = StoneOfMerien        0     0     0     0 0 0 0 0 0     3      0      6    129    100000  4000    -1     0      0
+

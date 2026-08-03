@@ -47697,7 +47697,7 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 	class CItem * pItem;
 	char  cColor, cItemName[21];
 	BOOL  bIsGold;
-	int   iGenLevel, iResult, iItemID;
+	int   iGenLevel = 0, iResult, iItemID;
 	DWORD dwType, dwValue;
 	double dTmp1, dTmp2, dTmp3;
 
@@ -47742,9 +47742,7 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 		else {
 			// 9000 default; the lower the greater the Weapon/Armor/Wand Drop
 			// 35% Drop 40% of that is an Item 
-			dTmp1 = m_pClientList[sAttackerH]->m_iRating*m_cRepDropModifier;
-			if (dTmp1 > 1000) dTmp1 = 1000;
-			if (dTmp1 < -1000) dTmp1 = -1000;
+			dTmp1 = 1000; // treat every attacker as max reputation - secondary drop chance no longer scales with m_iRating
 			dTmp2 = (m_iSecondaryDropRate - (dTmp1));
 			if (iDice(1,10000) <= dTmp2) { 
 				// 40% Drop 90% of that is a standard drop
@@ -47796,7 +47794,7 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 										break;
 								}
 								break;
-						case 9: 		
+						case 9:
 							SYSTEMTIME SysTime;
 							GetLocalTime(&SysTime);
 							if (((short)SysTime.wMonth == 12) && (m_pNpcList[iNpcH]->m_sType == 61 || 55)) {
@@ -47806,6 +47804,7 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 								case 3: iItemID = 782; break; // Green Candy
 								}
 							}
+							else iItemID = 95; // Not the Christmas event - fall back to Green Potion instead of dropping nothing
 							break;
 				}
 				// If a non-existing item is created then delete the item
@@ -47892,7 +47891,7 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 					break;
 				}	
 
-				if (iGenLevel == 0) return;
+				if (iGenLevel == 0) iGenLevel = 1; // NPC type not in the tier table above - fall back to lowest tier instead of dropping nothing
 
 				// Weapon Drop: 
 				// 1.4% chance Valuable Drop 60% that it is a Weapon
@@ -48022,10 +48021,9 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 						case 7:
 						case 8:
 							iItemID = 256; break; // MagicWand(MS20)
-						case 9:
-						case 10:
-							break;
-						}	
+						default:
+							iItemID = 258; break; // MagicWand(MS20) - tiers 1, 9, 10 had no wand assigned above
+						}
 					}
 				}
 				else {
@@ -48162,8 +48160,8 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 						switch(iDice(1,4)) {
 							case 1: iItemID = 457; break; // ScaleMail(M)
 							case 2: iItemID = 477; break; // ScaleMail(W)
-							case 4: iItemID = 600; break; // Helm(M)
-							case 5: iItemID = 602; break; // Helm(W)
+							case 3: iItemID = 600; break; // Helm(M)
+							case 4: iItemID = 602; break; // Helm(W)
 							}
 							break;
 					}
@@ -48212,23 +48210,23 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 					pItem->m_cItemColor = cColor;
 
 					iResult = iDice(1, 30000);
-					if ((iResult >= 1) && (iResult < 10000))           dwValue = 1;  // 10000/29348 = 34%
-					else if ((iResult >= 10000) && (iResult < 17400))  dwValue = 2;  // 6600/29348 = 22.4%
-					else if ((iResult >= 17400) && (iResult < 22400))  dwValue = 3;  // 4356/29348 = 14.8%
-					else if ((iResult >= 22400) && (iResult < 25400))  dwValue = 4;  // 2874/29348 = 9.7%
-					else if ((iResult >= 25400) && (iResult < 27400))  dwValue = 5;  // 1897/29348 = 6.4%
-					else if ((iResult >= 27400) && (iResult < 28400))  dwValue = 6;  // 1252/29348 = 4.2%
-					else if ((iResult >= 28400) && (iResult < 28900))  dwValue = 7;  // 826/29348 = 2.8%
-					else if ((iResult >= 28900) && (iResult < 29300))  dwValue = 8;  // 545/29348 = 1.85%
-					else if ((iResult >= 29300) && (iResult < 29600))  dwValue = 9;  // 360/29348 = 1.2%
-					else if ((iResult >= 29600) && (iResult < 29800))  dwValue = 10; // 237/29348 = 0.8%
-					else if ((iResult >= 29800) && (iResult < 29900))  dwValue = 11; // 156/29348 = 0.5%
-					else if ((iResult >= 29900) && (iResult < 29970))  dwValue = 12; // 103/29348 = 0.3%
-					else if ((iResult >= 29970) && (iResult <= 30000))  dwValue = 13; // 68/29348 = 0.1%
+					if ((iResult >= 1) && (iResult < 7250))            dwValue = 1;  // 7250/30000 = 24.2%
+					else if ((iResult >= 7250) && (iResult < 12800))   dwValue = 2;  // 5550/30000 = 18.5%
+					else if ((iResult >= 12800) && (iResult < 17050))  dwValue = 3;  // 4250/30000 = 14.2%
+					else if ((iResult >= 17050) && (iResult < 20300))  dwValue = 4;  // 3250/30000 = 10.8%
+					else if ((iResult >= 20300) && (iResult < 22800))  dwValue = 5;  // 2500/30000 = 8.3%
+					else if ((iResult >= 22800) && (iResult < 24700))  dwValue = 6;  // 1900/30000 = 6.3%
+					else if ((iResult >= 24700) && (iResult < 26150))  dwValue = 7;  // 1450/30000 = 4.8%
+					else if ((iResult >= 26150) && (iResult < 27300))  dwValue = 8;  // 1150/30000 = 3.8%
+					else if ((iResult >= 27300) && (iResult < 28150))  dwValue = 9;  // 850/30000 = 2.8%
+					else if ((iResult >= 28150) && (iResult < 28800))  dwValue = 10; // 650/30000 = 2.2%
+					else if ((iResult >= 28800) && (iResult < 29300))  dwValue = 11; // 500/30000 = 1.7%
+					else if ((iResult >= 29300) && (iResult < 29700))  dwValue = 12; // 400/30000 = 1.3%
+					else if ((iResult >= 29700) && (iResult <= 30000))  dwValue = 13; // 300/30000 = 1.0%
 					else dwValue = 1; // v2.03 906
 
 					switch (dwType) {
-					case 1: 
+					case 1:
 						if (dwValue <= 5) dwValue = 5;
 						break; 
 					case 2: // 
@@ -48257,34 +48255,34 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 						else if ((iResult >= 9500) && (iResult <= 10000)) dwType = 11;
 
 						iResult = iDice(1, 30000);
-						if ((iResult >= 1) && (iResult < 10000))           dwValue = 1;  // 10000/29348 = 34%
-						else if ((iResult >= 10000) && (iResult < 17400))  dwValue = 2;  // 6600/29348 = 22.4%
-						else if ((iResult >= 17400) && (iResult < 22400))  dwValue = 3;  // 4356/29348 = 14.8%
-						else if ((iResult >= 22400) && (iResult < 25400))  dwValue = 4;  // 2874/29348 = 9.7%
-						else if ((iResult >= 25400) && (iResult < 27400))  dwValue = 5;  // 1897/29348 = 6.4%
-						else if ((iResult >= 27400) && (iResult < 28400))  dwValue = 6;  // 1252/29348 = 4.2%
-						else if ((iResult >= 28400) && (iResult < 28900))  dwValue = 7;  // 826/29348 = 2.8%
-						else if ((iResult >= 28900) && (iResult < 29300))  dwValue = 8;  // 545/29348 = 1.85%
-						else if ((iResult >= 29300) && (iResult < 29600))  dwValue = 9;  // 360/29348 = 1.2%
-						else if ((iResult >= 29600) && (iResult < 29800))  dwValue = 10; // 237/29348 = 0.8%
-						else if ((iResult >= 29800) && (iResult < 29900))  dwValue = 11; // 156/29348 = 0.5%
-						else if ((iResult >= 29900) && (iResult < 29970))  dwValue = 12; // 103/29348 = 0.3%
-						else if ((iResult >= 29970) && (iResult <= 30000))  dwValue = 13; // 68/29348 = 0.1%
+						if ((iResult >= 1) && (iResult < 7250))            dwValue = 1;  // 7250/30000 = 24.2%
+						else if ((iResult >= 7250) && (iResult < 12800))   dwValue = 2;  // 5550/30000 = 18.5%
+						else if ((iResult >= 12800) && (iResult < 17050))  dwValue = 3;  // 4250/30000 = 14.2%
+						else if ((iResult >= 17050) && (iResult < 20300))  dwValue = 4;  // 3250/30000 = 10.8%
+						else if ((iResult >= 20300) && (iResult < 22800))  dwValue = 5;  // 2500/30000 = 8.3%
+						else if ((iResult >= 22800) && (iResult < 24700))  dwValue = 6;  // 1900/30000 = 6.3%
+						else if ((iResult >= 24700) && (iResult < 26150))  dwValue = 7;  // 1450/30000 = 4.8%
+						else if ((iResult >= 26150) && (iResult < 27300))  dwValue = 8;  // 1150/30000 = 3.8%
+						else if ((iResult >= 27300) && (iResult < 28150))  dwValue = 9;  // 850/30000 = 2.8%
+						else if ((iResult >= 28150) && (iResult < 28800))  dwValue = 10; // 650/30000 = 2.2%
+						else if ((iResult >= 28800) && (iResult < 29300))  dwValue = 11; // 500/30000 = 1.7%
+						else if ((iResult >= 29300) && (iResult < 29700))  dwValue = 12; // 400/30000 = 1.3%
+						else if ((iResult >= 29700) && (iResult <= 30000))  dwValue = 13; // 300/30000 = 1.0%
 						else dwValue = 1; // v2.03 906
 
 						switch (dwType) {
-						case 2: 
+						case 2:
 							if (dwValue <= 3) dwValue = 3;
-							break; 
-						case 10: 
-							if (dwValue > 7) dwValue = 7; 
-							break; 
-						case 11: 
+							break;
+						case 10:
+							if (dwValue > 7) dwValue = 7;
+							break;
+						case 11:
 							dwValue = 2;
-							break; 
-						case 12: 
+							break;
+						case 12:
 							dwValue = 5;
-							break; 
+							break;
 						}
 						if ((iGenLevel <= 2) && (dwValue > 7)) dwValue = 7;
 
@@ -48302,19 +48300,19 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 					pItem->m_cItemColor = cColor;
 
 					iResult = iDice(1, 30000);
-					if ((iResult >= 1) && (iResult < 10000))           dwValue = 1;  // 10000/29348 = 34%
-					else if ((iResult >= 10000) && (iResult < 17400))  dwValue = 2;  // 6600/29348 = 22.4%
-					else if ((iResult >= 17400) && (iResult < 22400))  dwValue = 3;  // 4356/29348 = 14.8%
-					else if ((iResult >= 22400) && (iResult < 25400))  dwValue = 4;  // 2874/29348 = 9.7%
-					else if ((iResult >= 25400) && (iResult < 27400))  dwValue = 5;  // 1897/29348 = 6.4%
-					else if ((iResult >= 27400) && (iResult < 28400))  dwValue = 6;  // 1252/29348 = 4.2%
-					else if ((iResult >= 28400) && (iResult < 28900))  dwValue = 7;  // 826/29348 = 2.8%
-					else if ((iResult >= 28900) && (iResult < 29300))  dwValue = 8;  // 545/29348 = 1.85%
-					else if ((iResult >= 29300) && (iResult < 29600))  dwValue = 9;  // 360/29348 = 1.2%
-					else if ((iResult >= 29600) && (iResult < 29800))  dwValue = 10; // 237/29348 = 0.8%
-					else if ((iResult >= 29800) && (iResult < 29900))  dwValue = 11; // 156/29348 = 0.5%
-					else if ((iResult >= 29900) && (iResult < 29970))  dwValue = 12; // 103/29348 = 0.3%
-					else if ((iResult >= 29970) && (iResult <= 30000))  dwValue = 13; // 68/29348 = 0.1%
+					if ((iResult >= 1) && (iResult < 7250))            dwValue = 1;  // 7250/30000 = 24.2%
+					else if ((iResult >= 7250) && (iResult < 12800))   dwValue = 2;  // 5550/30000 = 18.5%
+					else if ((iResult >= 12800) && (iResult < 17050))  dwValue = 3;  // 4250/30000 = 14.2%
+					else if ((iResult >= 17050) && (iResult < 20300))  dwValue = 4;  // 3250/30000 = 10.8%
+					else if ((iResult >= 20300) && (iResult < 22800))  dwValue = 5;  // 2500/30000 = 8.3%
+					else if ((iResult >= 22800) && (iResult < 24700))  dwValue = 6;  // 1900/30000 = 6.3%
+					else if ((iResult >= 24700) && (iResult < 26150))  dwValue = 7;  // 1450/30000 = 4.8%
+					else if ((iResult >= 26150) && (iResult < 27300))  dwValue = 8;  // 1150/30000 = 3.8%
+					else if ((iResult >= 27300) && (iResult < 28150))  dwValue = 9;  // 850/30000 = 2.8%
+					else if ((iResult >= 28150) && (iResult < 28800))  dwValue = 10; // 650/30000 = 2.2%
+					else if ((iResult >= 28800) && (iResult < 29300))  dwValue = 11; // 500/30000 = 1.7%
+					else if ((iResult >= 29300) && (iResult < 29700))  dwValue = 12; // 400/30000 = 1.3%
+					else if ((iResult >= 29700) && (iResult <= 30000))  dwValue = 13; // 300/30000 = 1.0%
 					else dwValue = 1; // v2.03 906
 
 					if ((iGenLevel <= 2) && (dwValue > 7)) dwValue = 7;
@@ -48333,36 +48331,36 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 						else if ((iResult >= 9500) && (iResult <= 10000)) dwType = 11;
 
 						iResult = iDice(1, 30000);
-						if ((iResult >= 1) && (iResult < 10000))           dwValue = 1;  // 10000/29348 = 34%
-						else if ((iResult >= 10000) && (iResult < 17400))  dwValue = 2;  // 6600/29348 = 22.4%
-						else if ((iResult >= 17400) && (iResult < 22400))  dwValue = 3;  // 4356/29348 = 14.8%
-						else if ((iResult >= 22400) && (iResult < 25400))  dwValue = 4;  // 2874/29348 = 9.7%
-						else if ((iResult >= 25400) && (iResult < 27400))  dwValue = 5;  // 1897/29348 = 6.4%
-						else if ((iResult >= 27400) && (iResult < 28400))  dwValue = 6;  // 1252/29348 = 4.2%
-						else if ((iResult >= 28400) && (iResult < 28900))  dwValue = 7;  // 826/29348 = 2.8%
-						else if ((iResult >= 28900) && (iResult < 29300))  dwValue = 8;  // 545/29348 = 1.85%
-						else if ((iResult >= 29300) && (iResult < 29600))  dwValue = 9;  // 360/29348 = 1.2%
-						else if ((iResult >= 29600) && (iResult < 29800))  dwValue = 10; // 237/29348 = 0.8%
-						else if ((iResult >= 29800) && (iResult < 29900))  dwValue = 11; // 156/29348 = 0.5%
-						else if ((iResult >= 29900) && (iResult < 29970))  dwValue = 12; // 103/29348 = 0.3%
-						else if ((iResult >= 29970) && (iResult <= 30000))  dwValue = 13; // 68/29348 = 0.1%
+						if ((iResult >= 1) && (iResult < 7250))            dwValue = 1;  // 7250/30000 = 24.2%
+						else if ((iResult >= 7250) && (iResult < 12800))   dwValue = 2;  // 5550/30000 = 18.5%
+						else if ((iResult >= 12800) && (iResult < 17050))  dwValue = 3;  // 4250/30000 = 14.2%
+						else if ((iResult >= 17050) && (iResult < 20300))  dwValue = 4;  // 3250/30000 = 10.8%
+						else if ((iResult >= 20300) && (iResult < 22800))  dwValue = 5;  // 2500/30000 = 8.3%
+						else if ((iResult >= 22800) && (iResult < 24700))  dwValue = 6;  // 1900/30000 = 6.3%
+						else if ((iResult >= 24700) && (iResult < 26150))  dwValue = 7;  // 1450/30000 = 4.8%
+						else if ((iResult >= 26150) && (iResult < 27300))  dwValue = 8;  // 1150/30000 = 3.8%
+						else if ((iResult >= 27300) && (iResult < 28150))  dwValue = 9;  // 850/30000 = 2.8%
+						else if ((iResult >= 28150) && (iResult < 28800))  dwValue = 10; // 650/30000 = 2.2%
+						else if ((iResult >= 28800) && (iResult < 29300))  dwValue = 11; // 500/30000 = 1.7%
+						else if ((iResult >= 29300) && (iResult < 29700))  dwValue = 12; // 400/30000 = 1.3%
+						else if ((iResult >= 29700) && (iResult <= 30000))  dwValue = 13; // 300/30000 = 1.0%
 						else dwValue = 1; // v2.03 906
 
 						if ((iGenLevel <= 2) && (dwValue > 7)) dwValue = 7;
 
 						switch (dwType) {
-						case 2: 
+						case 2:
 							if (dwValue <= 3) dwValue = 3;
-							break; 
-						case 10: 
-							if (dwValue > 7) dwValue = 7; 
-							break; 
-						case 11: 
+							break;
+						case 10:
+							if (dwValue > 7) dwValue = 7;
+							break;
+						case 11:
 							dwValue = 2;
-							break; 
+							break;
 						case 12:
 							dwValue = 5;
-							break; 
+							break;
 						}
 
 						dwType  = dwType << 12;
@@ -48379,28 +48377,28 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 					else if ((iResult >= 9555) && (iResult <= 10000)) dwType = 12; //dwType = 12;
 
 					iResult = iDice(1, 30000);
-					if ((iResult >= 1) && (iResult < 10000))           dwValue = 1;  // 10000/29348 = 34%
-					else if ((iResult >= 10000) && (iResult < 17400))  dwValue = 2;  // 6600/29348 = 22.4%
-					else if ((iResult >= 17400) && (iResult < 22400))  dwValue = 3;  // 4356/29348 = 14.8%
-					else if ((iResult >= 22400) && (iResult < 25400))  dwValue = 4;  // 2874/29348 = 9.7%
-					else if ((iResult >= 25400) && (iResult < 27400))  dwValue = 5;  // 1897/29348 = 6.4%
-					else if ((iResult >= 27400) && (iResult < 28400))  dwValue = 6;  // 1252/29348 = 4.2%
-					else if ((iResult >= 28400) && (iResult < 28900))  dwValue = 7;  // 826/29348 = 2.8%
-					else if ((iResult >= 28900) && (iResult < 29300))  dwValue = 8;  // 545/29348 = 1.85%
-					else if ((iResult >= 29300) && (iResult < 29600))  dwValue = 9;  // 360/29348 = 1.2%
-					else if ((iResult >= 29600) && (iResult < 29800))  dwValue = 10; // 237/29348 = 0.8%
-					else if ((iResult >= 29800) && (iResult < 29900))  dwValue = 11; // 156/29348 = 0.5%
-					else if ((iResult >= 29900) && (iResult < 29970))  dwValue = 12; // 103/29348 = 0.3%
-					else if ((iResult >= 29970) && (iResult <= 30000))  dwValue = 13; // 68/29348 = 0.1%
+					if ((iResult >= 1) && (iResult < 7250))            dwValue = 1;  // 7250/30000 = 24.2%
+					else if ((iResult >= 7250) && (iResult < 12800))   dwValue = 2;  // 5550/30000 = 18.5%
+					else if ((iResult >= 12800) && (iResult < 17050))  dwValue = 3;  // 4250/30000 = 14.2%
+					else if ((iResult >= 17050) && (iResult < 20300))  dwValue = 4;  // 3250/30000 = 10.8%
+					else if ((iResult >= 20300) && (iResult < 22800))  dwValue = 5;  // 2500/30000 = 8.3%
+					else if ((iResult >= 22800) && (iResult < 24700))  dwValue = 6;  // 1900/30000 = 6.3%
+					else if ((iResult >= 24700) && (iResult < 26150))  dwValue = 7;  // 1450/30000 = 4.8%
+					else if ((iResult >= 26150) && (iResult < 27300))  dwValue = 8;  // 1150/30000 = 3.8%
+					else if ((iResult >= 27300) && (iResult < 28150))  dwValue = 9;  // 850/30000 = 2.8%
+					else if ((iResult >= 28150) && (iResult < 28800))  dwValue = 10; // 650/30000 = 2.2%
+					else if ((iResult >= 28800) && (iResult < 29300))  dwValue = 11; // 500/30000 = 1.7%
+					else if ((iResult >= 29300) && (iResult < 29700))  dwValue = 12; // 400/30000 = 1.3%
+					else if ((iResult >= 29700) && (iResult <= 30000))  dwValue = 13; // 300/30000 = 1.0%
 					else dwValue = 1; // v2.03 906
 
 					switch (dwType) {
-					case 6: 
+					case 6:
 						if (dwValue <= 4) dwValue = 4;
-						break; 
-					case 8: 
+						break;
+					case 8:
 						if (dwValue <= 2) dwValue = 2;
-						break; 
+						break;
 
 					case 11:
 					case 12:
@@ -48430,29 +48428,29 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 						else if ((iResult >= 9800) && (iResult <= 10000)) dwType = 9;
 
 						iResult = iDice(1, 30000);
-						if ((iResult >= 1) && (iResult < 10000))           dwValue = 1;  // 10000/29348 = 34%
-						else if ((iResult >= 10000) && (iResult < 17400))  dwValue = 2;  // 6600/29348 = 22.4%
-						else if ((iResult >= 17400) && (iResult < 22400))  dwValue = 3;  // 4356/29348 = 14.8%
-						else if ((iResult >= 22400) && (iResult < 25400))  dwValue = 4;  // 2874/29348 = 9.7%
-						else if ((iResult >= 25400) && (iResult < 27400))  dwValue = 5;  // 1897/29348 = 6.4%
-						else if ((iResult >= 27400) && (iResult < 28400))  dwValue = 6;  // 1252/29348 = 4.2%
-						else if ((iResult >= 28400) && (iResult < 28900))  dwValue = 7;  // 826/29348 = 2.8%
-						else if ((iResult >= 28900) && (iResult < 29300))  dwValue = 8;  // 545/29348 = 1.85%
-						else if ((iResult >= 29300) && (iResult < 29600))  dwValue = 9;  // 360/29348 = 1.2%
-						else if ((iResult >= 29600) && (iResult < 29800))  dwValue = 10; // 237/29348 = 0.8%
-						else if ((iResult >= 29800) && (iResult < 29900))  dwValue = 11; // 156/29348 = 0.5%
-						else if ((iResult >= 29900) && (iResult < 29970))  dwValue = 12; // 103/29348 = 0.3%
-						else if ((iResult >= 29970) && (iResult <= 30000))  dwValue = 13; // 68/29348 = 0.1%
+						if ((iResult >= 1) && (iResult < 7250))            dwValue = 1;  // 7250/30000 = 24.2%
+						else if ((iResult >= 7250) && (iResult < 12800))   dwValue = 2;  // 5550/30000 = 18.5%
+						else if ((iResult >= 12800) && (iResult < 17050))  dwValue = 3;  // 4250/30000 = 14.2%
+						else if ((iResult >= 17050) && (iResult < 20300))  dwValue = 4;  // 3250/30000 = 10.8%
+						else if ((iResult >= 20300) && (iResult < 22800))  dwValue = 5;  // 2500/30000 = 8.3%
+						else if ((iResult >= 22800) && (iResult < 24700))  dwValue = 6;  // 1900/30000 = 6.3%
+						else if ((iResult >= 24700) && (iResult < 26150))  dwValue = 7;  // 1450/30000 = 4.8%
+						else if ((iResult >= 26150) && (iResult < 27300))  dwValue = 8;  // 1150/30000 = 3.8%
+						else if ((iResult >= 27300) && (iResult < 28150))  dwValue = 9;  // 850/30000 = 2.8%
+						else if ((iResult >= 28150) && (iResult < 28800))  dwValue = 10; // 650/30000 = 2.2%
+						else if ((iResult >= 28800) && (iResult < 29300))  dwValue = 11; // 500/30000 = 1.7%
+						else if ((iResult >= 29300) && (iResult < 29700))  dwValue = 12; // 400/30000 = 1.3%
+						else if ((iResult >= 29700) && (iResult <= 30000))  dwValue = 13; // 300/30000 = 1.0%
 						else dwValue = 1; // v2.03 906
 
 						switch (dwType) {
-						case 1: 
-						case 3: 
-						case 7: 
-						case 8: 
-						case 9: 
+						case 1:
+						case 3:
+						case 7:
+						case 8:
+						case 9:
 							if (dwValue <= 3) dwValue = 3;
-							break; 
+							break;
 						}
 						if ((iGenLevel <= 2) && (dwValue > 7)) dwValue = 7;
 
@@ -49791,17 +49789,17 @@ BOOL CGame::bCheckIsItemUpgradeSuccess(int iClientH, int iItemIndex, int iSomH, 
 	iValue = (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0x0F0000000) >> 28;
 
 	switch (iValue) {
-	case 0: iProb = 30; break;  // +1 :90%     +1~+2
-	case 1: iProb = 25; break;  // +2 :80%      +3
-	case 2: iProb = 20; break;  // +3 :48%      +4 
-	case 3: iProb = 15; break;  // +4 :24%      +5
-	case 4: iProb = 10; break;  // +5 :9.6%     +6
-	case 5: iProb = 10; break;  // +6 :2.8%     +7
-	case 6: iProb =  8; break;  // +7 :0.57%    +8
-	case 7: iProb =  8; break;  // +8 :0.05%    +9
-	case 8: iProb =  5; break;  // +9 :0.004%   +10
-	case 9: iProb =  3; break;  // +10:0.00016%
-	default: iProb = 1; break;
+	case 0: iProb = 100; break; // +0 -> +1: guaranteed
+	case 1: iProb = 77;  break; // +1 -> +2
+	case 2: iProb = 60;  break; // +2 -> +3
+	case 3: iProb = 46;  break; // +3 -> +4
+	case 4: iProb = 36;  break; // +4 -> +5
+	case 5: iProb = 28;  break; // +5 -> +6
+	case 6: iProb = 22;  break; // +6 -> +7
+	case 7: iProb = 17;  break; // +7 -> +8
+	case 8: iProb = 13;  break; // +8 -> +9
+	case 9: iProb = 10;  break; // +9 -> +10
+	default: iProb = 10; break; // beyond +10: floor matches the final tier
 	}
 
 	if (((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0x00000001) != NULL) && (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2 > 100)) {	
@@ -51742,11 +51740,8 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 							if (bCheckIsItemUpgradeSuccess(iClientH, iItemIndex, iSoxH) == FALSE) {
 								// 업그레이드 실패 
 								SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
-								// 실패한 아이템 없앤다.
-								iValue = (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0xF0000000) >> 28; // v2.172
-								if (iValue >= 1) ItemDepleteHandler(iClientH, iItemIndex, FALSE); // v2.172 +1 -> +2 단계에서 실패하면 사라짐 
-								// 스톤 오브 제리마 없앤다.
-								ItemDepleteHandler(iClientH, iSoxH, FALSE);	
+								// 스톤 오브 제리마 없앤다. (실패해도 대상 아이템은 파괴되지 않음)
+								ItemDepleteHandler(iClientH, iSoxH, FALSE);
 								return;
 							}
 
@@ -51824,10 +51819,8 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 				if (bCheckIsItemUpgradeSuccess(iClientH, iItemIndex, iSomH,TRUE) == FALSE) {
 					// 업그레이드 실패 
 					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
-					iValue = (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0xF0000000) >> 28; // v2.172
-					if (iValue >= 1) ItemDepleteHandler(iClientH, iItemIndex, FALSE); // v2.172 +1 -> +2 단계에서 실패하면 사라짐 
-					// 스톤 오브 메리엔 없앤다.
-					ItemDepleteHandler(iClientH, iSomH, FALSE);	
+					// 스톤 오브 메리엔 없앤다. (실패해도 대상 아이템은 파괴되지 않음)
+					ItemDepleteHandler(iClientH, iSomH, FALSE);
 					return;
 				}
 
@@ -51910,8 +51903,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 					if (iSoM > 0) {
 						if (bCheckIsItemUpgradeSuccess(iClientH, iItemIndex, iSomH, TRUE) == FALSE) {
 							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
-							iValue = (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0xF0000000) >> 28;
-							if (iValue >= 1) ItemDepleteHandler(iClientH, iItemIndex, FALSE);
+							// 실패해도 대상 아이템은 파괴되지 않음
 							ItemDepleteHandler(iClientH, iSomH, FALSE);
 							return;
 						}
@@ -52148,10 +52140,8 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 						if (bCheckIsItemUpgradeSuccess(iClientH, iItemIndex, iSoxH) == FALSE) {
 							// 업그레이드 실패 
 							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
-							iValue = (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0xF0000000) >> 28; // v2.172
-							if (iValue >= 1) ItemDepleteHandler(iClientH, iItemIndex, FALSE); // v2.172 +1 -> +2 단계에서 실패하면 사라짐 
-							// 스톤 오브 제리마 없앤다.
-							ItemDepleteHandler(iClientH, iSoxH, FALSE);	
+							// 스톤 오브 제리마 없앤다. (실패해도 대상 아이템은 파괴되지 않음)
+							ItemDepleteHandler(iClientH, iSoxH, FALSE);
 							return;
 						}
 
