@@ -169,7 +169,8 @@ CGame::CGame(HWND hWnd)
 	ZeroMemory(m_cServerName, sizeof(m_cServerName));
 
 	m_iPlayerMaxLevel = DEF_PLAYERMAXLEVEL;
-	
+	m_dExpRateMultiplier = DEF_EXPRATEMULTIPLIER;
+
 	for (i = 0; i < DEF_MAXCLIENTS; i++)
 		m_pClientList[i] = NULL;
 
@@ -5249,12 +5250,20 @@ BOOL CGame::bReadSettingsConfigFile(char * cFn)
                cReadMode = 0; 
                break;
 
-			case 20: 
+			case 20:
 				m_iPlayerMaxLevel = atoi(token);
                if (m_iPlayerMaxLevel == 0) m_iPlayerMaxLevel = 180;
                cReadMode = 0;
                break;
-			
+
+			case 21:
+				m_dExpRateMultiplier = atof(token);
+				if (m_dExpRateMultiplier <= 0) m_dExpRateMultiplier = DEF_EXPRATEMULTIPLIER;
+				wsprintf(cTxt, "(*) EXP rate multiplier: (%.2f)", m_dExpRateMultiplier);
+				PutLogList(cTxt);
+               cReadMode = 0;
+               break;
+
 			}
          } 
          else { 
@@ -5278,7 +5287,8 @@ BOOL CGame::bReadSettingsConfigFile(char * cFn)
 			if (memcmp(token, "rep-drop-modifier", 17) == 0)		cReadMode = 18;
 			if (memcmp(token, "admin-security-code", 19) == 0)		cReadMode = 19;
 			if (memcmp(token, "max-player-level", 16) == 0)		cReadMode = 20;
-         } 
+			if (memcmp(token, "exp-rate-multiplier", 19) == 0)		cReadMode = 21;
+         }
 
          token = pStrTok->pGet(); 
          //token = strtok( NULL, seps ); 
@@ -45310,6 +45320,9 @@ DWORD dwTime = timeGetTime(), iUnitValue;
 int iTotalPartyMembers;
 
 	if (m_pClientList[iClientH] == NULL) return;
+	if (iExp <= 0) return;
+
+	iExp = (DWORD)((double)iExp * m_dExpRateMultiplier);
 	if (iExp <= 0) return;
 
 	if (m_pClientList[iClientH]->m_iLevel <= 80) {

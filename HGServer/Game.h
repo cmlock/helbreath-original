@@ -156,6 +156,7 @@
 
 //============================
 #define DEF_PLAYERMAXLEVEL	180				// 최대 레벨: Npc.cfg 파일에 설정되어 있지 않을 경우 m_iPlayerMaxLevel에 입력된다.
+#define DEF_EXPRATEMULTIPLIER	10.0			// EXP multiplier applied to all EXP gains if GServer.cfg does not set exp-rate-multiplier.
 //============================
 
 //============================
@@ -964,6 +965,7 @@ public:
 	short m_sLastCrusadeDate;
 	int   m_iCrusadeWinnerSide;
 	int   m_iPlayerMaxLevel;
+	double m_dExpRateMultiplier;
 
 	struct  {
 		int iTotalMembers;
