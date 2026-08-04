@@ -170,6 +170,7 @@ CGame::CGame(HWND hWnd)
 
 	m_iPlayerMaxLevel = DEF_PLAYERMAXLEVEL;
 	m_dExpRateMultiplier = DEF_EXPRATEMULTIPLIER;
+	m_dGoldRateMultiplier = DEF_GOLDRATEMULTIPLIER;
 
 	for (i = 0; i < DEF_MAXCLIENTS; i++)
 		m_pClientList[i] = NULL;
@@ -5264,6 +5265,14 @@ BOOL CGame::bReadSettingsConfigFile(char * cFn)
                cReadMode = 0;
                break;
 
+			case 22:
+				m_dGoldRateMultiplier = atof(token);
+				if (m_dGoldRateMultiplier <= 0) m_dGoldRateMultiplier = DEF_GOLDRATEMULTIPLIER;
+				wsprintf(cTxt, "(*) Gold rate multiplier: (%.2f)", m_dGoldRateMultiplier);
+				PutLogList(cTxt);
+               cReadMode = 0;
+               break;
+
 			}
          } 
          else { 
@@ -5288,6 +5297,7 @@ BOOL CGame::bReadSettingsConfigFile(char * cFn)
 			if (memcmp(token, "admin-security-code", 19) == 0)		cReadMode = 19;
 			if (memcmp(token, "max-player-level", 16) == 0)		cReadMode = 20;
 			if (memcmp(token, "exp-rate-multiplier", 19) == 0)		cReadMode = 21;
+			if (memcmp(token, "gold-rate-multiplier", 20) == 0)		cReadMode = 22;
          }
 
          token = pStrTok->pGet(); 
@@ -27108,7 +27118,7 @@ void CGame::DeleteNpc(int iNpcH)
 				}
 				else {
 					if (iItemIDs[j] == 90) // Gold
-						pItem->m_dwCount = iDice(10, 15000);
+						pItem->m_dwCount = (DWORD)((double)iDice(10, 15000) * m_dGoldRateMultiplier);
 					else
 						pItem->m_dwCount = dwCount;
 
@@ -47776,6 +47786,7 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 			}
 
 			pItem->m_dwCount = (DWORD)(iDice(1, (m_pNpcList[iNpcH]->m_iGoldDiceMax - m_pNpcList[iNpcH]->m_iGoldDiceMin)) + m_pNpcList[iNpcH]->m_iGoldDiceMin);
+			pItem->m_dwCount = (DWORD)((double)pItem->m_dwCount * m_dGoldRateMultiplier);
 
 			// v1.42 Gold 
 			if ((cAttackerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sAttackerH]->m_iAddGold != NULL)) {
