@@ -5221,8 +5221,8 @@ BOOL CGame::bReadSettingsConfigFile(char * cFn)
                break;
 
 			case 16: 
-               m_sCharStatLimit = atoi(token); 
-               if (m_sCharStatLimit == 0) m_sCharStatLimit = 200; 
+               m_sCharStatLimit = atoi(token);
+               if (m_sCharStatLimit == 0) m_sCharStatLimit = 1000;
                cReadMode = 0;
                break;
 
@@ -17322,7 +17322,7 @@ int CGame::iClientMotion_Magic_Handler(int iClientH, short sX, short sY, char cD
 
 /*********************************************************************************************************************
 **  DWORD CGame::dwGetBeneficialMagicDuration(int iClientH, DWORD dwBaseDuration)									**
-**  description			:: scales a beneficial spell's duration by the caster's Mag stat, up to +100% at max stat	**
+**  description			:: scales a beneficial spell's duration by the caster's Mag stat, +(Mag/2)% duration		**
 **	return value		:: scaled duration, in the same units as dwBaseDuration									**
 **********************************************************************************************************************/
 DWORD CGame::dwGetBeneficialMagicDuration(int iClientH, DWORD dwBaseDuration)
@@ -17330,11 +17330,8 @@ DWORD CGame::dwGetBeneficialMagicDuration(int iClientH, DWORD dwBaseDuration)
 	double dRatio;
 
 	if (m_pClientList[iClientH] == NULL) return dwBaseDuration;
-	if (m_sCharStatLimit <= 0) return dwBaseDuration;
 
-	dRatio = (double)(m_pClientList[iClientH]->m_iMag + m_pClientList[iClientH]->m_iAngelicMag) / (double)m_sCharStatLimit;
-	if (dRatio > 1.0) dRatio = 1.0;
-	if (dRatio < 0.0) dRatio = 0.0;
+	dRatio = (double)(m_pClientList[iClientH]->m_iMag + m_pClientList[iClientH]->m_iAngelicMag) / 200.0;
 
 	return (DWORD)((double)dwBaseDuration * (1.0 + dRatio));
 }
