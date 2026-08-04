@@ -20356,7 +20356,7 @@ void CGame::RequestTeleportHandler(int iClientH, char * pData, char * cMapName, 
 	char  * pBuffer, cTempMapName[21];
 	DWORD * dwp;
 	WORD  * wp;
-	char  * cp, cDestMapName[11], cDir, cMapIndex, cQuestRemain;
+	char  * cp, cDestMapName[11], cDir, cMapIndex, cQuestRemain, cOldMapIndex;
 	short * sp, sX, sY, sSummonPoints;
 	int   * ip, i, iRet, iSize, iDestX, iDestY, iExH, iMapSide;
 	BOOL    bRet, bIsLockedMapNotify;
@@ -20366,6 +20366,8 @@ void CGame::RequestTeleportHandler(int iClientH, char * pData, char * cMapName, 
 	if (m_pClientList[iClientH]->m_bIsInitComplete == FALSE) return;
 	if (m_pClientList[iClientH]->m_bIsKilled == TRUE) return;
 	if (m_pClientList[iClientH]->m_bIsOnWaitingProcess == TRUE) return;
+
+	cOldMapIndex = m_pClientList[iClientH]->m_cMapIndex;
 	if ((m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_bIsRecallImpossible == TRUE) && (m_pClientList[iClientH]->m_iAdminUserLevel == 0) &&
 		(m_pClientList[iClientH]->m_bIsKilled == FALSE) && (m_bIsApocalypseMode == TRUE)  && (m_pClientList[iClientH]->m_iHP > 0)) {
 		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_NORECALL, NULL, NULL, NULL, NULL);
@@ -20473,6 +20475,7 @@ void CGame::RequestTeleportHandler(int iClientH, char * pData, char * cMapName, 
 			// í”Œë ˆì´ì–´ì˜ ë°ì´í„°ë¥¼ ì €ìž¥í•˜ê³  ì €ìž¥í–ˆë‹¤ëŠ” ì‘ë‹µì´ ì˜¤ë©´ í´ë¼ì´ì–¸íŠ¸ì—ê²Œ ì ‘ì†ì„ ë‹¤ì‹œ í• ê²ƒì„ ì•Œë ¤ì¤€ë‹¤.
 			bSendMsgToLS(MSGID_REQUEST_SAVEPLAYERDATA_REPLY, iClientH, FALSE);  // ! ì¹´ìš´íŒ… í•˜ì§€ ì•ŠëŠ”ë‹¤.
 			// !!!!
+			UnsummonOwnedPets(iClientH);
 			m_pClientList[iClientH]->m_bIsOnServerChange = TRUE;
 			m_pClientList[iClientH]->m_bIsOnWaitingProcess = TRUE;
 			return;
@@ -20531,6 +20534,7 @@ void CGame::RequestTeleportHandler(int iClientH, char * pData, char * cMapName, 
 				// í”Œë ˆì´ì–´ì˜ ë°ì´í„°ë¥¼ ì €ìž¥í•˜ê³  ì‘ë‹µì„ ë°›ì€ í›„ ìž¬ì ‘ì†ì„ ì•Œë ¤ì•¼ í•œë‹¤.
 				bSendMsgToLS(MSGID_REQUEST_SAVEPLAYERDATA_REPLY, iClientH, FALSE); // ! ì¹´ìš´íŒ… í•˜ì§€ ì•ŠëŠ”ë‹¤.
 
+				UnsummonOwnedPets(iClientH);
 				m_pClientList[iClientH]->m_bIsOnServerChange = TRUE;
 				m_pClientList[iClientH]->m_bIsOnWaitingProcess = TRUE;
 				return;
@@ -20593,6 +20597,7 @@ void CGame::RequestTeleportHandler(int iClientH, char * pData, char * cMapName, 
 				// í”Œë ˆì´ì–´ì˜ ë°ì´í„°ë¥¼ ì €ìž¥í•˜ê³  ì‘ë‹µì„ ë°›ì€ í›„ ìž¬ì ‘ì†ì„ ì•Œë ¤ì•¼ í•œë‹¤.
 				bSendMsgToLS(MSGID_REQUEST_SAVEPLAYERDATA_REPLY, iClientH, FALSE); // ! ì¹´ìš´íŒ… í•˜ì§€ ì•ŠëŠ”ë‹¤.
 				// !!!
+				UnsummonOwnedPets(iClientH);
 				m_pClientList[iClientH]->m_bIsOnServerChange   = TRUE;
 				m_pClientList[iClientH]->m_bIsOnWaitingProcess = TRUE;
 				return;
@@ -20632,6 +20637,7 @@ void CGame::RequestTeleportHandler(int iClientH, char * pData, char * cMapName, 
 
 				bSendMsgToLS(MSGID_REQUEST_SAVEPLAYERDATA_REPLY, iClientH, FALSE); // ! ì¹´ìš´íŒ… í•˜ì§€ ì•ŠëŠ”ë‹¤.
 				// !!!
+				UnsummonOwnedPets(iClientH);
 				m_pClientList[iClientH]->m_bIsOnServerChange   = TRUE;
 				m_pClientList[iClientH]->m_bIsOnWaitingProcess = TRUE;
 				return;
@@ -20648,6 +20654,8 @@ void CGame::RequestTeleportHandler(int iClientH, char * pData, char * cMapName, 
 	}
 
 RTH_NEXTSTEP:;
+
+	if (m_pClientList[iClientH]->m_cMapIndex != cOldMapIndex) RelocateOwnedPets(iClientH);
 
 	// New 17/05/2004
 	SetPlayingStatus(iClientH);
@@ -20982,6 +20990,79 @@ void CGame::ReleaseFollowMode(short sOwnerH, char cOwnerType)
 			(m_pNpcList[i]->m_cFollowOwnerType == cOwnerType)) {
 			
 			m_pNpcList[i]->m_cMoveType = DEF_MOVETYPE_RANDOMWAYPOINT;
+		}
+	}
+}
+
+// Moves a player's owned pets onto the player's new map/position instead of
+// leaving them behind, for map changes that stay within this server process
+// (i.e. its m_pMapList already contains the destination map - most in-zone
+// teleports/recalls/dungeon entrances). Vitals, buffs, follow mode etc. are
+// untouched since this is the same CNpc object, just relocated.
+void CGame::RelocateOwnedPets(int iClientH)
+{
+ register int i;
+ short sX, sY;
+ char  cNewMapIndex;
+
+	cNewMapIndex = m_pClientList[iClientH]->m_cMapIndex;
+
+	for (i = 0; i < DEF_MAXNPCS; i++)
+	if (m_pNpcList[i] != NULL) {
+		if ((m_pNpcList[i]->m_bIsSummoned == TRUE) &&
+			(m_pNpcList[i]->m_bIsKilled == FALSE) &&
+			(m_pNpcList[i]->m_cFollowOwnerType == DEF_OWNERTYPE_PLAYER) &&
+			(m_pNpcList[i]->m_iFollowOwnerIndex == iClientH)) {
+
+			// Vanish from the old map's nearby clients before the position changes.
+			SendEventToNearClient_TypeA(i, DEF_OWNERTYPE_NPC, MSGID_EVENT_LOG, DEF_MSGTYPE_REJECT, NULL, NULL, NULL);
+			m_pMapList[m_pNpcList[i]->m_cMapIndex]->ClearOwner(21, i, DEF_OWNERTYPE_NPC, m_pNpcList[i]->m_sX, m_pNpcList[i]->m_sY);
+
+			sX = m_pClientList[iClientH]->m_sX;
+			sY = m_pClientList[iClientH]->m_sY;
+			if (bGetEmptyPosition(&sX, &sY, cNewMapIndex) == FALSE) {
+				sX = m_pClientList[iClientH]->m_sX;
+				sY = m_pClientList[iClientH]->m_sY;
+			}
+
+			m_pNpcList[i]->m_cMapIndex = cNewMapIndex;
+			m_pNpcList[i]->m_sX = sX;
+			m_pNpcList[i]->m_sY = sY;
+			m_pNpcList[i]->m_vX = sX;
+			m_pNpcList[i]->m_vY = sY;
+			m_pNpcList[i]->m_dX = sX;
+			m_pNpcList[i]->m_dY = sY;
+
+			// Any pre-teleport target handle belonged to the old map - drop it
+			// so the pet doesn't attack an unrelated object on the new one.
+			m_pNpcList[i]->m_cBehavior          = DEF_BEHAVIOR_MOVE;
+			m_pNpcList[i]->m_sBehaviorTurnCount  = 0;
+			m_pNpcList[i]->m_iTargetIndex        = NULL;
+
+			// Reappear on the new map, next to the owner.
+			m_pMapList[cNewMapIndex]->SetOwner(i, DEF_OWNERTYPE_NPC, sX, sY);
+			SendEventToNearClient_TypeA(i, DEF_OWNERTYPE_NPC, MSGID_EVENT_LOG, DEF_MSGTYPE_CONFIRM, NULL, NULL, NULL);
+		}
+	}
+}
+
+// A player's summoned/tamed pets are tied to this server process - they can't
+// follow the owner across a map change that moves the player to a different
+// HGServer instance entirely (see RelocateOwnedPets for the in-process case),
+// so leaving them behind would strand them there until the DEF_SUMMONTIME
+// timeout. Despawn them immediately instead.
+void CGame::UnsummonOwnedPets(int iClientH)
+{
+ register int i;
+
+	for (i = 0; i < DEF_MAXNPCS; i++)
+	if (m_pNpcList[i] != NULL) {
+		if ((m_pNpcList[i]->m_bIsSummoned == TRUE) &&
+			(m_pNpcList[i]->m_cFollowOwnerType == DEF_OWNERTYPE_PLAYER) &&
+			(m_pNpcList[i]->m_iFollowOwnerIndex == iClientH)) {
+
+			m_pNpcList[i]->m_bIsUnsummoned = TRUE;
+			NpcKilledHandler(NULL, NULL, i, 0);
 		}
 	}
 }

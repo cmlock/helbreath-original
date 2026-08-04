@@ -613,6 +613,8 @@ public:
 	BOOL _bDecodeSkillConfigFileContents(char * pData, DWORD dwMsgSize);
 	BOOL _bDecodeMagicConfigFileContents(char * pData, DWORD dwMsgSize);
 	void ReleaseFollowMode(short sOwnerH, char cOwnerType);
+	void RelocateOwnedPets(int iClientH);
+	void UnsummonOwnedPets(int iClientH);
 	BOOL bSetNpcFollowMode(char * pName, char * pFollowName, char cFollowOwnerType);
 	void RequestTeleportHandler(int iClientH, char * pData, char * cMapName = NULL, int dX = -1, int dY = -1);
 	void PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL bItemEffect = FALSE, int iV1 = NULL);
