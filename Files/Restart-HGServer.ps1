@@ -23,7 +23,7 @@ previous run's.
 
 param(
     [ValidateSet('Release', 'Debug')]
-    [string]$Configuration = 'Debug',
+    [string]$Configuration = 'Release',
 
     [ValidateSet('Aresden', 'Elvine', 'Middleland', 'Dungeons', 'Heldenian',
                  'Apocalypse', 'Neutrals', 'Huntzones', 'ToH')]

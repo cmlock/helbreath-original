@@ -11,7 +11,7 @@ script, matching the OutDir set in HGserver.vcxproj.
 
 param(
     [ValidateSet('Release', 'Debug')]
-    [string]$Configuration = 'Debug',
+    [string]$Configuration = 'Release',
     [switch]$WhatIf
 )
 
