@@ -10924,7 +10924,12 @@ void CGame::NpcKilledHandler(short sAttackerH, char cAttackerType, int iNpcH, sh
 
 	RemoveFromTarget(iNpcH, DEF_OWNERTYPE_NPC);
 
-	ReleaseFollowMode(iNpcH, DEF_OWNERTYPE_NPC); 
+	ReleaseFollowMode(iNpcH, DEF_OWNERTYPE_NPC);
+
+	// Drop this NPC's own follow link so a dead pet stops counting against its
+	// owner's active-summon limit while the corpse lingers awaiting cleanup.
+	if (m_pNpcList[iNpcH]->m_cMoveType == DEF_MOVETYPE_FOLLOW)
+		m_pNpcList[iNpcH]->m_cMoveType = DEF_MOVETYPE_RANDOMWAYPOINT;
 
 	m_pNpcList[iNpcH]->m_iTargetIndex = NULL;
 	m_pNpcList[iNpcH]->m_cTargetType  = NULL;
@@ -19002,20 +19007,11 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 					// The designated Owner becomes the Master.
 					if ((sOwnerH != NULL) && (cOwnerType == DEF_OWNERTYPE_PLAYER)) {
 						// MasterÂ·ÃŽ ÃÃ¶ÃÂ¤ÂµÃˆ Â´Ã«Â»Ã³Ã€Â» ÂµÃ»Â¶Ã³Â´Ã™Â´ÃÂ°Ã­ Ã€Ã–Â´Ã‚ Â°Â´ÃƒÂ¼ Â¼Ã¶Â¸Â¦ Â°Ã¨Â»ÃªÃ‡Ã‘Â´Ã™. 
-						if (sType == 97) {
-							// Summon-Demon: capped at 1 active demon per player, independent of the Magery follower cap.
-							if (iGetDemonFollowerNumber(sOwnerH, cOwnerType) >= 1) break;
-						}
-						else if (sType == 98) {
-							// Summon-Unicorn: capped at 1 active unicorn per player, independent of the Magery follower cap.
-							if (iGetUnicornFollowerNumber(sOwnerH, cOwnerType) >= 1) break;
-						}
-						else {
+						// Demon and Unicorn share the same active-follower pool as every other summon.
 						iFollowersNum = iGetFollowerNumber(sOwnerH, cOwnerType);
 
 						// Â¼Ã’ÃˆÂ¯Â¸Â¶Â¹Ã½Ã€Â» CastingÃ‡Ã‘ Ã€ÃšÃ€Ã‡ Magery/20 Â¸Â¸Ã…Â­Ã€Ã‡ Â¸Ã³Â½ÂºÃ…ÃÂ¸Â¦ Â¼Ã’ÃˆÂ¯Ã‡Ã’ Â¼Ã¶ Ã€Ã–Â´Ã™.
 						if (iFollowersNum >= (m_pClientList[iClientH]->m_cSkillMastery[4]/20)) break;
-						}
 
 						iNamingValue = m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->iGetEmptyNamingValue();
 						if (iNamingValue == -1) {
@@ -30042,37 +30038,6 @@ int CGame::iGetFollowerNumber(short sOwnerH, char cOwnerType)
 	return iTotal;
 }
 
-int CGame::iGetDemonFollowerNumber(short sOwnerH, char cOwnerType)
-{
- register int i, iTotal;
-
-	iTotal = 0;
-
-	for (i = 1; i < DEF_MAXNPCS; i++)
-	if ( (m_pNpcList[i] != NULL) && (m_pNpcList[i]->m_cMoveType == DEF_MOVETYPE_FOLLOW) && (m_pNpcList[i]->m_sType == 31) ) {
-
-		if ((m_pNpcList[i]->m_iFollowOwnerIndex == sOwnerH) && (m_pNpcList[i]->m_cFollowOwnerType == cOwnerType))
-			iTotal++;
-	}
-
-	return iTotal;
-}
-
-int CGame::iGetUnicornFollowerNumber(short sOwnerH, char cOwnerType)
-{
- register int i, iTotal;
-
-	iTotal = 0;
-
-	for (i = 1; i < DEF_MAXNPCS; i++)
-	if ( (m_pNpcList[i] != NULL) && (m_pNpcList[i]->m_cMoveType == DEF_MOVETYPE_FOLLOW) && (m_pNpcList[i]->m_sType == 32) ) {
-
-		if ((m_pNpcList[i]->m_iFollowOwnerIndex == sOwnerH) && (m_pNpcList[i]->m_cFollowOwnerType == cOwnerType))
-			iTotal++;
-	}
-
-	return iTotal;
-}
 
 /*********************************************************************************************************************
 **  BOOL CGame::bRegisterDelayEvent(int iDelayType, int iEffectType, DWORD dwLastTime, int iTargetH,				**
