@@ -422,7 +422,7 @@ public:
 	void _DrawThunderEffect(int sX, int sY, int dX, int dY, int rX, int rY, char cType);
 	void DrawLine2(int x0, int y0, int x1, int y1, int iR, int iG, int iB);
 	void DrawLine(int x0, int y0, int x1, int y1, int iR, int iG, int iB);
-	void DrawNpcHPBar(int sX, int sY, int iHP, int iMaxHP);
+	void DrawNpcHPBar(int sX, int sTop, int iHP, int iMaxHP);
 	void SetWhetherStatus(BOOL bStart, char cType);
 	void WhetherObjectFrameCounter();
 	void DrawWhetherEffects();
