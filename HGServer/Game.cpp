@@ -47858,108 +47858,97 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 
 	// 6500 default; the lower the greater the Weapon/Armor/Wand Drop
 	if (iDice(1,10000) >= m_iPrimaryDropRate) {
-		// 35% Drop 60% of that is gold
-		// 35% Chance of drop (35/100)
-		if (iDice(1,10000) <= 6000) {
-			iItemID = 90; // Gold: (35/100) * (60/100) = 21%
-			// If a non-existing itemID is given create no item
+		// Standard/Valuable split: 60% Standard (gold/potions/candy/trinkets), 40% Valuable (weapon/armor/wand)
+		// secondary-drop-rate lower => greater Weapon/Armor/Wand Drop; 7000 here yields the 60/40 split
+		dTmp1 = 1000; // treat every attacker as max reputation - secondary drop chance no longer scales with m_iRating
+		dTmp2 = (m_iSecondaryDropRate - (dTmp1));
+		if (iDice(1,10000) <= dTmp2) {
+			// Standard drop: Gold is 50% of this bucket, potions/candy/trinkets split the other 50% in their old proportions
+			iResult = iDice(1,24000);
+			if ((iResult >= 1) && (iResult <= 3000))            dwValue = 1;
+			else if ((iResult >= 3001) && (iResult <= 4000))    dwValue = 2;
+			else if ((iResult >= 4001) && (iResult <= 5500))    dwValue = 3;
+			else if ((iResult >= 5501) && (iResult <= 7000))    dwValue = 4;
+			else if ((iResult >= 7001) && (iResult <= 8500))    dwValue = 5;
+			else if ((iResult >= 8501) && (iResult <= 9200))    dwValue = 6;
+			else if ((iResult >= 9201) && (iResult <= 9800))    dwValue = 7;
+			else if ((iResult >= 9801) && (iResult <= 10000))   dwValue = 8;
+			else if ((iResult >= 10001) && (iResult <= 12000))  dwValue = 9;
+			else if ((iResult >= 12001) && (iResult <= 24000))  dwValue = 10; // Gold: 50%
+
+			switch (dwValue) {
+					case 1: iItemID = 95; break; // Green Potion
+					case 2: iItemID = 91; break; // Red Potion
+					case 3: iItemID = 93; break; // Blue Potion
+					case 4: iItemID = 96; break; // Big Green Potion
+					case 5: iItemID = 92; break; // Big Red Potion
+					case 6: iItemID = 94; break; // Big Blue Potion
+					case 7: switch(iDice(1,5)) {
+							case 1: iItemID = 390; break; // Power Green Potion
+							case 2: iItemID = 95;  break; // Green Potion
+							case 3: iItemID = 780; break; // RedCandy
+							case 4: iItemID = 781; break; // BlueCandy
+							case 5: iItemID = 782; break; // GreenCandy
+							}
+							break;
+					case 8: switch(iDice(1,10)) {
+							case 1: iItemID = 391; break; // Super Power Green Potion
+							case 2: iItemID = 650; break; // Zemstone of Sacrifice
+							case 3: iItemID = 656; break; // Xelima Stone
+							case 4: iItemID = 657; break; // Merien Stone
+							case 5: iItemID = 95;  break; // Green Potion
+							case 6: iItemID = 868; break; // AcientTablet(LU)
+							case 7: iItemID = 869; break; // AcientTablet(LD)
+							case 8: iItemID = 870; break; // AcientTablet(RU)
+							case 9: iItemID = 871; break; // AcientTablet(RD)
+							case 10: switch(iDice(1,5)) {
+									case 1: iItemID = 651; break; // GreenBall
+									case 2: iItemID = 652; break; // RedBall
+									case 3: iItemID = 653; break; // YellowBall
+									case 4: iItemID = 654; break; // BlueBall
+									case 5: iItemID = 655; break; // PearlBall
+									}
+									break;
+							}
+							break;
+					case 9:
+						SYSTEMTIME SysTime;
+						GetLocalTime(&SysTime);
+						if (((short)SysTime.wMonth == 12) && (m_pNpcList[iNpcH]->m_sType == 61 || 55)) {
+							switch(iDice(1,3)) {
+							case 1: iItemID = 780; break; // Red Candy
+							case 2: iItemID = 781; break; // Blue Candy
+							case 3: iItemID = 782; break; // Green Candy
+							}
+						}
+						else iItemID = 95; // Not the Christmas event - fall back to Green Potion instead of dropping nothing
+						break;
+					case 10: iItemID = 90; break; // Gold
+			}
+			// If a non-existing item is created then delete the item
 			pItem = new class CItem;
 			if (_bInitItemAttr(pItem, iItemID) == FALSE) {
 				delete pItem;
-				wsprintf(cLogTxt, "  -> NoDrop: invalid gold item config id=%d", iItemID);
+				wsprintf(cLogTxt, "  -> NoDrop: invalid standard-drop item id=%d", iItemID);
 				PutLogFileList(cLogTxt);
 				return;
 			}
 
-			pItem->m_dwCount = (DWORD)(iDice(1, (m_pNpcList[iNpcH]->m_iGoldDiceMax - m_pNpcList[iNpcH]->m_iGoldDiceMin)) + m_pNpcList[iNpcH]->m_iGoldDiceMin);
-			pItem->m_dwCount = (DWORD)((double)pItem->m_dwCount * m_dGoldRateMultiplier);
+			if (iItemID == 90) {
+				pItem->m_dwCount = (DWORD)(iDice(1, (m_pNpcList[iNpcH]->m_iGoldDiceMax - m_pNpcList[iNpcH]->m_iGoldDiceMin)) + m_pNpcList[iNpcH]->m_iGoldDiceMin);
+				pItem->m_dwCount = (DWORD)((double)pItem->m_dwCount * m_dGoldRateMultiplier);
 
-			// v1.42 Gold
-			if ((cAttackerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sAttackerH]->m_iAddGold != NULL)) {
-				dTmp1 = (double)m_pClientList[sAttackerH]->m_iAddGold;
-				dTmp2 = (double)pItem->m_dwCount;
-				dTmp3 = (dTmp1/100.0f)*dTmp2;
-				pItem->m_dwCount += (int)dTmp3;
+				// v1.42 Gold
+				if ((cAttackerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sAttackerH]->m_iAddGold != NULL)) {
+					dTmp1 = (double)m_pClientList[sAttackerH]->m_iAddGold;
+					dTmp2 = (double)pItem->m_dwCount;
+					dTmp3 = (dTmp1/100.0f)*dTmp2;
+					pItem->m_dwCount += (int)dTmp3;
+				}
 			}
 		}
 		else {
-			// 9000 default; the lower the greater the Weapon/Armor/Wand Drop
-			// 35% Drop 40% of that is an Item 
-			dTmp1 = 1000; // treat every attacker as max reputation - secondary drop chance no longer scales with m_iRating
-			dTmp2 = (m_iSecondaryDropRate - (dTmp1));
-			if (iDice(1,10000) <= dTmp2) { 
-				// 40% Drop 90% of that is a standard drop
-				// Standard Drop Calculation: (35/100) * (40/100) * (90/100) = 12.6%
-				iResult = iDice(1,12000);
-				if ((iResult >= 1) && (iResult <= 3000))          dwValue = 1;
-				else if ((iResult >= 3001) && (iResult <= 4000))  dwValue = 2;
-				else if ((iResult >= 4001) && (iResult <= 5500))  dwValue = 3;
-				else if ((iResult >= 5501) && (iResult <= 7000))  dwValue = 4;
-				else if ((iResult >= 7001) && (iResult <= 8500))  dwValue = 5;
-				else if ((iResult >= 8501) && (iResult <= 9200))  dwValue = 6;
-				else if ((iResult >= 9201) && (iResult <= 9800))  dwValue = 7;
-				else if ((iResult >= 9801) && (iResult <= 10000)) dwValue = 8;
-				else if ((iResult >= 10001) && (iResult <= 12000)) dwValue = 9;
-
-				switch (dwValue) {	
-						case 1: iItemID = 95; break; // Green Potion
-						case 2: iItemID = 91; break; // Red Potion
-						case 3: iItemID = 93; break; // Blue Potion
-						case 4: iItemID = 96; break; // Big Green Potion
-						case 5: iItemID = 92; break; // Big Red Potion
-						case 6: iItemID = 94; break; // Big Blue Potion
-						case 7: switch(iDice(1,5)) {
-								case 1: iItemID = 390; break; // Power Green Potion
-								case 2: iItemID = 95;  break; // Green Potion
-								case 3: iItemID = 780; break; // RedCandy
-								case 4: iItemID = 781; break; // BlueCandy
-								case 5: iItemID = 782; break; // GreenCandy
-								}
-								break;
-						case 8: switch(iDice(1,10)) {
-								case 1: iItemID = 391; break; // Super Power Green Potion
-								case 2: iItemID = 650; break; // Zemstone of Sacrifice
-								case 3: iItemID = 656; break; // Xelima Stone
-								case 4: iItemID = 657; break; // Merien Stone
-								case 5: iItemID = 95;  break; // Green Potion
-								case 6: iItemID = 868; break; // AcientTablet(LU)
-								case 7: iItemID = 869; break; // AcientTablet(LD)
-								case 8: iItemID = 870; break; // AcientTablet(RU)
-								case 9: iItemID = 871; break; // AcientTablet(RD)
-								case 10: switch(iDice(1,5)) {
-										case 1: iItemID = 651; break; // GreenBall
-										case 2: iItemID = 652; break; // RedBall
-										case 3: iItemID = 653; break; // YellowBall
-										case 4: iItemID = 654; break; // BlueBall
-										case 5: iItemID = 655; break; // PearlBall
-										}
-										break;
-								}
-								break;
-						case 9:
-							SYSTEMTIME SysTime;
-							GetLocalTime(&SysTime);
-							if (((short)SysTime.wMonth == 12) && (m_pNpcList[iNpcH]->m_sType == 61 || 55)) {
-								switch(iDice(1,3)) {
-								case 1: iItemID = 780; break; // Red Candy
-								case 2: iItemID = 781; break; // Blue Candy
-								case 3: iItemID = 782; break; // Green Candy
-								}
-							}
-							else iItemID = 95; // Not the Christmas event - fall back to Green Potion instead of dropping nothing
-							break;
-				}
-				// If a non-existing item is created then delete the item
-				pItem = new class CItem;
-				if (_bInitItemAttr(pItem, iItemID) == FALSE) {
-					delete pItem;
-					wsprintf(cLogTxt, "  -> NoDrop: invalid standard-drop item id=%d", iItemID);
-					PutLogFileList(cLogTxt);
-					return;
-				}
-			}
-			else {
-				// Valuable Drop Calculation: (35/100) * (40/100) * (10/100) = 1.4%
+			// Valuable Drop Calculation: (35/100) * (40/100) * (10/100) = 1.4%
 				// Define iGenLevel using Npc.cfg#
 				switch (m_pNpcList[iNpcH]->m_sType) {
 
@@ -48718,7 +48707,6 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 
 				_AdjustRareItemValue(pItem);
 			}
-		}
 
 		pItem->m_sTouchEffectType   = DEF_ITET_ID;
 		pItem->m_sTouchEffectValue1 = iDice(1,100000);
