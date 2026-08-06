@@ -2098,7 +2098,7 @@ void CGame::DrawObjects(short sPivotX, short sPivotY, short sDivX, short sDivY, 
 					if ((_tmp_wObjectID >= 10000) && (_tmp_wObjectID < 10000 + DEF_MAXNPCS))
 					{	int iNpcH = _tmp_wObjectID - 10000;
 						if ((m_iNpcMaxHP[iNpcH] > 0) && (m_iNpcHP[iNpcH] > 0))
-							DrawNpcHPBar(ix, iy, m_iNpcHP[iNpcH], m_iNpcMaxHP[iNpcH]);
+							DrawNpcHPBar(ix, m_rcBodyRect.top, m_iNpcHP[iNpcH], m_iNpcMaxHP[iNpcH]);
 					}
 
 					if ((bContact == TRUE) && (msY <= res_msy))
@@ -20628,11 +20628,10 @@ void CGame::DlgBoxClick_ShutDownMsg(short msX, short msY)
 	}
 }
 
-void CGame::DrawNpcHPBar(int sX, int sY, int iHP, int iMaxHP)
+void CGame::DrawNpcHPBar(int sX, int sTop, int iHP, int iMaxHP)
 {
  int iBarWidth = 26, iBarHeight = 3;
  int iX0, iY0, iX, iY, iFillWidth, iPercent;
- char cTxt[32];
 
 	if (iMaxHP <= 0) return;
 	iPercent = (iHP * 100) / iMaxHP;
@@ -20640,19 +20639,15 @@ void CGame::DrawNpcHPBar(int sX, int sY, int iHP, int iMaxHP)
 	if (iPercent > 100) iPercent = 100;
 
 	iX0 = sX - (iBarWidth / 2);
-	iY0 = sY - 46;
+	iY0 = sTop - 6 - iBarHeight;
 	iFillWidth = (iBarWidth * iPercent) / 100;
 
 	for (iY = 0; iY < iBarHeight; iY++)
 	for (iX = 0; iX < iBarWidth; iX++)
 	{	if (iX < iFillWidth)
-			 m_DDraw.PutPixel(iX0 + iX, iY0 + iY, 40, 200, 40);
-		else m_DDraw.PutPixel(iX0 + iX, iY0 + iY, 60, 20, 20);
+			 m_DDraw.PutPixel(iX0 + iX, iY0 + iY, 200, 30, 30);
+		else m_DDraw.PutPixel(iX0 + iX, iY0 + iY, 0, 0, 0);
 	}
-
-	// Debug: raw current/max HP next to the bar
-	wsprintf(cTxt, "%d/%d", iHP, iMaxHP);
-	PutString2(iX0 + iBarWidth + 4, iY0 - 5, cTxt, 255, 255, 0);
 }
 
 void CGame::DrawLine(int x0, int y0, int x1, int y1, int iR, int iG, int iB)
