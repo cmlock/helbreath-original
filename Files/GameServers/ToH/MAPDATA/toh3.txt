@@ -37,17 +37,17 @@ maximum-object		= 180
 random-mob-generator	= 1  15
 
 //-----------------------Num-Type-RECT---------------Mob-MobNum
-spot-mob-generator	= 1  1    82 195 94 205      56   1
+spot-mob-generator	= 1  1    82 195 94 205      49   1
 spot-mob-generator	= 2  1    82 195 94 205      53   2
 spot-mob-generator	= 3  1    82 195 94 205      55   3
 spot-mob-generator	= 4  1    82 195 94 205      54   8
 
-spot-mob-generator	= 5  1    35 265 45 275      56   1
+spot-mob-generator	= 5  1    35 265 45 275      49   1
 spot-mob-generator	= 6  1    35 265 45 275      53   6
 spot-mob-generator	= 7  1    35 265 45 275      55   6
 spot-mob-generator	= 8  1    35 265 45 275      54   1
 
-spot-mob-generator	= 9   1    225 248 235 257    56   1
+spot-mob-generator	= 9   1    225 248 235 257    49   1
 spot-mob-generator	= 10  1    225 248 235 257    53   8
 spot-mob-generator	= 11  1    225 248 235 257    55   4
 spot-mob-generator	= 12  1    225 248 235 257    54   1

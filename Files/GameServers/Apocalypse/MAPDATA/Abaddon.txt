@@ -12,23 +12,23 @@ initial-point = 1  168 170
 no-attack-area           = 1       164 166 172 174
 
 //------------------------Num-Type-waypoints--------------Mob-MobNum
-//Å¸ÀÌ°Å¿ú
+//Å¸ï¿½Ì°Å¿ï¿½
 spot-mob-generator	= 1   1    74 23 138 52           52  20
 spot-mob-generator	= 2   1    30 115 86 146          52  20
 spot-mob-generator	= 3   1    141 68 173 118         52  20
 
-//ÇïÅ¬¶ó¿ì
-spot-mob-generator	= 4   1    23 71 68 117           51  20
-spot-mob-generator	= 5   1    120 43 174 73          51  20
-spot-mob-generator	= 6   1    127 113 178 145        51  20
+//ï¿½ï¿½Å¬ï¿½ï¿½ï¿½
+spot-mob-generator	= 4   1    23 71 68 117           49  20
+spot-mob-generator	= 5   1    120 43 174 73          49  20
+spot-mob-generator	= 6   1    127 113 178 145        49  20
 
-//¾ÆÀÌ½º¿ÍÀÌ¹ø
+//ï¿½ï¿½ï¿½Ì½ï¿½ï¿½ï¿½ï¿½Ì¹ï¿½
 spot-mob-generator	= 7   1    34 45 94 75            70  20
 
-//ÆÄÀÌ¾î¿ÍÀÌ¹ø
+//ï¿½ï¿½ï¿½Ì¾ï¿½ï¿½ï¿½Ì¹ï¿½
 spot-mob-generator	= 8   1    75 134 133 170         71  20
 
-// ¹ß·Î±×_ÅÙÅ¸Å¬_¹Ì³ëÅ¸¿ì¸£½º
+// ï¿½ß·Î±ï¿½_ï¿½ï¿½Å¸Å¬_ï¿½Ì³ï¿½Å¸ï¿½ì¸£ï¿½ï¿½
 spot-mob-generator	= 9   1    71 64 143 112          72  40
 spot-mob-generator	= 10  1    71 64 143 112          73  40
 spot-mob-generator	= 11  1    71 64 143 112          76  40
