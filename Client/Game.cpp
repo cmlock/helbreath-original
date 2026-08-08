@@ -3078,7 +3078,7 @@ void CGame::UpdateScreen_OnLoading(bool bActive)
 			MakeSprite( "Gandlf",	  DEF_SPRID_MOB   + 7*8*9,  8, TRUE);// Gandalf (Type: 19)
 			MakeSprite( "Howard",	  DEF_SPRID_MOB   + 7*8*10, 8, TRUE);// Howard, warehouse keeper (Type: 20)
 			MakeSprite( "Guard",	  DEF_SPRID_MOB   + 7*8*11, 40, TRUE);// Guard (Type: 21)
-			MakeSprite( "Amp",		  DEF_SPRID_MOB   + 7*8*12, 40, TRUE);// Amphis (Type: 22)
+			MakeSprite( "Amp",		  DEF_SPRID_MOB   + 7*8*12, 40, TRUE);// Snake (Type: 22, was "Amphis")
 			MakeSprite( "Cla",		  DEF_SPRID_MOB   + 7*8*13, 40, TRUE);// Clay-Golem (Type: 23)
 			MakeSprite( "tom",		  DEF_SPRID_MOB   + 7*8*14,  8, TRUE);// Tom (Type: 24)
 			MakeSprite( "William",	  DEF_SPRID_MOB   + 7*8*15,  8, TRUE);// William (Type: 25)
@@ -4949,7 +4949,7 @@ int _iAttackerHeight[] = {0, 35, 35,35,35,35,35, 0,0,0,
 35,// Gandalf
 35,// Howard
 35,// Guard
-10,// Amphis
+10,// Snake (was "Amphis")
 38,// Clay-Golem
 35,// Tom
 35,// William

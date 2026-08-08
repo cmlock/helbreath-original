@@ -114,7 +114,7 @@ spot-mob-generator	=	7	1	317	38	339	70	18	20
 //	Scorpion								
 spot-mob-generator	=	8	1	360	391	411	414	17	1
 spot-mob-generator	=	9	1	79	114	411	414	17	3
-//	Amphis								
+//	Snake
 spot-mob-generator	=	10	1	268	301	292	323	22	5
 spot-mob-generator	=	11	1	214	182	230	196	22	5
 spot-mob-generator	=	12	1	213	181	229	195	22	5

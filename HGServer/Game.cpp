@@ -19070,7 +19070,7 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 											break;
 										case 2:
 											switch (iDice(1, 3)) {
-												case 1: strcpy(cNpcName, "Amphis"); break;
+												case 1: strcpy(cNpcName, "Snake"); break;
 												case 2: strcpy(cNpcName, "Orc"); break;
 												case 3: strcpy(cNpcName, "Scorpion"); break;
 											}
@@ -25980,7 +25980,7 @@ void CGame::MobGenerator()
 						switch (iDice(1,5)) {
 						case 1: iResult = 3;  break; // Orc
 						case 2: iResult = 6;  break; // Orc-Mage
-						case 3: iResult = 10; break; // Amphis
+						case 3: iResult = 10; break; // Snake
 						case 4: iResult = 3;  break; // Orc
 						case 5: iResult = 50; break; // Giant-Tree
 						}
@@ -26227,7 +26227,7 @@ void CGame::MobGenerator()
 						switch (iDice(1,3)) {
 						case 1:	iResult = 7;  break; // Scorpion
 						case 2: iResult = 2;  break; // Giant-Ant
-						case 3: iResult = 10; break; // Amphis
+						case 3: iResult = 10; break; // Snake
 						}
 					}
 					else if ((iResult >= 40) && (iResult < 50)) {
@@ -26457,7 +26457,7 @@ void CGame::MobGenerator()
 				case 7:  strcpy(cNpcName, "Scorpion");			iNpcID = 17; iProbSA = 15; iKindSA = 3; break;
 				case 8:  strcpy(cNpcName, "Stone-Golem");		iNpcID = 12; iProbSA = 25; iKindSA = 5; break;
 				case 9:  strcpy(cNpcName, "Cyclops");			iNpcID = 13; iProbSA = 35; iKindSA = 8; break;
-				case 10: strcpy(cNpcName, "Amphis");			iNpcID = 22; iProbSA = 20; iKindSA = 3; break;
+				case 10: strcpy(cNpcName, "Snake");			iNpcID = 22; iProbSA = 20; iKindSA = 3; break;
 				case 11: strcpy(cNpcName, "Clay-Golem");		iNpcID = 23; iProbSA = 20; iKindSA = 5; break;
 				case 12: strcpy(cNpcName, "Troll");				iNpcID = 28; iProbSA = 25; iKindSA = 3; break; 
 				case 13: strcpy(cNpcName, "Orge");				iNpcID = 29; iProbSA = 25; iKindSA = 1; break;
@@ -26594,7 +26594,7 @@ void CGame::MobGenerator()
 				case 7:  // Scorpion
 				case 8:  // Stone-Golem
 				case 9:  // Cyclops
-				case 10: // Amphis
+				case 10: // Snake
 				case 11: // Clay-Golem
 				case 12: // Troll
 				case 13: // Orge
@@ -26707,7 +26707,7 @@ void CGame::MobGenerator()
 									case 17:  strcpy(cNpcName,"Scorpion");			iProbSA = 15; iKindSA = 3;  break;
 									case 12:  strcpy(cNpcName,"Stone-Golem");		iProbSA = 25; iKindSA = 5;  break;
 									case 13:  strcpy(cNpcName,"Cyclops");			iProbSA = 35; iKindSA = 8;  break;
-									case 22:  strcpy(cNpcName,"Amphis");			iProbSA = 20; iKindSA = 3;  break;
+									case 22:  strcpy(cNpcName,"Snake");			iProbSA = 20; iKindSA = 3;  break;
 									case 23:  strcpy(cNpcName,"Clay-Golem");		iProbSA = 20; iKindSA = 5;  break;
 									case 24:  strcpy(cNpcName,"Guard-Aresden");		iProbSA = 20; iKindSA = 1;  break;
 									case 25:  strcpy(cNpcName,"Guard-Elvine");		iProbSA = 20; iKindSA = 1;  break;
@@ -27020,7 +27020,7 @@ void CGame::DeleteNpc(int iNpcH)
 			bGetItemNameWhenDeleteNpc(iItemID, m_pNpcList[iNpcH]->m_sType); break;
 			break;
 
-		case 22: //Amphis
+		case 22: //Snake
 			switch(iDice(1,5)){
 			case 1: if (iDice(1,15) == 1) iItemID = 188; break; // SnakeMeat
 			case 2:	if (iDice(1,16) == 1) iItemID = 189; break; // SnakeSkin
@@ -35002,7 +35002,7 @@ void CGame::AdminOrder_Polymorph(int iClientH, char *pData, DWORD dwMsgSize)
 		else if (memcmp(token, "Gaurd", 5) == 0)
 			m_pClientList[iClientH]->m_sType = 21;
 
-		else if (memcmp(token, "Amphis", 6) == 0)
+		else if (memcmp(token, "Snake", 5) == 0)
 			m_pClientList[iClientH]->m_sType = 22;
 
 		else if (memcmp(token, "Clay-Golem", 10) == 0)
@@ -40497,7 +40497,7 @@ char CGame::_cGetSpecialAbility(int iKindSA)
 		break;
 
 	case 3: 
-		// Zombie, Scorpion, Amphis, Troll, Dark-Elf
+		// Zombie, Scorpion, Snake, Troll, Dark-Elf
 		switch (iDice(1,4)) {
 			case 1: cSA = 3; break; // Anti-Physical Damage
 			case 2: cSA = 4; break; // Anti-Magic Damage
@@ -54581,7 +54581,7 @@ BOOL CGame::bGetItemNameWhenDeleteNpc(int & iItemID, short sNpcType)
 		case 14: if (iDice(1,595) != 11) return FALSE; break;	  // Orc 4 * 100	
 		case 17: if (iDice(1,510) != 11) return FALSE; break;	  // Scorpoin 5 * 100	
 		case 18: if (iDice(1,720) != 11) return FALSE; break;	  // Zombie 1 * 100	
-		case 22: if (iDice(1,510) != 11) return FALSE; break;	  // Amphis 5 * 100	
+		case 22: if (iDice(1,510) != 11) return FALSE; break;	  // Snake 5 * 100	
 		case 23: if (iDice(1,340) != 11) return FALSE; break;	  // Clay-Golem 2 * 100	
 		case 27: if (iDice(1,85)  != 11) return FALSE; break;	  // Hellhound 7 * 100	
 		case 28: if (iDice(1,85)  != 11) return FALSE; break;	  // Troll 5 * 100	
@@ -54643,7 +54643,7 @@ BOOL CGame::bGetItemNameWhenDeleteNpc(int & iItemID, short sNpcType)
 		break;
 
 	case 18: // Zombie
-	case 22: // Amphis
+	case 22: // Snake
 		switch (iDice(1,4)) {
 		case 1: if (iDice(1,65) == 13) iItemID = 613 ; break; // SwordofMedusa
 		case 2: if (iDice(1,15) == 13) iItemID = 639 ; break; // KnecklaceOfPoisonPro
