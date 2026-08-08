@@ -47950,18 +47950,24 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 		else {
 			// Valuable Drop Calculation: (35/100) * (40/100) * (10/100) = 1.4%
 				// Define iGenLevel using Npc.cfg#
+				// Re-derived from actual combat stats (HitDice/DefenseRatio/HitRatio/dmg, cross-checked
+				// against Exp/Gold tuning) rather than the old ad-hoc grouping, which had e.g. Mountain-Giant
+				// and Ettin ranked above monsters several times their HitDice. 12 tiers instead of 10: two are
+				// reserved for Wyvern/Fire-Wyvern/Abaddon, which also have their own bespoke unique-item table
+				// (bGetMultipleItemNamesWhenDeleteNpc) - this iGenLevel only governs their generic gold/weapon/
+				// wand/armor rolls, which previously defaulted to Tier 1 since they were never listed here.
 				switch (m_pNpcList[iNpcH]->m_sType) {
 
 				case 10: // Slime
 				case 16: // Giant-Ant
-				case 22: // Amphis
+				case 22: // Snake
 				case 55: // Rabbit
-				case 56: //	Cat
+				case 56: // Cat
 					iGenLevel = 1;
 					break;
 
 				case 11: // Skeleton
-				case 14: // Orc, Orc-Mage
+				case 14: // Orc, Orc-Mage (share one Npc.cfg Type - can't be split into separate tiers)
 				case 17: // Scorpion
 				case 18: // Zombie
 					iGenLevel = 2;
@@ -47969,231 +47975,236 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 
 				case 12: // Stone-Golem
 				case 23: // Clay-Golem
+				case 27: // Hellbound
+				case 57: // Giant-Frog
+				case 61: // Rudolph
 					iGenLevel = 3;
 					break;
 
-				case 27: // Hellbound
-				case 61: // Rudolph
-					iGenLevel = 4;
-					break; 
-
-				case 72: // Claw-Turtle
-				case 76: // Giant-Plant
-				case 74: // Giant-Crayfish
-				case 13: // Cyclops
 				case 28: // Troll
+				case 13: // Cyclops
+				case 65: // Ice-Golem
+				case 74: // Giant-Crayfish
+				case 80: // Tentocle
+					iGenLevel = 4;
+					break;
+
 				case 53: // Beholder
+				case 58: // Mountain-Giant
+				case 76: // Giant-Plant
 				case 60: // Cannibal-Plant
-				case 62: // DireBoar
+				case 29: // Orge
 					iGenLevel = 5;
 					break;
 
-				case 29: // Orge
-				case 33: // WereWolf
+				case 72: // Claw-Turtle
+				case 62: // DireBoar
+				case 30: // Liche
 				case 48: // Stalker
+				case 63: // Frost
+				case 33: // WereWolf
 				case 54: // Dark-Elf
-				case 65: // Ice-Golem
-			    case 78: // Minotaurus
+				case 59: // Ettin
 					iGenLevel = 6;
 					break;
 
-		 	    case 70: // Balrogs
-				case 71: // Centaurus
-				case 30: // Liche
-				case 63: // Frost
-			    case 79: // Nizie
+				case 77: // MasterMage-Orc
+				case 79: // Nizie
 					iGenLevel = 7;
 					break;
 
 				case 31: // Demon
 				case 32: // Unicorn
-				case 49: // Hellclaw
-				case 50: // Tigerworm
-				case 52: // Gagoyle
+				case 78: // Minotaurus
+				case 71: // Centaurus
 					iGenLevel = 8;
-					break; 
+					break;
 
-				case 58: // MountainGiant
+				case 52: // Gagoyle
+				case 75: // Giant-Lizard
+				case 70: // Balrog
 					iGenLevel = 9;
 					break;
 
-			    case 77: // MasterMage-Orc
-				case 59: // Ettin
-				case 75: // Lizards
+				case 49: // Hellclaw
+				case 50: // Tigerworm
 					iGenLevel = 10;
 					break;
-				}	
+
+				case 66: // Wyvern
+				case 73: // Fire-Wyvern
+					iGenLevel = 11;
+					break;
+
+				case 81: // Abaddon
+					iGenLevel = 12;
+					break;
+				}
 
 				if (iGenLevel == 0) iGenLevel = 1; // NPC type not in the tier table above - fall back to lowest tier instead of dropping nothing
 
-				// Weapon Drop: 
+				// Rare Accessory Drop (new): low-odds bonus layer for necklaces/rings/wands/manuals/named
+				// weapons. Cross-referenced against helbreathnemesis.com's per-monster drop pages: on that
+				// reference, this kind of item almost never comes from the common weapon/wand/armor pool -
+				// it's a monster-specific "Secondary Drop" layered on top, reused in thematic/power families
+				// across many monsters rather than escalating strictly with combat tier (e.g. the ice-elemental
+				// family spans Frost through Wyvern regardless of their differing combat stats). Approximated
+				// here as 5 tier-gated rarity pools since we don't have a per-monster drop table for every
+				// monster (only the 3 hardcoded bosses have that - see bGetMultipleItemNamesWhenDeleteNpc).
+				if ((iGenLevel >= 2) && (iDice(1,10000) <= 300)) {
+					switch (iGenLevel) {
+
+					case 2: // rings
+					case 4:
+						switch (iDice(1,7)) {
+						case 1: iItemID = 335; break; // EmeraldRing
+						case 2: iItemID = 334; break; // LuckyGoldRing
+						case 3: iItemID = 333; break; // PlatinumRing
+						case 4: iItemID = 635; break; // RingofMage
+						case 5: iItemID = 634; break; // RingofWizard
+						case 6: iItemID = 337; break; // RubyRing
+						case 7: iItemID = 336; break; // SapphireRing
+						}
+						break;
+
+					case 3: // basic magic necklaces + Merien/earth family (Stone-Golem/Clay-Golem/Mountain-Giant
+					case 5: // on the reference site all draw from this earth-elemental family)
+						switch (iDice(1,9)) {
+						case 1: iItemID = 300; break; // MagicNecklace(RM10)
+						case 2: iItemID = 305; break; // MagicNecklace(DM+1)
+						case 3: iItemID = 308; break; // MagicNecklace(MS10)
+						case 4: iItemID = 311; break; // MagicNecklace(DF+10)
+						case 5: iItemID = 637; break; // NecklaceOfLightPro
+						case 6: iItemID = 638; break; // NecklaceOfFirePro
+						case 7: iItemID = 620; break; // MerienShield
+						case 8: iItemID = 621; break; // MerienPlateMailM
+						case 9: iItemID = 858; break; // NecklaceOfMerien
+						}
+						break;
+
+					case 6: // elemental (ice) family + the "(LLF)" named weapon variants (Stalker's and
+					case 7: // WereWolf's entire secondary drop on the reference site is just these two)
+						switch (iDice(1,10)) {
+						case 1: iItemID = 642; break; // NecklaceOfIcePro
+						case 2: iItemID = 643; break; // NecklaceOfIceEle
+						case 3: iItemID = 644; break; // NecklaceOfAirEle
+						case 4: iItemID = 614; break; // SwordofIceElemental
+						case 5: iItemID = 380; break; // IceStormManual
+						case 6: iItemID = 845; break; // StormBringer
+						case 7: iItemID = 734; break; // RingOfArcmage
+						case 8: iItemID = 636; break; // RingofGrandMage
+						case 9: iItemID = 290; break; // Flameberge+3(LLF)
+						case 10: iItemID = 292; break; // GoldenAxe(LLF)
+						}
+						break;
+
+					case 8: // blood/demon family
+						switch (iDice(1,9)) {
+						case 1: iItemID = 490; break; // BloodSword
+						case 2: iItemID = 491; break; // BloodAxe
+						case 3: iItemID = 492; break; // BloodRapier
+						case 4: iItemID = 382; break; // BloodyShockWaveManual
+						case 5: iItemID = 381; break; // MassFireStrikeManual
+						case 6: iItemID = 616; break; // DemonSlayer
+						case 7: iItemID = 633; break; // RingofDemonPower
+						case 8: iItemID = 645; break; // NecklaceOfEfreet
+						case 9: iItemID = 862; break; // BerserkWand(MS.10)
+						}
+						break;
+
+					case 9: // apex family (also folds in the top of the Merien/earth family, which the
+					case 10: // reference site still has appearing on Hellclaw and Abaddon at this power level)
+					case 11: // Wyvern, Fire-Wyvern (on top of their own bespoke unique table)
+					case 12: // Abaddon (on top of its own bespoke unique table)
+						switch (iDice(1,22)) {
+						case 1: iItemID = 611; break; // XelimaAxe
+						case 2: iItemID = 610; break; // XelimaBlade
+						case 3: iItemID = 612; break; // XelimaRapier
+						case 4: iItemID = 850; break; // KlonessAxe
+						case 5: iItemID = 849; break; // KlonessBlade
+						case 6: iItemID = 851; break; // KlonessEsterk
+						case 7: iItemID = 864; break; // KlonessWand(MS.10)
+						case 8: iItemID = 863; break; // KlonessWand(MS.20)
+						case 9: iItemID = 860; break; // NecklaceOfXelima
+						case 10: iItemID = 859; break; // NecklaceOfKloness
+						case 11: iItemID = 848; break; // LightingBlade
+						case 12: iItemID = 847; break; // DarkExecutor
+						case 13: iItemID = 20;  break; // Excaliber
+						case 14: iItemID = 630; break; // RingoftheXelima
+						case 15: iItemID = 631; break; // RingoftheAbaddon
+						case 16: iItemID = 735; break; // RingOfDragonpower
+						case 17: iItemID = 846; break; // The_Devastator
+						case 18: iItemID = 866; break; // ResurWand(MS.10)
+						case 19: iItemID = 861; break; // BerserkWand(MS.20)
+						case 20: iItemID = 621; break; // MerienPlateMailM
+						case 21: iItemID = 622; break; // MerienPlateMailW
+						case 22: iItemID = 858; break; // NecklaceOfMerien
+						}
+						break;
+					}
+				}
+				else {
+
+				// Weapon Drop:
 				// 1.4% chance Valuable Drop 60% that it is a Weapon
 				if (iDice(1,10000) <= 6000) {
 					if (iDice(1,10000) <= 8000) {
 						// 70% the Weapon is Melee
-						switch (iGenLevel) { 
+						// Collapsed from 12 tiers to the handful of equipment bands actually observed on
+						// helbreathnemesis.com: item pools barely change across huge swaths of the monster
+						// roster there (e.g. Cyclops through Tigerworm share one ~40-item pool), so forcing
+						// 12 distinct pools was inventing granularity the reference data doesn't support.
+						switch (iGenLevel) {
 
-				case 1: // Slime, Giant-Ant, Amphis, Rabbit, Cat
-					switch (iDice(1,8)) {
+				case 1: // Band A (trash): Slime, Giant-Ant, Snake, Rabbit, Cat
+					switch (iDice(1,3)) {
 				case 1: iItemID = 1;  break; // Dagger
 				case 2: iItemID = 8;  break; // ShortSword
 				case 3: iItemID = 59; break; // LightAxe
-				case 4: iItemID = 4;  break; // Dagger+1
-				case 5: iItemID = 2;  break; // Dagger(S.C)
-				case 6: iItemID = 3;  break; // Dagger(Swd.breaker)
-				case 7: iItemID = 6;  break; // KightDagger
-				case 8: iItemID = 7;  break; // Dirk
 					}
 					break;
 
-				case 2: // Skeleton, Orc, Orc-Mage, Scorpion, Zombie
-					switch (iDice(1,12)) {
-						case 1: iItemID = 12;  break; // MainGauche
-						case 2: iItemID = 15;  break; // Gradius
-						case 3: iItemID = 65;  break; // SexonAxe
-						case 4: iItemID = 62;  break; // Tomahoc
-						case 5: iItemID = 23;  break; // Sabre
-						case 6: iItemID = 31;  break; // Esterk
-						case 7: iItemID = 11;  break; // ShortSword(S.C)
-						case 8: iItemID = 14;  break; // MainGauche(S.C)
-						case 9: iItemID = 9;   break; // ShortSword+1
-						case 10: iItemID = 17; break; // LongSword
-						case 11: iItemID = 60; break; // LightAxe+1
-						case 12: iItemID = 75; break; // ShortBow
+				case 2: // Band B: Skeleton, Orc, Orc-Mage, Scorpion, Zombie
+					switch (iDice(1,6)) {
+				case 1: iItemID = 31; break; // Esterk
+				case 2: iItemID = 15; break; // Gradius
+				case 3: iItemID = 12; break; // MainGauche
+				case 4: iItemID = 23; break; // Sabre
+				case 5: iItemID = 65; break; // SexonAxe
+				case 6: iItemID = 62; break; // Tomahoc
 					}
 					break;
 
-				case 3: // Stone-Golem, Clay-Golem
-					switch (iDice(1,9)) {
-				case 1: iItemID = 50;  break; // GreatSword
-				case 2: iItemID = 68;  break; // DoubleAxe
-				case 3: iItemID = 23;  break; // Sabre
-				case 4: iItemID = 31;  break; // Esterk
-				case 5: iItemID = 37;  break; // TemplerSword
-				case 6: iItemID = 22;  break; // LongSword(S.C)
-				case 7: iItemID = 13;  break; // MainGauche+1
-				case 8: iItemID = 38;  break; // BroadSword
-				case 9: iItemID = 41;  break; // BroadSword(S.C)
+				case 3: // Band C: Stone-Golem, Clay-Golem, Hellbound, Giant-Frog, Rudolph
+					switch (iDice(1,7)) {
+				case 1: iItemID = 68; break; // DoubleAxe
+				case 2: iItemID = 31; break; // Esterk
+				case 3: iItemID = 28; break; // Falchion
+				case 4: iItemID = 17; break; // LongSword
+				case 5: iItemID = 34; break; // Rapier
+				case 6: iItemID = 23; break; // Sabre
+				case 7: iItemID = 25; break; // Scimitar
 					}
 					break;
 
-				case 4: // Hellbound, Rudolph
-					switch (iDice(1,10)) {
-				case 1: iItemID = 25;  break; // Scimitar
-				case 2: iItemID = 28;  break; // Falchion
-				case 3: iItemID = 31;  break; // Esterk
-				case 4: iItemID = 34;  break; // Rapier
-				case 5: iItemID = 71;  break; // WarAxe
-				case 6: iItemID = 16;  break; // Gradius+1
-				case 7: iItemID = 24;  break; // Sabre+1
-				case 8: iItemID = 32;  break; // Esterk+1
-				case 9: iItemID = 63;  break; // Tomahoc+1
-				case 10: iItemID = 76; break; // LongBow
-					}
-					break;
-
-				case 5: // Cyclops, Troll, Beholder, Cannibal-Plant, DireBoar
-					    // Claw-Turtle, Giant-Plant, Giant-Crayfish
-					switch (iDice(1,12)) {
-				case 1: iItemID = 31;  break; // Esterk
-				case 2: iItemID = 34;  break; // Rapier
-				case 3: iItemID = 72;  break; // WarAxe+1
-				case 4: iItemID = 844; break; // BlackShadowSword
-				case 5: iItemID = 582; break; // Sabre+2
-				case 6: iItemID = 18;  break; // LongSword+1
-				case 7: iItemID = 35;  break; // Rapier+1
-				case 8: iItemID = 26;  break; // Scimitar+1
-				case 9: iItemID = 66;  break; // SexonAxe+1
-				case 10: iItemID = 42; break; // BastadSword
-				case 11: iItemID = 45; break; // BastadSword(S.C)
-				case 12: iItemID = 39; break; // BroadSword+1
-					}
-					break;
-
-				case 6: // Orge, WereWolf, Stalker, Dark-Elf, Ice-Golem, Minotaurus
-					switch (iDice(1,11)) {
-				case 1: iItemID = 47;  break; // Claymore+1
-				case 2: iItemID = 51;  break; // GreatSword+
-				case 3: iItemID = 55;  break; // Flameberge+1
-				case 4: iItemID = 34;  break; // GiantSword
-				case 5: iItemID = 74;  break; // GoldenAxe
-				case 6: iItemID = 848; break; // HolyBlade
-				case 7: iItemID = 29;  break; // Falchion+1
-				case 8: iItemID = 69;  break; // DoubleAxe+1
-				case 9: iItemID = 43;  break; // BastadSword+1
-				case 10: iItemID = 46; break; // Claymore
-				case 11: iItemID = 49; break; // Claymore(S.C)
-					}
-					break;
-
-				case 7: // Liche, Frost, Balrogs, Centaurus, Nizie
-					switch (iDice(1,13)) {
-				case 1: iItemID = 47;  break; // Claymore+1
-				case 2: iItemID = 50;  break; // GreatSword
-				case 3: iItemID = 54;  break; // Flameberge+1
-				case 4: iItemID = 74;  break; // GoldenAxe
-				case 5: iItemID = 850; break; // KlonessAxe
-				case 6: iItemID = 19;  break; // LongSword+2
-				case 7: iItemID = 36;  break; // Rapier+2
-				case 8: iItemID = 33;  break; // Esterk+2
-				case 9: iItemID = 61;  break; // LightAxe+2
-				case 10: iItemID = 64; break; // Tomahoc+2
-				case 11: iItemID = 40; break; // BroadSword+2
-				case 12: iItemID = 44; break; // BastadSword+2
-				case 13: iItemID = 53; break; // GreatSword(S.C)
-					}
-					break;
-
-				case 8: // Demon, Unicorn, Hellclaw, Tigerworm, Gagoyle
-					switch (iDice(1,14)) {
-				case 1: iItemID = 50;  break; // GreatSword
-				case 2: iItemID = 560; break; // BattleAxe
-				case 3: iItemID = 615; break; // GiantSword
-				case 4: iItemID = 56;  break; // Flameberge+2
-				case 5: iItemID = 846; break; // The_Devastator
-				case 6: iItemID = 27;  break; // Scimitar+2
-				case 7: iItemID = 67;  break; // SexonAxe+2
-				case 8: iItemID = 30;  break; // Falchion+2
-				case 9: iItemID = 70;  break; // DoubleAxe+2
-				case 10: iItemID = 73; break; // WarAxe+2
-				case 11: iItemID = 48; break; // Claymore+2
-				case 12: iItemID = 52; break; // GreatSword+2
-				case 13: iItemID = 617; break; // CompositeBow
-				case 14: iItemID = 873; break; // Fire-Bow
-					}
-					break;
-
-				case 9: // MountainGiant
-					switch (iDice(1,12)) {
-				case 1: iItemID = 55;  break; // Flameberge+1
-				case 2: iItemID = 615; break; // GiantSword
-				case 3: iItemID = 761; break; // BattleHammer
-				case 4: iItemID = 762; break; // GiantBattleHammer
-				case 5: iItemID = 857; break; // I.M.C Manual
-				case 6: iItemID = 674; break; // KnightWarAxe
-				case 7: iItemID = 671; break; // KnightRapier
-				case 8: iItemID = 57;  break; // Flameberge(S.C)
-				case 9: iItemID = 618; break; // DarkElfBow
-				case 10: iItemID = 760; break; // Hammer
-				case 11: iItemID = 672; break; // KnightGreatSword
-				case 12: iItemID = 581; break; // BattleAxe+2
-					}
-					break;
-
-				case 10: // Ettin, MasterMage-Orc, Giant-Lizard
-					switch (iDice(1,12)) {
-					case 1: iItemID = 50;  break; // GreatSword
-					case 2: iItemID = 51;  break; // GreatSword+1
-					case 3: iItemID = 55;  break; // Flameberge+1
-					case 4: iItemID = 56;  break; // Flameberge+2
-					case 5: iItemID = 615; break; // GiantSword
-					case 6: iItemID = 761; break; // BattleHammer
-					case 7: iItemID = 762; break; // GiantBattleHammer
-					case 8: iItemID = 843; break; // BarbarianHammer
-					case 9: iItemID = 853; break; // E.S.W Manual
-					case 10: iItemID = 874; break; // Direction-Bow
-					case 11: iItemID = 580; break; // BattleAxe+1
-					case 12: iItemID = 673; break; // KnightFlameberge
+				case 4: // Band D: Cyclops through Tigerworm (Troll, Ice-Golem, Giant-Crayfish, Tentocle,
+				case 5: // Mountain-Giant, Giant-Plant, Cannibal-Plant, Orge, Claw-Turtle, DireBoar, Liche,
+				case 6: // Stalker, Frost, WereWolf, Dark-Elf, Ettin, MasterMage-Orc, Nizie, Demon, Unicorn,
+				case 7: // Minotaurus, Centaurus, Gagoyle, Giant-Lizard, Balrog, Hellclaw, Tigerworm) - one
+				case 8: // broad shared pool per helbreathnemesis.com, which barely varies across this whole
+				case 9: // span of monsters rather than escalating tier-by-tier.
+				case 10:
+				case 11: // Wyvern, Fire-Wyvern (also get their own bespoke unique table, untouched)
+				case 12: // Abaddon (also gets its own bespoke unique table, untouched)
+					switch (iDice(1,8)) {
+				case 1: iItemID = 42; break; // BastadSword
+				case 2: iItemID = 38; break; // BroadSword
+				case 3: iItemID = 46; break; // Claymore
+				case 4: iItemID = 31; break; // Esterk
+				case 5: iItemID = 54; break; // Flameberge
+				case 6: iItemID = 50; break; // GreatSword
+				case 7: iItemID = 34; break; // Rapier
+				case 8: iItemID = 71; break; // WarAxe
 					}
 					break;
 
@@ -48201,34 +48212,32 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 					}
 					else {
 						// 30% the weapon is a Wand
+						// Collapsed to the same equipment bands as the melee pool above; BerserkWand/ResurWand
+						// moved to the new rare-accessory layer since the reference site treats those as rare
+						// "Secondary Drops", not part of the common wand pool.
 						switch (iGenLevel) {
 
 						case 2:
+							iItemID = 258; break; // MagicWand(MS0)
 						case 3:
 							switch (iDice(1,2)) {
 							case 1: iItemID = 258; break; // MagicWand(MS0)
-							case 2: iItemID = 259; break; // MagicWand(M.Shield)
+							case 2: iItemID = 257; break; // MagicWand(MS10)
 							}
 							break;
 						case 4:
 						case 5:
 						case 6:
-							iItemID = 257; break; // MagicWand(MS10)
 						case 7:
 						case 8:
-							iItemID = 256; break; // MagicWand(MS20)
 						case 9:
-							switch (iDice(1,2)) {
-							case 1: iItemID = 684; break; // WizMagicWand(MS10)
-							case 2: iItemID = 683; break; // WizMagicWand(MS20)
-							}
-							break;
 						case 10:
-							switch (iDice(1,4)) {
-							case 1: iItemID = 862; break; // BerserkWand(MS.10)
-							case 2: iItemID = 861; break; // BerserkWand(MS.20)
-							case 3: iItemID = 866; break; // ResurWand(MS.10)
-							case 4: iItemID = 865; break; // ResurWand(MS.20)
+						case 11:
+						case 12:
+							switch (iDice(1,3)) {
+							case 1: iItemID = 257; break; // MagicWand(MS10)
+							case 2: iItemID = 256; break; // MagicWand(MS20)
+							case 3: iItemID = 259; break; // MagicWand(M.Shield)
 							}
 							break;
 						default:
@@ -48238,177 +48247,77 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 				}
 				else {
 					// 1.4% chance Valuable Drop 40% that drop is an Armor/Shield
+					// Collapsed to the same equipment bands as the melee pool above (see that comment for
+					// why - helbreathnemesis.com shows one broad shared armor pool across most of the roster).
 					switch (iGenLevel) {
 
-					case 1: // Slime, Giant-Ant, Amphis, Rabbit, Cat
-					case 2: // Skeleton, Orc, Orc-Mage, Scorpion, Zombie
-						switch (iDice(1,15)) {
-							case 1: iItemID = 79;  break; // WoodShield
-							case 2: iItemID = 81;  break; // TargeShield
-							case 3: iItemID = 80;  break; // LeatherShield
-							case 4: iItemID = 473; break; // Bodice(W)
-							case 5: iItemID = 474; break; // LongBodice(W)
-							case 6: iItemID = 484; break; // Tunic(M)
-							case 7: iItemID = 453; break; // Shirt(M)
-							case 8: iItemID = 470; break; // Chemise(W)
-							case 9: iItemID = 471; break; // Shirt(W)
-							case 10: iItemID = 459; break; // Trousers(M)
-							case 11: iItemID = 460; break; // KneeTrousers(M)
-							case 12: iItemID = 479; break; // Skirt(W)
-							case 13: iItemID = 480; break; // Trousers(W)
-							case 14: iItemID = 481; break; // KneeTrousers(W)
-							case 15: iItemID = 450; break; // Shoes
+					case 1: // Band A (trash): Slime, Giant-Ant, Snake, Rabbit, Cat - shields only, no clothing
+						switch (iDice(1,2)) {              // items are actually rolled for this tier on
+							case 1: iItemID = 79; break;   // helbreathnemesis.com
+							case 2: iItemID = 81; break;
 						}
-						break;
+						break;                              // 79 WoodShield, 81 TargeShield
 
-					case 3: // Stone-Golem, Clay-Golem
+					case 2: // Band B: Skeleton, Orc, Orc-Mage, Scorpion, Zombie - still shields only per site
+						switch (iDice(1,2)) {
+							case 1: iItemID = 79; break;
+							case 2: iItemID = 81; break;
+						}
+						break;                              // 79 WoodShield, 81 TargeShield
+
+					case 3: // Band C: Stone-Golem, Clay-Golem, Hellbound, Giant-Frog, Rudolph
 						switch (iDice(1,6)) {
-							case 1: iItemID = 85;  break; // LagiShield
-							case 2: iItemID = 454; break; // Hauberk(M)
-							case 3: iItemID = 472; break; // Hauberk(W)
-							case 4: iItemID = 461; break; // ChainHose(M)
-							case 5: iItemID = 482; break; // ChainHose(W)
-							case 6: iItemID = 590; break; // Robe(M)
-						}
-						break;
-
-					case 4: // Hellbound, Rudolph
-						switch (iDice(1,8)) {
-							case 1: iItemID = 454; break; // Hauberk(M)
-							case 2: iItemID = 472; break; // Hauberk(W)
-							case 3: iItemID = 461; break; // ChainHose(M)
-							case 4: iItemID = 482; break; // ChainHose(W)
-							case 5: iItemID = 86;  break; // KnightShield
-							case 6: iItemID = 591; break; // Robe(W)
-							case 7: iItemID = 82;  break; // ScootermShield
-							case 8: iItemID = 83;  break; // BlondeShield
-						}
-						break;
-
-				case 5: // Cyclops, Troll, Beholder, Cannibal-Plant, DireBoar
-					    // Claw-Turtle, Giant-Plant, Giant-Crayfish
-						switch (iDice(1,9)) {
-							case 1: iItemID = 455; break; // LeatherArmor(M)
-							case 2: iItemID = 475; break; // LeatherArmor(W)
-							case 3: iItemID = 87;  break; // TowerShield
+							case 1: iItemID = 80;  break; // LeatherShield
+							case 2: iItemID = 81;  break; // TargeShield
+							case 3: iItemID = 83;  break; // BlondeShield
 							case 4: iItemID = 454; break; // Hauberk(M)
 							case 5: iItemID = 472; break; // Hauberk(W)
 							case 6: iItemID = 461; break; // ChainHose(M)
-							case 7: iItemID = 482; break; // ChainHose(W)
-							case 8: iItemID = 462; break; // PlateLeggings(M)
-							case 9: iItemID = 483; break; // PlateLeggings(W)
 						}
 						break;
 
-					case 6: // Orge, WereWolf, Stalker, Dark-Elf, Ice-Golem, Minotaurus
-						switch (iDice(1,6)) {
-						case 1: switch(iDice(1,2)) {
-							case 1: iItemID = 456; break; // ChainMail(M)
-							case 2: iItemID = 476; break; // ChainMail(W)
+					case 4: // Band D: Cyclops through Tigerworm - one broad shared pool per
+					case 5: // helbreathnemesis.com (see melee pool comment above for the full monster list
+					case 6: // this spans).
+					case 7:
+					case 8:
+					case 9:
+					case 10:
+					case 11: // Wyvern, Fire-Wyvern (also get their own bespoke unique table, untouched)
+					case 12: // Abaddon (also gets its own bespoke unique table, untouched)
+						switch (iDice(1,27)) {
+							case 1: iItemID = 79;  break; // WoodShield
+							case 2: iItemID = 81;  break; // TargeShield
+							case 3: iItemID = 83;  break; // BlondeShield
+							case 4: iItemID = 84;  break; // IronShield
+							case 5: iItemID = 85;  break; // LagiShield
+							case 6: iItemID = 87;  break; // TowerShield
+							case 7: iItemID = 402; break; // Cape
+							case 8: iItemID = 454; break; // Hauberk(M)
+							case 9: iItemID = 472; break; // Hauberk(W)
+							case 10: iItemID = 461; break; // ChainHose(M)
+							case 11: iItemID = 482; break; // ChainHose(W)
+							case 12: iItemID = 455; break; // LeatherArmor(M)
+							case 13: iItemID = 475; break; // LeatherArmor(W)
+							case 14: iItemID = 456; break; // ChainMail(M)
+							case 15: iItemID = 476; break; // ChainMail(W)
+							case 16: iItemID = 458; break; // PlateMail(M)
+							case 17: iItemID = 478; break; // PlateMail(W)
+							case 18: iItemID = 457; break; // ScaleMail(M)
+							case 19: iItemID = 477; break; // ScaleMail(W)
+							case 20: iItemID = 600; break; // Helm(M)
+							case 21: iItemID = 602; break; // Helm(W)
+							case 22: iItemID = 601; break; // Full-Helm(M)
+							case 23: iItemID = 603; break; // Full-Helm(W)
+							case 24: iItemID = 750; break; // Horned-Helm(M)
+							case 25: iItemID = 754; break; // Horned-Helm(W)
+							case 26: iItemID = 751; break; // Wings-Helm(M)
+							case 27: iItemID = 755; break; // Wings-Helm(W)
 						}
 						break;
-						case 2: switch(iDice(1,2)) {
-							case 1: iItemID = 458; break; // PlateMail(M)
-							case 2: iItemID = 478; break; // PlateMail(W)
-						}
-						break;
-						case 3: switch(iDice(1,2)) {
-							case 1: iItemID = 87; break; // TowerShield
-							case 2: iItemID = 84; break; // IronShield
-						}
-						break;
-						case 4: switch(iDice(1,8)) {
-							case 1: iItemID = 750; break; // Horned-Helm(M)
-							case 2: iItemID = 751; break; // Wings-Helm(M)
-							case 3: iItemID = 754; break; // Horned-Helm(W)
-							case 4: iItemID = 755; break; // Wings-Helm(W)
-							case 5: iItemID = 752; break; // Wizard-Cap(M) 
-							case 6: iItemID = 753; break; // Wizard-Hat(M)
-							case 7: iItemID = 756; break; // Wizard-Cap(W) 
-							case 8: iItemID = 757; break; // Wizard-Hat(W) 
-						}
-						break;	
-						case 5: switch(iDice(1,2)) {
-							case 1: iItemID = 454; break; // Hauberk(M)
-							case 2: iItemID = 472; break; // Hauberk(W)
-						}
-						break;
-						case 6: switch(iDice(1,2)) {
-							case 1: iItemID = 461; break; // ChainHose(M)
-							case 2: iItemID = 482; break; // ChainHose(W)
-						}
-						break;
-						}
-						break;
-
-
-					case 7: // Liche, Frost, Balrogs, Centaurus, Nizie
-						switch (iDice(1,6)) {
-						case 1: switch(iDice(1,6)) {
-							case 1: iItemID = 457; break; // ScaleMail(M)
-							case 2: iItemID = 477; break; // ScaleMail(W)
-							case 3: iItemID = 454; break; // Hauberk(M)
-							case 4: iItemID = 472; break; // Hauberk(W)
-							case 5: iItemID = 461; break; // ChainHose(M)
-							case 6: iItemID = 482; break; // ChainHose(W)
-							}
-							break;
-						case 2: switch(iDice(1,2)) {
-							case 1: iItemID = 458; break; // PlateMail(M)
-							case 2: iItemID = 478; break; // PlateMail(W)
-							}
-							break;
-						case 3: iItemID = 86; break; // KnightShield
-						case 4: iItemID = 87; break; // TowerShield
-						case 5: switch(iDice(1,2)) {
-							case 1: iItemID = 600; break; // Helm(M)
-							case 2: iItemID = 602; break; // Helm(M)
-							}
-							break;
-						case 6: switch(iDice(1,2)) {
-							case 1: iItemID = 601; break; // Full-Helm(M)
-							case 2: iItemID = 603; break; // Full-Helm(M)
-							}
-							break;
-						}
-						break;
-
-					case 8: // Demon, Unicorn, Hellclaw, Tigerworm, Gagoyle
-						switch(iDice(1,4)) {
-							case 1: iItemID = 402; break; // Cape
-							case 2: iItemID = 451; break; // Boots
-							case 3: iItemID = 687; break; // KnightHauberk(M)
-							case 4: iItemID = 688; break; // KnightHauberk(W)
-							}
-							break;
-
-					case 9: // Mountain-Giant
-						switch(iDice(1,10)) {
-							case 1: iItemID = 402; break; // Cape
-							case 2: iItemID = 451; break; // Boots
-							case 3: iItemID = 685; break; // WizardRobe(M)
-							case 4: iItemID = 686; break; // WizardRobe(W)
-							case 5: iItemID = 675; break; // KnightPlateMail(M)
-							case 6: iItemID = 676; break; // KnightPlateMail(W)
-							case 7: iItemID = 681; break; // WizardHauberk(M)
-							case 8: iItemID = 682; break; // WizardHauberk(W)
-							case 9: iItemID = 679; break; // KnightFullHelm(M)
-							case 10: iItemID = 680; break; // KnightFullHelm(W)
-							}
-							break;
-
-					case 10: //Ettin, MasterMage-Orc, Giant-Lizard
-						switch(iDice(1,6)) {
-							case 1: iItemID = 457; break; // ScaleMail(M)
-							case 2: iItemID = 477; break; // ScaleMail(W)
-							case 3: iItemID = 600; break; // Helm(M)
-							case 4: iItemID = 602; break; // Helm(W)
-							case 5: iItemID = 677; break; // KnightPlateLeg(M)
-							case 6: iItemID = 678; break; // KnightPlateLeg(W)
-							}
-							break;
 					}
 				}
+				} // end of else for the rare-accessory-roll wrapper added above
 				pItem = new class CItem;
 				if (_bInitItemAttr(pItem, iItemID) == FALSE) {
 					delete pItem;
