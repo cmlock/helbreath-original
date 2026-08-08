@@ -47647,7 +47647,7 @@ BOOL CGame::bGetMultipleItemNamesWhenDeleteNpc(short sNpcType, int iProbability,
 
 		switch(sNpcType)
 		{
-		case 69: // Wyvern...stupid koreans
+		case 66: // Wyvern...stupid koreans (was mis-keyed as case 69/Devlin, so this table never fired)
 			// 최상급
 			switch (iDice(1,4)) {
 				case 1: if (iDice(1,(6000 * fProbA)) == 3) iItemID = 634; break; // RingofWizard
