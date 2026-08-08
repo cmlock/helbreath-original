@@ -361,10 +361,10 @@ void CMap::ClearDeadOwner(short sX, short sY)
 
 BOOL CMap::bSetItem(short sX, short sY, class CItem * pItem)
 {
- class CTile * pTile;	
- register int i;
-	
-	if ((sX < 0) || (sX >= m_sSizeX) || (sY < 0) || (sY >= m_sSizeY)) return NULL; 
+ class CTile * pTile;
+ register int i, iPos;
+
+	if ((sX < 0) || (sX >= m_sSizeX) || (sY < 0) || (sY >= m_sSizeY)) return NULL;
 
 	pTile = (class CTile *)(m_pTile + sX + sY*m_sSizeY);
 
@@ -379,16 +379,29 @@ BOOL CMap::bSetItem(short sX, short sY, class CItem * pItem)
 		}
 	}
 
+	// Rank the new item by value (m_pItem[0] is the only slot the client renders),
+	// so pricier items stay visible on top and common/low-value loot sinks to the bottom.
+	for (iPos = 0; iPos < DEF_TILE_PER_ITEMS; iPos++) {
+		if ((pTile->m_pItem[iPos] == NULL) || (pTile->m_pItem[iPos]->m_wPrice < pItem->m_wPrice))
+			break;
+	}
+
+	// Stack is full and every slot already holds an item of equal or greater
+	// value - the new item is the least valuable of the bunch, so it doesn't fit.
+	if (iPos == DEF_TILE_PER_ITEMS) {
+		delete pItem;
+		return TRUE;
+	}
+
 	// v1.4 마지막 타일에 아이템이 있다면 삭제시키고 이동한다.
 	if (pTile->m_pItem[DEF_TILE_PER_ITEMS-1] != NULL)
 		delete pTile->m_pItem[DEF_TILE_PER_ITEMS-1];
 	else pTile->m_cTotalItem++;
-	
-	for (i = DEF_TILE_PER_ITEMS-2; i >= 0; i--) 
+
+	for (i = DEF_TILE_PER_ITEMS-2; i >= iPos; i--)
 		pTile->m_pItem[i+1] = pTile->m_pItem[i];
 
-	pTile->m_pItem[0] = pItem;
-	//pTile->m_cTotalItem++;
+	pTile->m_pItem[iPos] = pItem;
 	return TRUE;
 }
 
