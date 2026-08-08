@@ -1,8 +1,4 @@
 # --- Visual Studio / MSBuild build intermediates ---
-# Note: some Release/ folders (Client/CxImage, Client/jpeg) already have
-# their built .lib checked in as a vendored dependency. Ignoring the folder
-# doesn't untrack those - .gitignore only hides untracked files, so the
-# already-committed .lib keeps showing up as modified when it changes.
 [Dd]ebug/
 [Rr]elease/
 x64/
