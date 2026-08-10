@@ -1141,6 +1141,7 @@
 #define	DRAW_DIALOGBOX_NPCACTION_QUERY34	"Exchange"
 #define	DRAW_DIALOGBOX_NPCACTION_QUERY39	"Sell"
 #define	DRAW_DIALOGBOX_NPCACTION_QUERY43	"Repair"
+#define	DRAW_DIALOGBOX_NPCACTION_QUERY44	"Convert"
 #define	DRAW_DIALOGBOX_NPCACTION_QUERY48	"Deposit"
 
 #define	DRAW_DIALOGBOX_PARTY1	"Join a party."
@@ -1252,6 +1253,12 @@
 #define	DRAW_DIALOGBOX_SELLOR_REPAIR_ITEM9	"You cannot give or sell"
 #define	DRAW_DIALOGBOX_SELLOR_REPAIR_ITEM10	"until this finishes. "
 #define	DRAW_DIALOGBOX_SELLOR_REPAIR_ITEM11	" Processing the item repair..."
+
+#define	DRAW_DIALOGBOX_CONVERTITEM1	"Converts to: %s"
+#define	DRAW_DIALOGBOX_CONVERTITEM2	"Cost: %d Gold"
+#define	DRAW_DIALOGBOX_CONVERTITEM3	"Do you want to convert this item?"
+#define	DRAW_DIALOGBOX_CONVERTITEM_CONVERT	"Convert"
+#define	DRAW_DIALOGBOX_CONVERTITEM_CANCEL	"Cancel"
 
 
 #define	DRAW_DIALOGBOX_SHOP1	"ITEM"
@@ -1399,6 +1406,11 @@
 
 #define	NOTIFYMSG_CANNOT_REPAIR_ITEM1	"Item %s: You don't have to repair this item."
 #define	NOTIFYMSG_CANNOT_REPAIR_ITEM2	"Item %s: You can't repair this item here."
+
+#define	NOTIFYMSG_CANNOT_CONVERT_ITEM1	"Item %s: This item cannot be converted."
+#define	NOTIFYMSG_CANNOT_CONVERT_ITEM2	"Item %s: You can't convert this item here."
+#define	NOTIFYMSG_CANNOT_CONVERT_ITEM3	"Item %s: Unequip this item before converting it."
+#define	NOTIFYMSG_ITEMCONVERTED1	"Item %s converted."
 
 
 

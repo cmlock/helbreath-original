@@ -560,6 +560,11 @@ public:
 	void DlgBoxClick_Resurect(short msX, short msY);
 	void DrawDialogBox_CMDHallMenu(short msX, short msY);
 	void DlgBoxClick_CMDHallMenu(short msX, short msY);
+	void DrawDialogBox_ConvertItem(short msX, short msY);
+	void DlgBoxClick_ConvertItem(short msX, short msY);
+	void NotifyMsg_ItemConverted(char * pData);
+	void NotifyMsg_ConvertItemPrice(char * pData);
+	void NotifyMsg_CannotConvertItem(char * pData);
 	void ResponseHeldenianTeleportList(char *pData);
 	void DKGlare(int iWeaponColor, int iWeaponIndex, int *iWeaponGlare);
 	void DrawDruncncity();

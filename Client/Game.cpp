@@ -3759,6 +3759,9 @@ BOOL CGame::_bCheckDlgBoxClick(short msX, short msY)
 			case 51:
 				DlgBoxClick_CMDHallMenu(msX, msY);
 				break;
+			case 52:
+				DlgBoxClick_ConvertItem(msX, msY);
+				break;
 			}
 
 			return TRUE;
@@ -16103,6 +16106,9 @@ void CGame::DrawDialogBoxs(short msX, short msY, short msZ, char cLB)
 		case 51: // Gail
 			DrawDialogBox_CMDHallMenu(msX, msY);
 			break;
+		case 52:
+			DrawDialogBox_ConvertItem(msX, msY);
+			break;
 		}
 	}
 	int resy = 120;
@@ -16278,6 +16284,16 @@ void CGame::EnableDialogBox(int iBoxID, int cType, int sV1, int sV2, char * pStr
 			{	m_stDialogBoxInfo[23].sX = m_stDialogBoxInfo[11].sX;
 				m_stDialogBoxInfo[23].sY = m_stDialogBoxInfo[11].sY;
 			}
+		}
+		break;
+
+	case 52:
+		if (m_bIsDialogEnabled[52] == FALSE) {
+			m_stDialogBoxInfo[52].cMode = cType;
+			m_stDialogBoxInfo[52].sV1   = sV1;		// ItemID
+			m_stDialogBoxInfo[52].sV2   = sV2;		// Quoted price
+			m_stDialogBoxInfo[52].sX = m_stDialogBoxInfo[20].sX;
+			m_stDialogBoxInfo[52].sY = m_stDialogBoxInfo[20].sY;
 		}
 		break;
 
@@ -22293,6 +22309,28 @@ void CGame::NotifyMsg_RepairItemPrice(char * pData)
 	m_stDialogBoxInfo[23].sV3 = wV3;
 }
 
+void CGame::NotifyMsg_ConvertItemPrice(char * pData)
+{char * cp, cName[21];
+ DWORD * dwp, wV1, wV2, wV3, wV4;
+	cp = (char *)(pData + DEF_INDEX2_MSGTYPE + 2);
+	dwp = (DWORD *)cp;
+  	wV1 = *dwp;
+	cp += 4;
+	dwp = (DWORD *)cp;
+  	wV2 = *dwp;
+	cp += 4;
+	dwp = (DWORD *)cp;
+  	wV3 = *dwp;
+	cp += 4;
+	dwp = (DWORD *)cp;
+  	wV4 = *dwp;
+	cp += 4;
+	ZeroMemory(cName, sizeof(cName));
+	memcpy(cName, cp, 20);
+	cp += 20;
+	EnableDialogBox(52, 1, wV1, wV2, cName);
+}
+
 void CGame::NotifyMsg_SellItemPrice(char * pData)
 {char * cp, cName[21];
  DWORD * dwp, wV1, wV2, wV3, wV4;
@@ -26874,6 +26912,19 @@ NMH_LOOPBREAK2:;
 
 	case DEF_NOTIFY_SELLITEMPRICE:
 		NotifyMsg_SellItemPrice(pData);
+		break;
+
+	case DEF_NOTIFY_ITEMCONVERTED:
+		DisableDialogBox(52);
+		NotifyMsg_ItemConverted(pData);
+		break;
+
+	case DEF_NOTIFY_CANNOTCONVERTITEM:
+		NotifyMsg_CannotConvertItem(pData);
+		break;
+
+	case DEF_NOTIFY_CONVERTITEMPRICE:
+		NotifyMsg_ConvertItemPrice(pData);
 		break;
 
 	case DEF_NOTIFY_SHOWMAP:
@@ -34057,6 +34108,15 @@ void CGame::DrawDialogBox_NpcActionQuery(short msX, short msY)
 			{	PutString(sX + 125, sY + 55, DRAW_DIALOGBOX_NPCACTION_QUERY43, RGB(4,0,50));
 				PutString(sX + 126, sY + 55, DRAW_DIALOGBOX_NPCACTION_QUERY43, RGB(4,0,50));
 		}	}
+
+		if (m_pItemList[m_stDialogBoxInfo[20].sV1]->m_cGenderLimit != 0)
+		{	if ((msX > sX + 125) && (msX < sX + 180) && (msY > sY + 78) && (msY < sY + 93))
+			{	PutString(sX + 125, sY + 78, DRAW_DIALOGBOX_NPCACTION_QUERY44, RGB(255,255,255));//"Convert"
+				PutString(sX + 126, sY + 78, DRAW_DIALOGBOX_NPCACTION_QUERY44, RGB(255,255,255));
+			}else
+			{	PutString(sX + 125, sY + 78, DRAW_DIALOGBOX_NPCACTION_QUERY44, RGB(4,0,50));
+				PutString(sX + 126, sY + 78, DRAW_DIALOGBOX_NPCACTION_QUERY44, RGB(4,0,50));
+		}	}
 		break;
 
 	case 3: // WH
@@ -34769,6 +34829,82 @@ void CGame::DrawDialogBox_SellorRepairItem(short msX, short msY)
 		PutString(sX + 55, sY + 120, DRAW_DIALOGBOX_SELLOR_REPAIR_ITEM9, RGB(45,25,25));//"
 		PutString(sX + 55, sY + 135, DRAW_DIALOGBOX_SELLOR_REPAIR_ITEM10, RGB(45,25,25));//"
 		break;
+	}
+}
+
+void CGame::DrawDialogBox_ConvertItem(short msX, short msY)
+{
+ short sX, sY;
+ DWORD dwTime = m_dwCurTime;
+ char cItemID, cItemColor, cTxt[120], cTemp[120], cStr2[120], cStr3[120];
+
+	sX = m_stDialogBoxInfo[52].sX;
+	sY = m_stDialogBoxInfo[52].sY;
+
+	cItemID = m_stDialogBoxInfo[52].sV1;
+	if (m_pItemList[cItemID] == NULL) { DisableDialogBox(52); return; }
+
+	DrawNewDialogBox(DEF_SPRID_INTERFACE_ND_GAME2, sX, sY, 2);
+	DrawNewDialogBox(DEF_SPRID_INTERFACE_ND_TEXT, sX, sY, 10);
+
+	cItemColor = m_pItemList[cItemID]->m_cItemColor;
+	if (cItemColor == 0)
+		 m_pSprite[DEF_SPRID_ITEMPACK_PIVOTPOINT + m_pItemList[cItemID]->m_sSprite]->PutSpriteFast(sX + 62 + 15, sY + 84 + 30,
+	                                                                                               m_pItemList[cItemID]->m_sSpriteFrame, dwTime);
+	else
+	{	switch (m_pItemList[cItemID]->m_sSprite) {
+		case 1: // Swds
+		case 2: // Bows
+		case 3: // Shields
+		case 15: // Axes hammers
+			m_pSprite[DEF_SPRID_ITEMPACK_PIVOTPOINT + m_pItemList[cItemID]->m_sSprite]->PutSpriteRGB(sX + 62 + 15, sY + 84 + 30
+					, m_pItemList[cItemID]->m_sSpriteFrame, m_wWR[cItemColor] -m_wR[0], m_wWG[cItemColor] -m_wG[0], m_wWB[cItemColor] -m_wB[0], dwTime);
+			break;
+		default: m_pSprite[DEF_SPRID_ITEMPACK_PIVOTPOINT + m_pItemList[cItemID]->m_sSprite]->PutSpriteRGB(sX + 62 + 15, sY + 84 + 30
+				 	, m_pItemList[cItemID]->m_sSpriteFrame, m_wR[cItemColor] -m_wR[0], m_wG[cItemColor] -m_wG[0], m_wB[cItemColor] -m_wB[0], dwTime);
+			break;
+		}
+	}
+
+	ZeroMemory(cTemp, sizeof(cTemp));
+	ZeroMemory(cStr2, sizeof(cStr2));
+	ZeroMemory(cStr3, sizeof(cStr3));
+	GetItemName(m_pItemList[cItemID]->m_cName, m_pItemList[cItemID]->m_dwAttribute, cTemp, cStr2, cStr3);
+
+	PutAlignedString(sX + 25, sX + 240, sY + 60, cTemp, 45,25,25);
+	PutAlignedString(sX + 25 +1, sX + 240 +1, sY + 60, cTemp, 45,25,25);
+
+	wsprintf(cTxt, DRAW_DIALOGBOX_CONVERTITEM1, m_stDialogBoxInfo[52].cStr); // "Converts to: %s"
+	PutString(sX + 95 + 15, sY + 53 + 60, cTxt, RGB(45,25,25));
+	wsprintf(cTxt, DRAW_DIALOGBOX_CONVERTITEM2, m_stDialogBoxInfo[52].sV2); // "Cost: %d Gold"
+	PutString(sX + 95 + 15, sY + 53 + 75, cTxt, RGB(45,25,25));
+	PutString(sX + 55, sY + 190, DRAW_DIALOGBOX_CONVERTITEM3, RGB(45,25,25));
+
+	if ((msX >= sX + DEF_LBTNPOSX) && (msX <= sX + DEF_LBTNPOSX + DEF_BTNSZX) && (msY >= sY + DEF_BTNPOSY) && (msY <= sY + DEF_BTNPOSY + DEF_BTNSZY))
+		 PutString(sX + DEF_LBTNPOSX + 20, sY + DEF_BTNPOSY + 3, DRAW_DIALOGBOX_CONVERTITEM_CONVERT, RGB(255,255,255));
+	else PutString(sX + DEF_LBTNPOSX + 20, sY + DEF_BTNPOSY + 3, DRAW_DIALOGBOX_CONVERTITEM_CONVERT, RGB(4,0,50));
+
+	if ((msX >= sX + DEF_RBTNPOSX) && (msX <= sX + DEF_RBTNPOSX + DEF_BTNSZX) && (msY >= sY + DEF_BTNPOSY) && (msY <= sY + DEF_BTNPOSY + DEF_BTNSZY))
+		 PutString(sX + DEF_RBTNPOSX + 20, sY + DEF_BTNPOSY + 3, DRAW_DIALOGBOX_CONVERTITEM_CANCEL, RGB(255,255,255));
+	else PutString(sX + DEF_RBTNPOSX + 20, sY + DEF_BTNPOSY + 3, DRAW_DIALOGBOX_CONVERTITEM_CANCEL, RGB(4,0,50));
+}
+
+void CGame::DlgBoxClick_ConvertItem(short msX, short msY)
+{
+ short sX, sY;
+
+	sX = m_stDialogBoxInfo[52].sX;
+	sY = m_stDialogBoxInfo[52].sY;
+
+	if ((msX >= sX + DEF_LBTNPOSX) && (msX <= sX + DEF_LBTNPOSX + DEF_BTNSZX) && (msY >= sY + DEF_BTNPOSY) && (msY <= sY + DEF_BTNPOSY + DEF_BTNSZY)) {
+		// Convert
+		bSendCommand(MSGID_COMMAND_COMMON, DEF_COMMONTYPE_REQ_CONVERTITEMCONFIRM, NULL, m_stDialogBoxInfo[52].sV1, NULL, NULL, m_pItemList[m_stDialogBoxInfo[52].sV1]->m_cName);
+		DisableDialogBox(52);
+	}
+	if ((msX >= sX + DEF_RBTNPOSX) && (msX <= sX + DEF_RBTNPOSX + DEF_BTNSZX) && (msY >= sY + DEF_BTNPOSY) && (msY <= sY + DEF_BTNPOSY + DEF_BTNSZY)) {
+		// Cancel
+		m_bIsItemDisabled[ m_stDialogBoxInfo[52].sV1 ] = FALSE;
+		DisableDialogBox(52);
 	}
 }
 
@@ -36634,6 +36770,10 @@ void CGame::DlgBoxClick_NpcActionQuery(short msX, short msY)
 		{	if (m_stDialogBoxInfo[20].sV3 == 1)
 			{	bSendCommand(MSGID_COMMAND_COMMON, DEF_COMMONTYPE_REQ_REPAIRITEM, NULL, m_stDialogBoxInfo[20].sV1, m_stDialogBoxInfo[20].sV2, NULL, m_pItemList[m_stDialogBoxInfo[20].sV1]->m_cName, m_stDialogBoxInfo[20].sV4); // v1.4
 				DisableDialogBox(20);
+		}	}else if ((msX > sX + 125) && (msX < sX + 180) && (msY > sY + 78) && (msY < sY + 93))
+		{	if (m_pItemList[m_stDialogBoxInfo[20].sV1]->m_cGenderLimit != 0)
+			{	bSendCommand(MSGID_COMMAND_COMMON, DEF_COMMONTYPE_REQ_CONVERTITEM, NULL, m_stDialogBoxInfo[20].sV1, m_stDialogBoxInfo[20].sV2, NULL, m_pItemList[m_stDialogBoxInfo[20].sV1]->m_cName, m_stDialogBoxInfo[20].sV4);
+				DisableDialogBox(20);
 		}	}
 		break;
 
@@ -37197,6 +37337,40 @@ void CGame::NotifyMsg_CannotRepairItem(char * pData)
  		break;
 	case 2:
 		wsprintf(cTxt, NOTIFYMSG_CANNOT_REPAIR_ITEM2, cStr1 );
+		AddEventList(cTxt, 10);
+ 		break;
+	}
+	m_bIsItemDisabled[wV1] = FALSE;
+}
+
+void CGame::NotifyMsg_CannotConvertItem(char * pData)
+{
+ char * cp, cTxt[120], cStr1[64], cStr2[64], cStr3[64];
+ WORD * wp, wV1, wV2;
+
+	cp = (char *)(pData + DEF_INDEX2_MSGTYPE + 2);
+	wp = (WORD *)cp;
+  	wV1 = *wp;
+	cp += 2;
+	wp = (WORD *)cp;
+  	wV2 = *wp;
+	cp += 2;
+	ZeroMemory( cStr1, sizeof(cStr1) );
+	ZeroMemory( cStr2, sizeof(cStr2) );
+	ZeroMemory( cStr3, sizeof(cStr3) );
+	GetItemName( m_pItemList[wV1], cStr1, cStr2, cStr3 );
+
+	switch (wV2) {
+	case 1:
+		wsprintf(cTxt, NOTIFYMSG_CANNOT_CONVERT_ITEM1, cStr1 );
+		AddEventList(cTxt, 10);
+ 		break;
+	case 2:
+		wsprintf(cTxt, NOTIFYMSG_CANNOT_CONVERT_ITEM2, cStr1 );
+		AddEventList(cTxt, 10);
+ 		break;
+	case 3:
+		wsprintf(cTxt, NOTIFYMSG_CANNOT_CONVERT_ITEM3, cStr1 );
 		AddEventList(cTxt, 10);
  		break;
 	}
@@ -38048,6 +38222,67 @@ void CGame::NotifyMsg_ItemRepaired(char * pData)
 
 	wsprintf(cTxt, NOTIFYMSG_ITEMREPAIRED1, cStr1);
 
+	AddEventList(cTxt, 10);
+}
+
+void CGame::NotifyMsg_ItemConverted(char * pData)
+{
+ char * cp, cItemID, cName[21], cExtra[14], cTxt[120];
+ short * sp;
+ WORD  * wp;
+ char cStr1[64], cStr2[64], cStr3[64];
+
+	cp = (char *)(pData + DEF_INDEX2_MSGTYPE + 2);
+
+	cItemID = *cp;
+	cp++;
+
+	ZeroMemory(cName, sizeof(cName));
+	memcpy(cName, cp, 20);
+	cp += 20;
+
+	memcpy(cExtra, cp, 14);
+	cp += 14;
+
+	if (m_pItemList[cItemID] == NULL) return;
+
+	ZeroMemory(m_pItemList[cItemID]->m_cName, sizeof(m_pItemList[cItemID]->m_cName));
+	strcpy(m_pItemList[cItemID]->m_cName, cName);
+
+	cp = cExtra;
+	m_pItemList[cItemID]->m_cItemType    = *cp; cp++;
+	m_pItemList[cItemID]->m_cEquipPos    = *cp; cp++;
+	m_pItemList[cItemID]->m_cGenderLimit = *cp; cp++;
+	m_pItemList[cItemID]->m_cItemColor   = *cp; cp++;
+
+	sp = (short *)cp;
+	m_pItemList[cItemID]->m_sLevelLimit  = *sp;
+	cp += 2;
+
+	wp = (WORD *)cp;
+	m_pItemList[cItemID]->m_wMaxLifeSpan = *wp;
+	cp += 2;
+	m_pItemList[cItemID]->m_wCurLifeSpan = m_pItemList[cItemID]->m_wMaxLifeSpan;
+
+	wp = (WORD *)cp;
+	m_pItemList[cItemID]->m_wWeight = *wp;
+	cp += 2;
+
+	sp = (short *)cp;
+	m_pItemList[cItemID]->m_sSprite = *sp;
+	cp += 2;
+
+	sp = (short *)cp;
+	m_pItemList[cItemID]->m_sSpriteFrame = *sp;
+	cp += 2;
+
+	m_bIsItemDisabled[cItemID] = FALSE;
+
+	ZeroMemory( cStr1, sizeof(cStr1) );
+	ZeroMemory( cStr2, sizeof(cStr2) );
+	ZeroMemory( cStr3, sizeof(cStr3) );
+	GetItemName( m_pItemList[cItemID], cStr1, cStr2, cStr3 );
+	wsprintf(cTxt, NOTIFYMSG_ITEMCONVERTED1, cStr1);
 	AddEventList(cTxt, 10);
 }
 
