@@ -1076,24 +1076,10 @@ void CGame::ClientMotionHandler(int iClientH, char * pData)
 		iRet = iClientMotion_Magic_Handler(iClientH, sX, sY, cDir);
 		//client hp recorded here ONLY if its less than
 		if (iRet == 1) {
-			if (m_pClientList[iClientH]->m_bMagicPauseTime == FALSE) {
-				m_pClientList[iClientH]->m_bMagicPauseTime = TRUE;
-				iTemp = 10;
-				SendEventToNearClient_TypeA(iClientH, DEF_OWNERTYPE_PLAYER, MSGID_EVENT_MOTION, DEF_OBJECTMAGIC, dX, iTemp, NULL);
-				m_pClientList[iClientH]->m_iSpellCount++;
-				bCheckClientMagicFrequency(iClientH, dwClientTime);
-			}
-			else if (m_pClientList[iClientH]->m_bMagicPauseTime == TRUE) {
-				try
-				{
-					wsprintf(G_cTxt, "Cast Delay Hack: (%s) Player: (%s) - player casting too fast.", m_pClientList[iClientH]->m_cIPaddress, m_pClientList[iClientH]->m_cCharName);
-					PutHackLogFileList(G_cTxt);
-					DeleteClient(iClientH, TRUE, TRUE);
-				}
-				catch(...)
-				{
-				}
-			}
+			iTemp = 10;
+			SendEventToNearClient_TypeA(iClientH, DEF_OWNERTYPE_PLAYER, MSGID_EVENT_MOTION, DEF_OBJECTMAGIC, dX, iTemp, NULL);
+			m_pClientList[iClientH]->m_iSpellCount++;
+			bCheckClientMagicFrequency(iClientH, dwClientTime);
 		}
 		else if (iRet == 2) SendObjectMotionRejectMsg(iClientH);
 			break;
@@ -12004,7 +11990,15 @@ void CGame::ClientCommonHandler(int iClientH, char * pData)
 		//DbgWnd->AddEventMsg("RECV -> DEF_MSGFROM_CLIENT -> MSGID_COMMAND_COMMON -> DEF_COMMONTYPE_REQ_SELLITEM");
 		ReqSellItemHandler(iClientH, iV1, iV2, iV3, pString);
 		break;
-	
+
+	case DEF_COMMONTYPE_REQ_CONVERTITEMCONFIRM:
+		ReqConvertItemConfirmHandler(iClientH, iV1, pString);
+		break;
+
+	case DEF_COMMONTYPE_REQ_CONVERTITEM:
+		ReqConvertItemHandler(iClientH, iV1, iV2, pString);
+		break;
+
 	case DEF_COMMONTYPE_REQ_USESKILL:
 		//DbgWnd->AddEventMsg("RECV -> DEF_MSGFROM_CLIENT -> MSGID_COMMAND_COMMON -> DEF_COMMONTYPE_REQ_USESKILL");
 		UseSkillHandler(iClientH, iV1, iV2, iV3);
@@ -15110,11 +15104,65 @@ void CGame::SendNotifyMsg(int iFromH, int iToH, WORD wMsgType, DWORD sV1, DWORD 
 
 		memcpy(cp, pString, 20);
 		cp += 20;
-		
+
 		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData, 30);
 
 		break;
-	
+
+	case DEF_NOTIFY_CANNOTCONVERTITEM:
+		wp = (WORD *)cp;
+		*wp = (WORD)sV1;
+		cp += 2;
+
+		wp = (WORD *)cp;
+		*wp = (WORD)sV2;
+		cp += 2;
+
+		memcpy(cp, pString, 20);
+		cp += 20;
+
+		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData, 30);
+
+		break;
+
+	case DEF_NOTIFY_CONVERTITEMPRICE:
+		dwp = (DWORD *)cp;
+		*dwp = (DWORD)sV1;
+		cp += 4;
+		dwp = (DWORD *)cp;
+		*dwp = (DWORD)sV2;
+		cp += 4;
+		dwp = (DWORD *)cp;
+		*dwp = (DWORD)sV3;
+		cp += 4;
+		dwp = (DWORD *)cp;
+		*dwp = (DWORD)sV4;
+		cp += 4;
+
+		memcpy(cp, pString, 20);
+		cp += 20;
+
+		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData, 42);
+		break;
+
+	case DEF_NOTIFY_ITEMCONVERTED:
+		// sV1 = inventory slot index. pString = new item name (20 bytes).
+		// pString2 = 14-byte packed template (see ReqConvertItemConfirmHandler); only
+		// fields the client's CItem actually has (no cApprValue/cCategory client-side):
+		//   cItemType, cEquipPos, cGenderLimit, cItemColor,
+		//   sLevelLimit(2), wMaxLifeSpan(2), wWeight(2), sSprite(2), sSpriteFrame(2)
+		*cp = (char)sV1;
+		cp++;
+
+		memcpy(cp, pString, 20);
+		cp += 20;
+
+		memcpy(cp, pString2, 14);
+		cp += 14;
+
+		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData, 41);
+		break;
+
 	case DEF_NOTIFY_SHOWMAP:
 		wp  = (WORD *)cp;  // 보여주는 종류 
 		*wp = (WORD)sV1;
@@ -31625,9 +31673,230 @@ void CGame::ReqRepairItemCofirmHandler(int iClientH, char cItemID, char * pStrin
 		}
 	}
 	else {
-		// 고칠 필요가 없는 아이템 
-		// 해킹이나 버그에 의한 것일듯 
+		// 고칠 필요가 없는 아이템
+		// 해킹이나 버그에 의한 것일듯
 	}
+}
+
+struct SGenderConvertEntry { short sFromID; short sToID; };
+
+// Gender-conversion ("reforge"/"tailor") table: source item ID -> converted item ID.
+// Exact male/female pairs are listed both ways (identical stats, sprite/apprvalue differ).
+// The handful of items with no true opposite-gender counterpart are mapped one-directionally
+// to their closest existing stat/tier match, and deliberately have no reverse entry so a
+// common item can't be "converted" into a rarer one-of-a-kind item for the price of a fee.
+static const SGenderConvertEntry g_stGenderConvertTable[] = {
+	// Exact pairs
+	{ 403, 404 }, { 404, 403 }, // aHeroHelm
+	{ 405, 406 }, { 406, 405 }, // eHeroHelm
+	{ 407, 408 }, { 408, 407 }, // aHeroCap
+	{ 409, 410 }, { 410, 409 }, // eHeroCap
+	{ 411, 412 }, { 412, 411 }, // aHeroArmor
+	{ 413, 414 }, { 414, 413 }, // eHeroArmor
+	{ 415, 416 }, { 416, 415 }, // aHeroRobe
+	{ 417, 418 }, { 418, 417 }, // eHeroRobe
+	{ 419, 420 }, { 420, 419 }, // aHeroHauberk
+	{ 421, 422 }, { 422, 421 }, // eHeroHauberk
+	{ 423, 424 }, { 424, 423 }, // aHeroLeggings
+	{ 425, 426 }, { 426, 425 }, // eHeroLeggings
+	{ 453, 471 }, { 471, 453 }, // Shirt
+	{ 454, 472 }, { 472, 454 }, // Hauberk
+	{ 455, 475 }, { 475, 455 }, // LeatherArmor
+	{ 456, 476 }, { 476, 456 }, // ChainMail
+	{ 457, 477 }, { 477, 457 }, // ScaleMail
+	{ 458, 478 }, { 478, 458 }, // PlateMail
+	{ 459, 480 }, { 480, 459 }, // Trousers
+	{ 460, 481 }, { 481, 460 }, // KneeTrousers
+	{ 461, 482 }, { 482, 461 }, // ChainHose
+	{ 462, 483 }, { 483, 462 }, // PlateLeggings
+	{ 590, 591 }, { 591, 590 }, // Robe
+	{ 600, 602 }, { 602, 600 }, // Helm
+	{ 601, 603 }, { 603, 601 }, // FullHelm
+	{ 621, 622 }, { 622, 621 }, // MerienPlateMail
+	{ 675, 676 }, { 676, 675 }, // KnightPlateMail
+	{ 677, 678 }, { 678, 677 }, // KnightPlateLeg
+	{ 679, 680 }, { 680, 679 }, // KnightFullHelm
+	{ 681, 682 }, { 682, 681 }, // WizardHauberk
+	{ 685, 686 }, { 686, 685 }, // WizardRobe
+	{ 687, 688 }, { 688, 687 }, // KnightHauberk
+	{ 750, 754 }, { 754, 750 }, // Horned-Helm
+	{ 751, 755 }, { 755, 751 }, // Wings-Helm
+	{ 752, 756 }, { 756, 752 }, // Wizard-Cap
+	{ 753, 757 }, { 757, 753 }, // Wizard-Hat
+	{ 770, 771 }, { 771, 770 }, // SantaCostume
+	{ 706, 724 }, { 724, 706 }, // DarkKnightHauberk
+	{ 707, 725 }, { 725, 707 }, // DarkKnightFullHelm
+	{ 708, 726 }, { 726, 708 }, // DarkKnightLeggings
+	{ 710, 728 }, { 728, 710 }, // DarkKnightPlateMail
+	{ 711, 729 }, { 729, 711 }, // DarkMageHauberk
+	{ 712, 730 }, { 730, 712 }, // DarkMageChainMail
+	{ 713, 731 }, { 731, 713 }, // DarkMageLeggings
+	{ 715, 733 }, { 733, 715 }, // DarkMageRobe
+
+	// Approximated pairs (no true opposite-gender counterpart exists)
+	{ 700, 724 }, // SangAhHauberk -> DarkKnightHauberkW
+	{ 701, 725 }, // SangAhFullHel -> DarkKnightFullHelmW
+	{ 702, 726 }, // SangAhLeggings -> DarkKnightLeggingsW
+	{ 704, 728 }, // SangAhPlateMail -> DarkKnightPlateMailW
+	{ 716, 733 }, // DarkMageLedderArmor -> DarkMageRobeW
+	{ 719, 730 }, // DarkMageScaleMail -> DarkMageChainMailW
+	{ 484, 474 }, // Tunic(M) -> LongBodice(W)
+	{ 470, 453 }, // Chemise(W) -> Shirt(M)
+	{ 479, 459 }, // Skirt(W) -> Trousers(M)
+	{ 473, 484 }, // Bodice(W) -> Tunic(M)
+	{ 474, 484 }, // LongBodice(W) -> Tunic(M)
+};
+
+short CGame::sGetGenderConvertedItemID(short sFromItemID)
+{
+ register int i;
+
+	for (i = 0; i < (int)(sizeof(g_stGenderConvertTable) / sizeof(g_stGenderConvertTable[0])); i++)
+		if (g_stGenderConvertTable[i].sFromID == sFromItemID) return g_stGenderConvertTable[i].sToID;
+
+	return 0;
+}
+
+CItem * CGame::pGetItemConfigByID(short sItemID)
+{
+ register int i;
+
+	for (i = 0; i < DEF_MAXITEMTYPES; i++)
+		if ((m_pItemConfigList[i] != NULL) && (m_pItemConfigList[i]->m_sIDnum == sItemID))
+			return m_pItemConfigList[i];
+
+	return NULL;
+}
+
+void CGame::ReqConvertItemHandler(int iClientH, char cItemID, char cConvertWhom, char * pString)
+{
+ char cItemCategory;
+ short sNewItemID;
+ CItem * pNewItemConfig;
+
+	if (m_pClientList[iClientH] == NULL) return;
+	if (m_pClientList[iClientH]->m_bIsInitComplete == FALSE) return;
+	if ((cItemID < 0) || (cItemID >= DEF_MAXITEMS)) return;
+	if (m_pClientList[iClientH]->m_pItemList[cItemID] == NULL) return;
+
+	if (m_pClientList[iClientH]->m_bIsItemEquipped[cItemID] == TRUE) {
+		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_CANNOTCONVERTITEM, cItemID, 3, NULL, m_pClientList[iClientH]->m_pItemList[cItemID]->m_cName);
+		return;
+	}
+
+	sNewItemID = sGetGenderConvertedItemID(m_pClientList[iClientH]->m_pItemList[cItemID]->m_sIDnum);
+	if (sNewItemID == 0) {
+		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_CANNOTCONVERTITEM, cItemID, 1, NULL, m_pClientList[iClientH]->m_pItemList[cItemID]->m_cName);
+		return;
+	}
+
+	cItemCategory = m_pClientList[iClientH]->m_pItemList[cItemID]->m_cCategory;
+
+	// Heavy armor (blacksmith "reforge") vs cloth (shop "tailoring") - same category split used by ARMORDYE/DYE.
+	if ((cItemCategory == 6) || (cItemCategory == 13) || (cItemCategory == 15)) {
+		if (cConvertWhom != 24) {
+			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_CANNOTCONVERTITEM, cItemID, 2, NULL, m_pClientList[iClientH]->m_pItemList[cItemID]->m_cName);
+			return;
+		}
+	}
+	else if ((cItemCategory == 11) || (cItemCategory == 12)) {
+		if (cConvertWhom != 15) {
+			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_CANNOTCONVERTITEM, cItemID, 2, NULL, m_pClientList[iClientH]->m_pItemList[cItemID]->m_cName);
+			return;
+		}
+	}
+	else {
+		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_CANNOTCONVERTITEM, cItemID, 1, NULL, m_pClientList[iClientH]->m_pItemList[cItemID]->m_cName);
+		return;
+	}
+
+	pNewItemConfig = pGetItemConfigByID(sNewItemID);
+	if (pNewItemConfig == NULL) {
+		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_CANNOTCONVERTITEM, cItemID, 1, NULL, m_pClientList[iClientH]->m_pItemList[cItemID]->m_cName);
+		return;
+	}
+
+	SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_CONVERTITEMPRICE, cItemID, pNewItemConfig->m_wPrice, 0, pNewItemConfig->m_cName, 0);
+}
+
+void CGame::ReqConvertItemConfirmHandler(int iClientH, char cItemID, char * pString)
+{
+ char cItemCategory, cExtra[14], cData[120];
+ short sNewItemID;
+ CItem * pNewItemConfig, * pItem;
+ DWORD * dwp, dwGoldCount;
+ short sPrice;
+ char * cp;
+ short * sp;
+ WORD * wp;
+ int iRet;
+
+	if (m_pClientList[iClientH] == NULL) return;
+	if (m_pClientList[iClientH]->m_bIsInitComplete == FALSE) return;
+	if ((cItemID < 0) || (cItemID >= DEF_MAXITEMS)) return;
+	if (m_pClientList[iClientH]->m_pItemList[cItemID] == NULL) return;
+	if (m_pClientList[iClientH]->m_pIsProcessingAllowed == FALSE) return;
+
+	if (m_pClientList[iClientH]->m_bIsItemEquipped[cItemID] == TRUE) return;
+
+	pItem = m_pClientList[iClientH]->m_pItemList[cItemID];
+
+	sNewItemID = sGetGenderConvertedItemID(pItem->m_sIDnum);
+	if (sNewItemID == 0) return;
+
+	cItemCategory = pItem->m_cCategory;
+	if ((cItemCategory != 6) && (cItemCategory != 13) && (cItemCategory != 15) &&
+		(cItemCategory != 11) && (cItemCategory != 12)) return;
+
+	pNewItemConfig = pGetItemConfigByID(sNewItemID);
+	if (pNewItemConfig == NULL) return;
+
+	sPrice = (short)pNewItemConfig->m_wPrice;
+
+	dwGoldCount = dwGetItemCount(iClientH, "Gold");
+	if (dwGoldCount < (DWORD)sPrice) {
+		dwp  = (DWORD *)(cData + DEF_INDEX4_MSGID);
+		*dwp = MSGID_NOTIFY;
+		wp   = (WORD *)(cData + DEF_INDEX2_MSGTYPE);
+		*wp  = DEF_NOTIFY_NOTENOUGHGOLD;
+		cp   = (char *)(cData + DEF_INDEX2_MSGTYPE + 2);
+		*cp  = cItemID;
+		cp++;
+
+		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 7);
+		switch (iRet) {
+		case DEF_XSOCKEVENT_QUENEFULL:
+		case DEF_XSOCKEVENT_SOCKETERROR:
+		case DEF_XSOCKEVENT_CRITICALERROR:
+		case DEF_XSOCKEVENT_SOCKETCLOSED:
+			DeleteClient(iClientH, TRUE, TRUE);
+			break;
+		}
+		return;
+	}
+
+	// Re-stamp the whole template (name/sprite/apprvalue/genderlimit/etc, resets life span to
+	// new max). m_dwAttribute (rolled affix bonuses), m_dwCount, m_cItemColor and the touch/spec
+	// effect fields are untouched by _bInitItemAttr, so they survive the swap unmodified.
+	_bInitItemAttr(pItem, (int)sNewItemID);
+
+	SetItemCount(iClientH, "Gold", dwGoldCount - sPrice);
+	iCalcTotalWeight(iClientH);
+	m_stCityStatus[m_pClientList[iClientH]->m_cSide].iFunds += sPrice;
+
+	ZeroMemory(cExtra, sizeof(cExtra));
+	cp = cExtra;
+	*cp = pItem->m_cItemType;      cp++;
+	*cp = pItem->m_cEquipPos;      cp++;
+	*cp = pItem->m_cGenderLimit;   cp++;
+	*cp = pItem->m_cItemColor;     cp++;
+	sp = (short *)cp; *sp = pItem->m_sLevelLimit;  cp += 2;
+	wp = (WORD *)cp;  *wp = pItem->m_wMaxLifeSpan; cp += 2;
+	wp = (WORD *)cp;  *wp = pItem->m_wWeight;      cp += 2;
+	sp = (short *)cp; *sp = pItem->m_sSprite;      cp += 2;
+	sp = (short *)cp; *sp = pItem->m_sSpriteFrame; cp += 2;
+
+	SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMCONVERTED, cItemID, NULL, NULL, pItem->m_cName, NULL, NULL, NULL, NULL, NULL, NULL, cExtra);
 }
 
 int CGame::iCalcTotalWeight(int iClientH)
@@ -46519,7 +46788,6 @@ BOOL CGame::bCheckClientMagicFrequency(int iClientH, DWORD dwClientTime)
 		
 		m_pClientList[iClientH]->m_iSpellCount--;
 		m_pClientList[iClientH]->m_bMagicConfirm = FALSE;
-		m_pClientList[iClientH]->m_bMagicPauseTime = FALSE;
 		
 		//testcode
 		//wsprintf(G_cTxt, "Magic: %d", dwTimeGap);

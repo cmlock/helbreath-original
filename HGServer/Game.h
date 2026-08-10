@@ -546,6 +546,10 @@ public:
 	void ReqRepairItemHandler(int iClientH, char cItemID, char cRepairWhom, char * pString);
 	void ReqSellItemConfirmHandler(int iClientH, char cItemID, int iNum, char * pString);
 	void ReqSellItemHandler(int iClientH, char cItemID, char cSellToWhom, int iNum, char * pItemName);
+	short sGetGenderConvertedItemID(short sFromItemID);
+	class CItem * pGetItemConfigByID(short sItemID);
+	void ReqConvertItemHandler(int iClientH, char cItemID, char cConvertWhom, char * pString);
+	void ReqConvertItemConfirmHandler(int iClientH, char cItemID, char * pString);
 	void UseSkillHandler(int iClientH, int iV1, int iV2, int iV3);
 	int  iCalculateUseSkillItemEffect(int iOwnerH, char cOwnerType, char cOwnerSkill, int iSkillNum, char cMapIndex, int dX, int dY);
 	void ClearSkillUsingStatus(int iClientH);
