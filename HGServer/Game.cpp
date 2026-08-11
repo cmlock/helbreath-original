@@ -25931,9 +25931,10 @@ void CGame::MobGenerator()
 
 				case 4:
 					if ((iResult >= 1) && (iResult < 50)) {
-						switch (iDice(1,2)) {
+						switch (iDice(1,3)) {
 				case 1:	iResult = 2;  break;
 				case 2: iResult = 10; break;
+				case 3: iResult = 1;  break; // Slime
 						}
 					}
 					else if ((iResult >= 50) && (iResult < 80)) {
@@ -26175,10 +26176,11 @@ void CGame::MobGenerator()
 
 				case 12:
 					if ((iResult >= 1) && (iResult < 50)) {
-						switch (iDice(1,3)) {
+						switch (iDice(1,4)) {
 				case 1:	iResult = 1 ; break;
 				case 2: iResult = 2 ; break;
 				case 3: iResult = 10; break;
+				case 4: iResult = 3 ; break; // Orc
 						}
 					}
 					else if ((iResult >= 50) && (iResult < 85)) {
@@ -26188,10 +26190,11 @@ void CGame::MobGenerator()
 						}
 					}
 					else if ((iResult >= 85) && (iResult <= 100)) {
-						switch (iDice(1,3)) {
+						switch (iDice(1,4)) {
 				case 1: iResult = 8; break;
 				case 2: iResult = 11; break;
 				case 3: iResult = 26; break;
+				case 4: iResult = 14; break; // Hellbound
 						}
 					}
 					iMapLevel = 4;
@@ -26225,29 +26228,38 @@ void CGame::MobGenerator()
 					else if ((iResult >= 75) && (iResult < 95)) {
 						iResult = 23;
 					}
-					else if ((iResult >= 95) && (iResult <= 100)) {
+					else if ((iResult >= 95) && (iResult < 98)) {
 						iResult = 22;
+					}
+					else if ((iResult >= 98) && (iResult <= 100)) {
+						iResult = 5; // Skeleton
 					}
 					iMapLevel = 5;
 					break;
 
 				case 14: // icebound
-					if ((iResult >= 1) && (iResult < 30)) {
+					if ((iResult >= 1) && (iResult < 25)) {
 						iResult = 23; // Dark-Elf
 					}
-					else if ((iResult >= 30) && (iResult < 50)) {
+					else if ((iResult >= 25) && (iResult < 45)) {
 						iResult = 31; // Ice-Golem
 					}
-					else if ((iResult >= 50) && (iResult < 70)) {
+					else if ((iResult >= 45) && (iResult < 65)) {
 						iResult = 22; // Beholder
 						bFirmBerserk = TRUE;
 						iTotalMob = 4 - (iDice(1,2) - 1);
 					}
-					else if ((iResult >= 70) && (iResult < 90)) {
+					else if ((iResult >= 65) && (iResult < 83)) {
 						iResult = 32; // DireBoar
 					}
-					else if ((iResult >= 90) && (iResult <= 100)) {
+					else if ((iResult >= 83) && (iResult < 93)) {
 						iResult = 33; // Frost
+					}
+					else if ((iResult >= 93) && (iResult < 97)) {
+						iResult = 5; // Skeleton
+					}
+					else if ((iResult >= 97) && (iResult <= 100)) {
+						iResult = 8; // Stone-Golem
 					}
 					iMapLevel = 5;
 					break;
@@ -26399,8 +26411,11 @@ void CGame::MobGenerator()
 					else if ((iResult >= 75) && (iResult < 95)) {
 						iResult = 43;
 					}
-					else if ((iResult >= 95) && (iResult < 100)) {
+					else if ((iResult >= 95) && (iResult < 99)) {
 						iResult = 22;
+					}
+					else if ((iResult >= 99) && (iResult <= 100)) {
+						iResult = 35; // Hellclaw
 					}
 					iMapLevel = 4;
 					break;
@@ -26430,8 +26445,27 @@ void CGame::MobGenerator()
 					}
 					iMapLevel = 4;
 					break;
-	
-				}			
+
+				case 22: // toh2
+					if ((iResult >= 1) && (iResult < 21)) {
+						iResult = 22; // Beholder
+					}
+					else if ((iResult >= 21) && (iResult < 41)) {
+						iResult = 23; // Dark-Elf
+					}
+					else if ((iResult >= 41) && (iResult < 61)) {
+						iResult = 21; // Gagoyle
+					}
+					else if ((iResult >= 61) && (iResult < 81)) {
+						iResult = 15; // Liche
+					}
+					else if ((iResult >= 81) && (iResult <= 100)) {
+						iResult = 13; // Orge
+					}
+					iMapLevel = 5;
+					break;
+
+				}
 
 				pX = NULL;
 				pY = NULL;
@@ -48595,38 +48629,16 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 				}
 
 				if ((pItem->m_sItemEffectType == DEF_ITEMEFFECTTYPE_ATTACK) || (pItem->m_sItemEffectType == DEF_ITEMEFFECTTYPE_ATTACK_ARROW) || (pItem->m_sItemEffectType == DEF_ITEMEFFECTTYPE_ATTACK_DEFENSE)) {
-					iResult = iDice(1,10000);
-					if ((iResult >= 1) && (iResult <= 299)) {
-						dwType = 6; 
-						cColor = 2; 
-					}
-					else if ((iResult >= 300) && (iResult <= 999)) {
-						dwType = 8; 
-						cColor = 3;
-					}
-					else if ((iResult >= 1000) && (iResult <= 2499)) {
-						dwType = 1;
-						cColor = 5;
-					}
-					else if ((iResult >= 2500) && (iResult <= 4499)) {
-						dwType = 5;
-						cColor = 1;
-					}
-					else if ((iResult >= 4500) && (iResult <= 6499)) {
-						dwType = 3;
-						cColor = 7;
-					}
-					else if ((iResult >= 6500) && (iResult <= 8099)) {
-						dwType = 2;
-						cColor = 4;
-					}
-					else if ((iResult >= 8100) && (iResult <= 9699)) {
-						dwType = 7;
-						cColor = 6;
-					}
-					else if ((iResult >= 9700) && (iResult <= 10000)) {
-						dwType = 9;
-						cColor = 8;
+					// Each of the 8 Main affixes has an equal 1/8 chance.
+					switch (iDice(1,8)) {
+					case 1: dwType = 6; cColor = 2; break;
+					case 2: dwType = 8; cColor = 3; break;
+					case 3: dwType = 1; cColor = 5; break;
+					case 4: dwType = 5; cColor = 1; break;
+					case 5: dwType = 3; cColor = 7; break;
+					case 6: dwType = 2; cColor = 4; break;
+					case 7: dwType = 7; cColor = 6; break;
+					case 8: dwType = 9; cColor = 8; break;
 					}
 
 					pItem->m_cItemColor = cColor;
@@ -48670,11 +48682,13 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 
 					if (iDice(1,10000) >= 6000) {
 
-						iResult = iDice(1,10000);
-						if ((iResult >= 1) && (iResult <= 4999))          dwType = 2;
-						else if ((iResult >= 5000) && (iResult <= 8499))  dwType = 10;
-						else if ((iResult >= 8500) && (iResult <= 9499))  dwType = 12;
-						else if ((iResult >= 9500) && (iResult <= 10000)) dwType = 11;
+						// Each of the 4 Sub affixes has an equal 1/4 chance.
+						switch (iDice(1,4)) {
+						case 1: dwType = 2;  break;
+						case 2: dwType = 10; break;
+						case 3: dwType = 12; break;
+						case 4: dwType = 11; break;
+						}
 
 						iResult = iDice(1, 30000);
 						if ((iResult >= 1) && (iResult < 7250))            dwValue = 1;  // 7250/30000 = 24.2%
@@ -48746,11 +48760,13 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 
 					if (iDice(1,10000) >= 6000) {
 
-						iResult = iDice(1,10000);
-						if ((iResult >= 1) && (iResult <= 4999))          dwType = 2;
-						else if ((iResult >= 5000) && (iResult <= 8499))  dwType = 10;
-						else if ((iResult >= 8500) && (iResult <= 9499))  dwType = 12;
-						else if ((iResult >= 9500) && (iResult <= 10000)) dwType = 11;
+						// Each of the 4 Sub affixes has an equal 1/4 chance.
+						switch (iDice(1,4)) {
+						case 1: dwType = 2;  break;
+						case 2: dwType = 10; break;
+						case 3: dwType = 12; break;
+						case 4: dwType = 11; break;
+						}
 
 						iResult = iDice(1, 30000);
 						if ((iResult >= 1) && (iResult < 7250))            dwValue = 1;  // 7250/30000 = 24.2%
@@ -48792,11 +48808,13 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 				}
 				else if (pItem->m_sItemEffectType == DEF_ITEMEFFECTTYPE_DEFENSE) {
 
-					iResult = iDice(1,10000);
-					if ((iResult >= 1) && (iResult <= 5999))          dwType = 8;
-					else if ((iResult >= 6000) && (iResult <= 8999))  dwType = 6;
-					else if ((iResult >= 9000) && (iResult <= 9554))  dwType = 11; //dwType = 11;
-					else if ((iResult >= 9555) && (iResult <= 10000)) dwType = 12; //dwType = 12;
+					// Each of the 4 Main affixes has an equal 1/4 chance.
+					switch (iDice(1,4)) {
+					case 1: dwType = 8;  break;
+					case 2: dwType = 6;  break;
+					case 3: dwType = 11; break;
+					case 4: dwType = 12; break;
+					}
 
 					iResult = iDice(1, 30000);
 					if ((iResult >= 1) && (iResult < 7250))            dwValue = 1;  // 7250/30000 = 24.2%
@@ -48839,15 +48857,17 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 
 					if (iDice(1,10000) >= 6000) {
 
-						iResult = iDice(1,10000);
-						if ((iResult >= 1) && (iResult <= 999))           dwType = 3;
-						else if ((iResult >= 1000) && (iResult <= 3999))  dwType = 1;
-						else if ((iResult >= 4000) && (iResult <= 5499))  dwType = 5;
-						else if ((iResult >= 5500) && (iResult <= 6499))  dwType = 4;
-						else if ((iResult >= 6500) && (iResult <= 7499))  dwType = 6;
-						else if ((iResult >= 7500) && (iResult <= 9399))  dwType = 7;
-						else if ((iResult >= 9400) && (iResult <= 9799))  dwType = 8;
-						else if ((iResult >= 9800) && (iResult <= 10000)) dwType = 9;
+						// Each of the 8 Sub affixes has an equal 1/8 chance.
+						switch (iDice(1,8)) {
+						case 1: dwType = 3; break;
+						case 2: dwType = 1; break;
+						case 3: dwType = 5; break;
+						case 4: dwType = 4; break;
+						case 5: dwType = 6; break;
+						case 6: dwType = 7; break;
+						case 7: dwType = 8; break;
+						case 8: dwType = 9; break;
+						}
 
 						iResult = iDice(1, 30000);
 						if ((iResult >= 1) && (iResult < 7250))            dwValue = 1;  // 7250/30000 = 24.2%

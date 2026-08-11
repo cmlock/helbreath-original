@@ -41,34 +41,34 @@ random-mob-generator	= 1  14
 
 //-----------------------Num-Type-RECT---------------Mob-MobNum
 
-//¿ÍÀÌ¹ø
-spot-mob-generator	= 1   1    28   23  81  59   	13	10
+//ï¿½ï¿½ï¿½Ì¹ï¿½
+spot-mob-generator	= 1   1    28   23  81  59   	66	10
 
-//ÇÁ·Î½ºÆ®
-spot-mob-generator	= 2   1    51   85 105 136	30	10
-spot-mob-generator	= 3   1    225  63 269 109	30	10
-spot-mob-generator	= 4   1    159  79 197 171	30	10
+//ï¿½ï¿½ï¿½Î½ï¿½Æ®
+spot-mob-generator	= 2   1    51   85 105 136	63	10
+spot-mob-generator	= 3   1    225  63 269 109	63	10
+spot-mob-generator	= 4   1    159  79 197 171	63	10
 
-//ºñÈ¦´õ
-spot-mob-generator	= 5   1    137 113 198 164	54	10
-spot-mob-generator	= 6   1    179  67 237 103	54	10
-spot-mob-generator	= 7   1     45 202  83 233	54	10
+//ï¿½ï¿½È¦ï¿½ï¿½
+spot-mob-generator	= 5   1    137 113 198 164	53	10
+spot-mob-generator	= 6   1    179  67 237 103	53	10
+spot-mob-generator	= 7   1     45 202  83 233	53	10
 
 
-//ÇØ°ñ
+//ï¿½Ø°ï¿½
 spot-mob-generator	= 8   1    215 137 262 166	11	10
 spot-mob-generator	= 9   1    108 240 165 261	11	10
 spot-mob-generator	= 10  1     35 165  71 234	11	10
 
-//DireBoar	    
-spot-mob-generator	= 11   1    174  26 236  83	53	10
-spot-mob-generator	= 12   1    102 219 164 277	53	10
+//DireBoar
+spot-mob-generator	= 11   1    174  26 236  83	62	10
+spot-mob-generator	= 12   1    102 219 164 277	62	10
 
-//Åä³¢
+//ï¿½ä³¢
 spot-mob-generator	= 13   1    179 217 226 260	55	10
 spot-mob-generator	= 14   1     89 148 127 176	55	10
 
-//½ºÅæ°ñ·½
+//ï¿½ï¿½ï¿½ï¿½ï¿½
 spot-mob-generator	= 15   1    198 170 243 206	12	10
 spot-mob-generator	= 16   1     50  72  86 137	12	10
 spot-mob-generator	= 17   1     94  54  152 98	12	10

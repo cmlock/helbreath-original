@@ -33,8 +33,8 @@ waypoint          =     8       149   249
 waypoint          =     9       239   243
 
 //------------------------Num-Type-waypoints--------------Mob-MobNum
-spot-mob-generator	= 1   1    27  55 54  108         82  50	//������
-spot-mob-generator	= 2   1    140 28 167 73          82  50	//������
+spot-mob-generator	= 1   1    27  55 54  108         79  50	//������
+spot-mob-generator	= 2   1    140 28 167 73          79  50	//������
 
 spot-mob-generator	= 3   1    29  24  54  48         49  50	//��Ŭ���
 spot-mob-generator	= 4   1    152 138 172 163        49  50	//��Ŭ���

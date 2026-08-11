@@ -122,16 +122,16 @@ spot-mob-generator	=	12	1	213	181	229	195	22	5
 spot-mob-generator	=	13	1	169	373	203	393	11	20
 spot-mob-generator	=	14	1	49	159	87	178	11	20
 //	orc-Mage								
-spot-mob-generator	=	15	1	205	93	249	127	14	10
-spot-mob-generator	=	16	1	287	286	322	303	14	10
-spot-mob-generator	=	17	1	437	374	463	393	14	10
-spot-mob-generator	=	18	1	424	152	445	166	14	10
+spot-mob-generator	=	15	1	205	93	249	127	6	10
+spot-mob-generator	=	16	1	287	286	322	303	6	10
+spot-mob-generator	=	17	1	437	374	463	393	6	10
+spot-mob-generator	=	18	1	424	152	445	166	6	10
 //	Giant-Ant								
 spot-mob-generator	=	19	1	284	216	300	228	16	20
 spot-mob-generator	=	20	1	181	266	199	274	16	20
 spot-mob-generator	=	21	1	80	285	93	291	16	20
 //	WereWolf								
-spot-mob-generator	=	22	1	285	242	393	452	58	15
+spot-mob-generator	=	22	1	285	242	393	452	33	15
 spot-mob-generator	=	23	1	354	108	408	141	33	10
 //	Cyclops								
 spot-mob-generator	=	24	1	34	350	135	410	13	18
@@ -140,12 +140,12 @@ spot-mob-generator	=	25	1	269	156	303	208	13	18
 spot-mob-generator	=	26	1	1	1	500	500	49	1
 spot-mob-generator	=	27	1	1	1	500	500	49	1
 //      WereWolf
-spot-mob-generator	=	28	1	255	92	306	132	58	10
+spot-mob-generator	=	28	1	255	92	306	132	33	10
 spot-mob-generator	=	29	1	266	420	319	461	33	15
 //	Stalker								
 spot-mob-generator	=	30	1	107	202	418	304	48	40
-//	Tigerworm								
-spot-mob-generator	=	31	1	1	1	500	500	52	1
+//	Tigerworm
+spot-mob-generator	=	31	1	1	1	500	500	50	1
 //      Demon
 spot-mob-generator      =       32      1       420     293     435     320     31      3
 spot-mob-generator      =       33      1       143     208     225     248     59      6

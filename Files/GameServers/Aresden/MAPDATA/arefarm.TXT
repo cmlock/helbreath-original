@@ -83,7 +83,7 @@ no-attack-area           = 1       92  49 98  55
 
 
 maximum-object		= 300
-//random-mob-generator	= 1  1
+random-mob-generator	= 1  1
 
 
 //-----------------------Num-Type-RECT---------------Mob-MobNum

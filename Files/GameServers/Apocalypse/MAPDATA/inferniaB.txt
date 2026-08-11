@@ -22,13 +22,13 @@ waypoint          =     8       149   249
 waypoint          =     9       239   243
 
 /------------------------Num-Type-waypoints--------------Mob-MobNum
-spot-mob-generator	= 1   1    22 20 49 60            18  50	//Á»ºñ
-spot-mob-generator	= 2   1    69 38 115 73           13  80	//»çÀÌÅ¬·Ó½º
-spot-mob-generator	= 3   1    40 20 128 46           73  40	//ÅÙÅ¸Å¬
-spot-mob-generator	= 4   1    24 92 86 126           30  40	//¸®Ä¡
-spot-mob-generator	= 5   1    22 48 84 88            72 100	//¹ß·Î±×
-spot-mob-generator	= 6   1    86 54 125 102          31  60	//µ¥¸ó
-spot-mob-generator	= 7   1    36 101 74 119          71  10	//ÆÄÀÌ¾î¿ÍÀÌ¹ø
+spot-mob-generator	= 1   1    22 20 49 60            18  50	//ï¿½ï¿½ï¿½ï¿½
+spot-mob-generator	= 2   1    69 38 115 73           13  80	//ï¿½ï¿½ï¿½ï¿½Å¬ï¿½Ó½ï¿½
+spot-mob-generator	= 3   1    40 20 128 46           80  40	//ï¿½ï¿½Å¸Å¬
+spot-mob-generator	= 4   1    24 92 86 126           30  40	//ï¿½ï¿½Ä¡
+spot-mob-generator	= 5   1    22 48 84 88            70 100	//ï¿½ß·Î±ï¿½
+spot-mob-generator	= 6   1    86 54 125 102          31  60	//ï¿½ï¿½ï¿½ï¿½
+spot-mob-generator	= 7   1    36 101 74 119          73  10	//ï¿½ï¿½ï¿½Ì¾ï¿½ï¿½ï¿½Ì¹ï¿½
 
 //-No-Attack-Area----------Num-----RECT-------------
 no-attack-area          = 1       30 24 38 32

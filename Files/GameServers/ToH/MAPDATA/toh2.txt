@@ -44,7 +44,7 @@ no-attack-area           = 3       97 266 105 274
 no-attack-area           = 4       247 238 255 246
 
 maximum-object		= 200
-random-mob-generator	= 1  14
+random-mob-generator	= 1  22
 
 fixed-dayornight-mode = 1
 
