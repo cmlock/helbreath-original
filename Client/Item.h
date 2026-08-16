@@ -64,6 +64,9 @@ public:
 	WORD  m_wPrice, m_wWeight;
 	DWORD m_dwCount;
 	DWORD m_dwAttribute;
+	DWORD m_dwAttribute2;	// Affix slots 3 and 4 - same nibble layout as m_dwAttribute:
+							// 0x00F00000/0x000F0000 Main-2 type/value,
+							// 0x0000F000/0x00000F00 Sub-2 type/value.
 };
 
 #endif // !defined(AFX_ITEM_H__211A1360_91B9_11D2_B143_00001C7030A6__INCLUDED_)

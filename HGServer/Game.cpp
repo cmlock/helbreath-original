@@ -1737,6 +1737,9 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 		dwp =(DWORD *)cp;
 		*dwp = m_pClientList[iClientH]->m_pItemList[i]->m_dwAttribute;
 		cp += 4;
+		dwp =(DWORD *)cp;
+		*dwp = m_pClientList[iClientH]->m_pItemList[i]->m_dwAttribute2;
+		cp += 4;
 		/*
 		*cp = (char)(m_pClientList[iClientH]->m_pItemList[i]->m_dwAttribute & 0x00000001); // Custom-Item?íš“íšì² ?íš‰ ì©”ì§¤ì¨˜íš“ 
 		cp++;
@@ -1793,6 +1796,9 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 		dwp =(DWORD *)cp;
 		*dwp = m_pClientList[iClientH]->m_pItemInBankList[i]->m_dwAttribute;
 		cp += 4;
+		dwp =(DWORD *)cp;
+		*dwp = m_pClientList[iClientH]->m_pItemInBankList[i]->m_dwAttribute2;
+		cp += 4;
 		/*
 		*cp = (char)(m_pClientList[iClientH]->m_pItemInBankList[i]->m_dwAttribute & 0x00000001); // Custom-Item?íš“íšì² ?íš‰ ì©”ì§¤ì¨˜íš“ 
 		cp++;
@@ -1809,7 +1815,7 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 		cp++;
 	}
 
-	iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(pBuffer, 6 + 1 + iTotalItemA*44 + iTotalItemB*43 + DEF_MAXMAGICTYPE + DEF_MAXSKILLTYPE);
+	iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(pBuffer, 6 + 1 + iTotalItemA*48 + iTotalItemB*47 + DEF_MAXMAGICTYPE + DEF_MAXSKILLTYPE);
 	switch (iRet) {
 	case DEF_XSOCKEVENT_QUENEFULL:
 	case DEF_XSOCKEVENT_SOCKETERROR:
@@ -5698,7 +5704,7 @@ BOOL CGame::_bDecodePlayerDatafileContents(int iClientH, char * pData, DWORD dwS
 			case 12:
 				// m_dwAttribute
 				if (_bGetIsStringIsNumber(token) == FALSE) {
-					wsprintf(cTxt, "(!!!) Player(%s) data file error! wrong Data format - Connection closed. ", m_pClientList[iClientH]->m_cCharName); 
+					wsprintf(cTxt, "(!!!) Player(%s) data file error! wrong Data format - Connection closed. ", m_pClientList[iClientH]->m_cCharName);
 					PutLogList(cTxt);
 					delete pContents;
 					delete pStrTok;
@@ -5717,11 +5723,28 @@ BOOL CGame::_bDecodePlayerDatafileContents(int iClientH, char * pData, DWORD dwS
 								m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue3,
 								m_pClientList[iClientH]->m_sCharIDnum1,
 								m_pClientList[iClientH]->m_sCharIDnum2,
-								m_pClientList[iClientH]->m_sCharIDnum3); 
+								m_pClientList[iClientH]->m_sCharIDnum3);
 							PutLogList(cTxt);
 							//PutLogFileList(cTxt);
 						}
 				}
+
+				cReadModeB = 13;
+				break;
+
+			case 13:
+				// m_dwAttribute2 - affix slots 3 and 4. This is read before the
+				// finalization below on purpose: _AdjustRareItemValue applies the
+				// Main effect of BOTH attribute DWORDs and is cumulative rather
+				// than idempotent, so it cannot be re-run after the fact.
+				if (_bGetIsStringIsNumber(token) == FALSE) {
+					wsprintf(cTxt, "(!!!) Player(%s) data file error! wrong Data format - Connection closed. ", m_pClientList[iClientH]->m_cCharName);
+					PutLogList(cTxt);
+					delete pContents;
+					delete pStrTok;
+					return FALSE;
+				}
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2 = atoi(token);
 
 				cReadModeA = 0;
 				cReadModeB = 0;
@@ -5739,7 +5762,7 @@ BOOL CGame::_bDecodePlayerDatafileContents(int iClientH, char * pData, DWORD dwS
 					m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wCurLifeSpan = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wMaxLifeSpan;
 
 				// v1.433
-				if ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wCurLifeSpan == 0) && 
+				if ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wCurLifeSpan == 0) &&
 					(m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemEffectType == DEF_ITEMEFFECTTYPE_ALTERITEMDROP)) {
 						wsprintf(G_cTxt, "(!) Character(%s) possesses a 0-duration sacrifice stone!", m_pClientList[iClientH]->m_cCharName);
 						PutLogFileList(G_cTxt);
@@ -6241,13 +6264,29 @@ BOOL CGame::_bDecodePlayerDatafileContents(int iClientH, char * pData, DWORD dwS
 			case 12:
 				// m_dwAttribute
 				if (_bGetIsStringIsNumber(token) == FALSE) {
-					wsprintf(cTxt, "(!!!) Player(%s) data file error! wrong Data format - Connection closed. ", m_pClientList[iClientH]->m_cCharName); 
+					wsprintf(cTxt, "(!!!) Player(%s) data file error! wrong Data format - Connection closed. ", m_pClientList[iClientH]->m_cCharName);
 					PutLogList(cTxt);
 					delete pContents;
 					delete pStrTok;
 					return FALSE;
 				}
 				m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]->m_dwAttribute = atoi(token);
+
+				cReadModeB = 13;
+				break;
+
+			case 13:
+				// m_dwAttribute2 - affix slots 3 and 4. Read before finalization
+				// for the same reason as the player-item case above.
+				if (_bGetIsStringIsNumber(token) == FALSE) {
+					wsprintf(cTxt, "(!!!) Player(%s) data file error! wrong Data format - Connection closed. ", m_pClientList[iClientH]->m_cCharName);
+					PutLogList(cTxt);
+					delete pContents;
+					delete pStrTok;
+					return FALSE;
+				}
+				m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]->m_dwAttribute2 = atoi(token);
+
 				cReadModeA = 0;
 				cReadModeB = 0;
 
@@ -6258,13 +6297,15 @@ BOOL CGame::_bDecodePlayerDatafileContents(int iClientH, char * pData, DWORD dwS
 				}
 
 				// v2.16 2002-5-21
-				int iValue = (m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]->m_dwAttribute & 0xF0000000) >> 28;
-				if (iValue > 0) {
-					switch (m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]->m_cCategory) {
-			case 5: 
-			case 6:  
-				m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]->m_wMaxLifeSpan = m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]->m_sItemSpecEffectValue1;
-				break;
+				{
+					int iValue = (m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]->m_dwAttribute & 0xF0000000) >> 28;
+					if (iValue > 0) {
+						switch (m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]->m_cCategory) {
+				case 5:
+				case 6:
+					m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]->m_wMaxLifeSpan = m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]->m_sItemSpecEffectValue1;
+					break;
+						}
 					}
 				}
 
@@ -6274,10 +6315,10 @@ BOOL CGame::_bDecodePlayerDatafileContents(int iClientH, char * pData, DWORD dwS
 				// v1.41
 				if (m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]->m_wCurLifeSpan > m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]->m_wMaxLifeSpan)
 					m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]->m_wCurLifeSpan = m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]->m_wMaxLifeSpan;
-				
+
 
 				// v1.433
-				if ((m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]->m_wCurLifeSpan == 0) && 
+				if ((m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]->m_wCurLifeSpan == 0) &&
 					(m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]->m_sItemEffectType == DEF_ITEMEFFECTTYPE_ALTERITEMDROP)) {
 						wsprintf(G_cTxt, "(!) Character(%s) possesses a 0-duration sacrifice stone!", m_pClientList[iClientH]->m_cCharName);
 						PutLogFileList(G_cTxt);
@@ -6290,14 +6331,14 @@ BOOL CGame::_bDecodePlayerDatafileContents(int iClientH, char * pData, DWORD dwS
 						delete m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex];
 						m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex] = NULL;
 					}
-					else 
+					else
 						if (_bCheckDupItemID(m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]) == TRUE) {
 							// v1.42
 							_bItemLog(DEF_ITEMLOG_DUPITEMID, iClientH, NULL, m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]);
 
 							iNotUsedItemPrice += m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex]->m_wPrice;
 							delete m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex];
-							m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex] = NULL;		
+							m_pClientList[iClientH]->m_pItemInBankList[iItemInBankIndex] = NULL;
 						}
 						else iItemInBankIndex++;
 						break;
@@ -7795,6 +7836,9 @@ int CGame::_iComposePlayerDataFileContents(int iClientH, char * pData)
 		strcat(pData, " ");
 		itoa( m_pClientList[iClientH]->m_pItemList[i]->m_dwAttribute, cTxt, 10);
 		strcat(pData, cTxt);
+		strcat(pData, " ");
+		itoa( m_pClientList[iClientH]->m_pItemList[i]->m_dwAttribute2, cTxt, 10);
+		strcat(pData, cTxt);
 		strcat(pData, "\n");
 	}
 	strcat(pData, "\n\n");
@@ -7845,6 +7889,9 @@ int CGame::_iComposePlayerDataFileContents(int iClientH, char * pData)
 		strcat(pData, cTxt);
 		strcat(pData, " ");
 		itoa( m_pClientList[iClientH]->m_pItemInBankList[i]->m_dwAttribute, cTxt, 10);
+		strcat(pData, cTxt);
+		strcat(pData, " ");
+		itoa( m_pClientList[iClientH]->m_pItemInBankList[i]->m_dwAttribute2, cTxt, 10);
 		strcat(pData, cTxt);
 		strcat(pData, "\n");
 	}
@@ -12332,6 +12379,9 @@ int CGame::iClientMotion_GetItem_Handler(int iClientH, short sX, short sY, char 
 			dwp = (DWORD *)cp;
 			*dwp = pItem->m_dwAttribute;
 			cp += 4;
+			dwp = (DWORD *)cp;
+			*dwp = pItem->m_dwAttribute2;
+			cp += 4;
 
 			if (iEraseReq == 1) delete pItem;
 
@@ -12339,7 +12389,7 @@ int CGame::iClientMotion_GetItem_Handler(int iClientH, short sX, short sY, char 
 				                        m_pClientList[iClientH]->m_sX, m_pClientList[iClientH]->m_sY,
 				                        sRemainItemSprite, sRemainItemSpriteFrame, cRemainItemColor);
 
-			iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 53);						
+			iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 57);						
 			switch (iRet) {
 			case DEF_XSOCKEVENT_QUENEFULL:
 			case DEF_XSOCKEVENT_SOCKETERROR:
@@ -12476,13 +12526,16 @@ void CGame::_AutoPickupGold(int iClientH, short sX, short sY)
 	dwp = (DWORD *)cp;
 	*dwp = pItem->m_dwAttribute;
 	cp += 4;
+	dwp = (DWORD *)cp;
+	*dwp = pItem->m_dwAttribute2;
+	cp += 4;
 
 	if (iEraseReq == 1) delete pItem;
 
 	SendEventToNearClient_TypeB(MSGID_EVENT_COMMON, DEF_COMMONTYPE_SETITEM, m_pClientList[iClientH]->m_cMapIndex,
 		                        sX, sY, sRemainItemSprite, sRemainItemSpriteFrame, cRemainItemColor);
 
-	iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 53);
+	iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 57);
 	switch (iRet) {
 	case DEF_XSOCKEVENT_QUENEFULL:
 	case DEF_XSOCKEVENT_SOCKETERROR:
@@ -13675,6 +13728,9 @@ void CGame::GiveItemHandler(int iClientH, short sItemIndex, int iAmount, short d
 					dwp = (DWORD *)cp;
 					*dwp = pItem->m_dwAttribute;
 					cp += 4;
+					dwp = (DWORD *)cp;
+					*dwp = pItem->m_dwAttribute2;
+					cp += 4;
 					/*
 					*cp = (char)(pItem->m_dwAttribute & 0x00000001); // Custom-Item
 					cp++;
@@ -13682,7 +13738,7 @@ void CGame::GiveItemHandler(int iClientH, short sItemIndex, int iAmount, short d
 
 					if (iEraseReq == 1) delete pItem;
 
-					iRet = m_pClientList[sOwnerH]->m_pXSock->iSendMsg(cData, 53);
+					iRet = m_pClientList[sOwnerH]->m_pXSock->iSendMsg(cData, 57);
 					switch (iRet) {
 					case DEF_XSOCKEVENT_QUENEFULL:
 					case DEF_XSOCKEVENT_SOCKETERROR:
@@ -13938,6 +13994,9 @@ void CGame::GiveItemHandler(int iClientH, short sItemIndex, int iAmount, short d
 					dwp = (DWORD *)cp;
 					*dwp = pItem->m_dwAttribute;
 					cp += 4;
+					dwp = (DWORD *)cp;
+					*dwp = pItem->m_dwAttribute2;
+					cp += 4;
 					/*
 					*cp = (char)(pItem->m_dwAttribute & 0x00000001); // Custom-Item인지의 여부 
 					cp++;
@@ -13945,7 +14004,7 @@ void CGame::GiveItemHandler(int iClientH, short sItemIndex, int iAmount, short d
 
 					if (iEraseReq == 1) delete pItem;
  
-					iRet = m_pClientList[sOwnerH]->m_pXSock->iSendMsg(cData, 53);
+					iRet = m_pClientList[sOwnerH]->m_pXSock->iSendMsg(cData, 57);
 					switch (iRet) {
 					case DEF_XSOCKEVENT_QUENEFULL:
 					case DEF_XSOCKEVENT_SOCKETERROR:
@@ -14321,7 +14380,6 @@ void CGame::SendNotifyMsg(int iFromH, int iToH, WORD wMsgType, DWORD sV1, DWORD 
 		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData,8);
 		break;
 
-	case DEF_NOTIFY_ITEMATTRIBUTECHANGE:
 	case DEF_NOTIFY_GIZONITEMUPGRADELEFT:
 		sp  = (short *)cp;
 		*sp = sV1;
@@ -14340,6 +14398,32 @@ void CGame::SendNotifyMsg(int iFromH, int iToH, WORD wMsgType, DWORD sV1, DWORD 
 		cp += 4;
 
 		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData,20);
+		break;
+
+	// Split from DEF_NOTIFY_GIZONITEMUPGRADELEFT (v1.42+) so this case can carry
+	// m_dwAttribute2 (sV5) without growing the unrelated upgrade-left notify.
+	case DEF_NOTIFY_ITEMATTRIBUTECHANGE:
+		sp  = (short *)cp;
+		*sp = sV1;
+		cp += 2;
+
+		dwp = (DWORD *)cp;
+		*dwp = sV2;
+		cp += 4;
+
+		dwp = (DWORD *)cp;
+		*dwp = sV3;
+		cp += 4;
+
+		dwp = (DWORD *)cp;
+		*dwp = sV4;
+		cp += 4;
+
+		dwp = (DWORD *)cp;
+		*dwp = sV5;
+		cp += 4;
+
+		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData,24);
 		break;
 
 	case DEF_NOTIFY_GIZONITEMCANGE:
@@ -14372,10 +14456,14 @@ void CGame::SendNotifyMsg(int iFromH, int iToH, WORD wMsgType, DWORD sV1, DWORD 
 		*dwp = sV8;
 		cp += 4;
 
+		dwp = (DWORD *)cp;
+		*dwp = sV9;
+		cp += 4;
+
 		memcpy(cp,pString,20);
 		cp += 20;
 
-		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData,41);
+		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData,45);
 		break;
 
 // 2.06 - by KLKS
@@ -19597,6 +19685,9 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 							dwp = (DWORD *)cp;
 							*dwp = pItem->m_dwAttribute;
 							cp += 4;
+							dwp = (DWORD *)cp;
+							*dwp = pItem->m_dwAttribute2;
+							cp += 4;
 							/*
 							*cp = (char)(pItem->m_dwAttribute & 0x00000001); // Custom-ItemÃ€ÃŽÃÃ¶Ã€Ã‡ Â¿Â©ÂºÃŽ 
 							cp++;
@@ -19609,7 +19700,7 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 								dX, dY,	sRemainItemSprite, sRemainItemSpriteFrame, cRemainItemColor); // v1.4
 
 							// Â¾Ã†Ã€ÃŒÃ…Ã› ÃÂ¤ÂºÂ¸ Ã€Ã¼Â¼Ã› 
-							iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 53);
+							iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 57);
 
 							switch (iRet) {
 								case DEF_XSOCKEVENT_QUENEFULL:
@@ -24809,9 +24900,12 @@ BOOL CGame::bSetItemToBankItem(int iClientH, short sItemIndex)
 		dwp = (DWORD *)cp;
 		*dwp = pItem->m_dwAttribute;
 		cp += 4;
+		dwp = (DWORD *)cp;
+		*dwp = pItem->m_dwAttribute2;
+		cp += 4;
 
 		// 아이템 정보 전송 
-		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 55);
+		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 59);
 		switch (iRet) {
 		case DEF_XSOCKEVENT_QUENEFULL:
 		case DEF_XSOCKEVENT_SOCKETERROR:
@@ -25410,6 +25504,9 @@ void CGame::GetRewardMoneyHandler(int iClientH)
 		dwp = (DWORD *)cp;
 		*dwp = pItem->m_dwAttribute;
 		cp += 4;
+		dwp = (DWORD *)cp;
+		*dwp = pItem->m_dwAttribute2;
+		cp += 4;
 		/*
 		*cp = (char)(pItem->m_dwAttribute & 0x00000001); // Custom-Item인지의 여부 
 		cp++;
@@ -25418,7 +25515,7 @@ void CGame::GetRewardMoneyHandler(int iClientH)
 		if (iEraseReq == 1) delete pItem;
 		
 		// 아이템 정보 전송 
-		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 53);
+		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 57);
 						
 		switch (iRet) {
 		case DEF_XSOCKEVENT_QUENEFULL:
@@ -29863,9 +29960,12 @@ BOOL CGame::bSetItemToBankItem(int iClientH, class CItem * pItem)
 		dwp = (DWORD *)cp;
 		*dwp = pItem->m_dwAttribute;
 		cp += 4;
+		dwp = (DWORD *)cp;
+		*dwp = pItem->m_dwAttribute2;
+		cp += 4;
 
 		// 아이템 정보 전송 
-		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 55);
+		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 59);
 		switch (iRet) {
 		case DEF_XSOCKEVENT_QUENEFULL:
 		case DEF_XSOCKEVENT_SOCKETERROR:
@@ -31032,6 +31132,78 @@ void CGame::UseSkillHandler(int iClientH, int iV1, int iV2, int iV3)
 	m_pClientList[iClientH]->m_bSkillUsingStatus[iV1] = TRUE;
 }
 
+// Price contribution of one affix slot. Extracted so all four slots share a
+// single table; bIsMainSlot selects between the Main and Sub multiplier sets.
+DWORD CGame::_dwGetAffixAddPrice(int iPrice, DWORD dwSWEType, DWORD dwSWEValue, BOOL bIsMainSlot)
+{
+ DWORD dwMul;
+ double d1, d2, d3;
+
+	// An empty slot is worth nothing. This replaces the "(... & 0x00F00000) != NULL"
+	// guards that used to wrap each of these blocks.
+	if (dwSWEType == 0) return 0;
+
+	if (bIsMainSlot == TRUE) {
+		// 0-None 1-필살기대미지추가 2-중독효과 3-정의의 4-저주의
+		// 5-민첩의 6-가벼운 7-예리한 8-강화된 9-고대문명의
+		switch (dwSWEType) {
+		case 6: dwMul = 2; break;  // 가벼운
+		case 8: dwMul = 2; break;  // 강화된
+		case 5: dwMul = 3; break;  // 민첩의
+		case 1: dwMul = 4; break;  // 필살의
+		case 7: dwMul = 5; break;  // 예리한
+		case 2: dwMul = 6; break;  // 중독의
+		case 3: dwMul = 15; break; // 정의의
+		case 9: dwMul = 20; break; // 고대문명
+		default: dwMul = 1; break;
+		}
+	}
+	else {
+		//추가 독성저항(1), 추가 명중값(2), 추가 방어값(3), HP 회복량 추가(4), SP 회복량 추가(5)
+		//MP 회복량 추가(6), 추가 마법저항(7), 물리 대미지 흡수(8), 마법 대미지 흡수(9)
+		//연타 대미지 추가(10), 더 많은 경험치(11), 더많은 Gold(12)
+		switch (dwSWEType) {
+		case 1:
+		case 12: dwMul = 2; break;
+
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7: dwMul = 4; break;
+
+		case 8:
+		case 9:
+		case 10:
+		case 11: dwMul = 6; break;
+
+		default: dwMul = 0; break;
+		}
+	}
+
+	d1 = (double)iPrice*dwMul;
+	switch (dwSWEValue) {
+	case 1: d2 = 10.0f; break;
+	case 2: d2 = 20.0f; break;
+	case 3: d2 = 30.0f; break;
+	case 4: d2 = 35.0f; break;
+	case 5: d2 = 40.0f; break;
+	case 6: d2 = 50.0f; break;
+	case 7: d2 = 100.0f; break;
+	case 8: d2 = 200.0f; break;
+	case 9: d2 = 300.0f; break;
+	case 10: d2 = 400.0f; break;
+	case 11: d2 = 500.0f; break;
+	case 12: d2 = 700.0f; break;
+	case 13: d2 = 900.0f; break;
+	default: d2 = 0.0f; break;
+	}
+	d3 = d1*(d2/100.0f);
+
+	return (DWORD)(int)(d1 + d3);
+}
+
 void CGame::ReqSellItemHandler(int iClientH, char cItemID, char cSellToWhom, int iNum, char * pItemName)
 {
  char cItemCategory,cItemName[21];
@@ -31039,7 +31211,7 @@ void CGame::ReqSellItemHandler(int iClientH, char cItemID, char cSellToWhom, int
  int   iPrice;
  double d1, d2, d3;
  BOOL   bNeutral;
- DWORD  dwSWEType, dwSWEValue, dwAddPrice1, dwAddPrice2, dwMul1, dwMul2;
+ DWORD  dwAddPrice1, dwAddPrice2;
  CItem * m_pGold;
 
 	// 사용자의 아이템 팔기 요구.
@@ -31107,90 +31279,18 @@ void CGame::ReqSellItemHandler(int iClientH, char cItemID, char cSellToWhom, int
 				iPrice = (int)d3;
 				iPrice = iPrice*iNum;
 
-				dwAddPrice1 = 0;
-				dwAddPrice2 = 0;
-				// 아이템 특성치에 따른 가격 상승 
-	if ((m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x00F00000) != NULL) {
-		dwSWEType  = (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x00F00000) >> 20;  
-		dwSWEValue = (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x000F0000) >> 16;
+				// 아이템 특성치에 따른 가격 상승. All four affix slots contribute:
+				// Main-1/Main-2 fold into dwAddPrice1 and Sub-1/Sub-2 into dwAddPrice2,
+				// so the existing weighting line below stays unchanged.
+				dwAddPrice1 = _dwGetAffixAddPrice(iPrice, (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x00F00000) >> 20,
+												  (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x000F0000) >> 16, TRUE)
+							+ _dwGetAffixAddPrice(iPrice, (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute2 & 0x00F00000) >> 20,
+												  (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute2 & 0x000F0000) >> 16, TRUE);
 
-	switch (dwSWEType) {
-		case 6: dwMul1 = 2; break;  // 가벼운 
-		case 8: dwMul1 = 2; break;  // 강화된
-		case 5: dwMul1 = 3; break;  // 민첩의
-		case 1: dwMul1 = 4; break;  // 필살의 
-		case 7: dwMul1 = 5; break;  // 예리한
-		case 2: dwMul1 = 6; break;  // 중독의
-		case 3: dwMul1 = 15; break; // 정의의 
-		case 9: dwMul1 = 20; break; // 고대문명 
-		default: dwMul1 = 1; break;
-	}
-
-	d1 = (double)iPrice*dwMul1;
-	switch (dwSWEValue) {
-		case 1: d2 = 10.0f; break;
-		case 2: d2 = 20.0f; break;
-		case 3: d2 = 30.0f; break;
-		case 4: d2 = 35.0f; break;
-		case 5: d2 = 40.0f; break;
-		case 6: d2 = 50.0f; break;
-		case 7: d2 = 100.0f; break;
-		case 8: d2 = 200.0f; break;
-		case 9: d2 = 300.0f; break;
-		case 10: d2 = 400.0f; break;
-		case 11: d2 = 500.0f; break;
-		case 12: d2 = 700.0f; break;
-		case 13: d2 = 900.0f; break;
-		default: d2 = 0.0f; break;
-	}
-	d3 = d1*(d2/100.0f);
-
-	dwAddPrice1 = (int)(d1 + d3);
-	}
-
-				// v1.42 희귀 아이템이라면 Sub 효과를 설정한다. 공격무기는 1개만 장착된다고 했을때만 유효함.
-	if ((m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x0000F000) != NULL) {
-		dwSWEType  = (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x0000F000) >> 12;  
-		dwSWEValue = (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x00000F00) >> 8;
-
-	switch (dwSWEType) {
-		case 1: 
-		case 12: dwMul2 = 2; break;
-
-		case 2:
-		case 3:
-		case 4:
-		case 5:
-		case 6:
-		case 7: dwMul2 = 4; break;
-
-		case 8:
-		case 9:
-		case 10:
-		case 11: dwMul2 = 6; break;
-	}
-
-	d1 = (double)iPrice*dwMul2;
-	switch (dwSWEValue) {
-		case 1: d2 = 10.0f; break;
-		case 2: d2 = 20.0f; break;
-		case 3: d2 = 30.0f; break;
-		case 4: d2 = 35.0f; break;
-		case 5: d2 = 40.0f; break;
-		case 6: d2 = 50.0f; break;
-		case 7: d2 = 100.0f; break;
-		case 8: d2 = 200.0f; break;
-		case 9: d2 = 300.0f; break;
-		case 10: d2 = 400.0f; break;
-		case 11: d2 = 500.0f; break;
-		case 12: d2 = 700.0f; break;
-		case 13: d2 = 900.0f; break;
-		default: d2 = 0.0f; break;
-	}
-	d3 = d1*(d2/100.0f);
-
-	dwAddPrice2 = (int)(d1 + d3);
-}
+				dwAddPrice2 = _dwGetAffixAddPrice(iPrice, (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x0000F000) >> 12,
+												  (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x00000F00) >> 8, FALSE)
+							+ _dwGetAffixAddPrice(iPrice, (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute2 & 0x0000F000) >> 12,
+												  (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute2 & 0x00000F00) >> 8, FALSE);
 
 				// v2.03 925 특수 아이템 가격 가중치를 77%수준으로 다운 
 				iPrice = iPrice + (dwAddPrice1 - (dwAddPrice1/3)) + (dwAddPrice2 - (dwAddPrice2/3));
@@ -31224,7 +31324,7 @@ void CGame::ReqSellItemConfirmHandler(int iClientH, char cItemID, int iNum, char
  int   iPrice;
  double d1, d2, d3;
  char   * cp, cItemName[21], cData[120], cItemCategory;
- DWORD  * dwp, dwMul1, dwMul2, dwSWEType, dwSWEValue, dwAddPrice1, dwAddPrice2;
+ DWORD  * dwp, dwAddPrice1, dwAddPrice2;
  WORD   * wp;
  int    iEraseReq, iRet;
  short * sp;
@@ -31272,95 +31372,18 @@ void CGame::ReqSellItemConfirmHandler(int iClientH, char cItemID, int iNum, char
 			iPrice = (short)d3;
 			iPrice = iPrice*iNum;
 
-			dwAddPrice1 = 0;
-			dwAddPrice2 = 0;
-			// 아이템 특성치에 따른 가격 상승 
-			if ((m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x00F00000) != NULL) {
-				dwSWEType  = (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x00F00000) >> 20;  
-				dwSWEValue = (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x000F0000) >> 16;
-				
-				// 희귀 아이템 효과 종류: 
-				// 0-None 1-필살기대미지추가 2-중독효과 3-정의의 4-저주의 
-				// 5-민첩의 6-가벼운 7-예리한 8-강화된 9-고대문명의
-				switch (dwSWEType) {
-				case 6: dwMul1 = 2; break;  // 가벼운 
-				case 8: dwMul1 = 2; break;  // 강화된
-				case 5: dwMul1 = 3; break;  // 민첩의
-				case 1: dwMul1 = 4; break;  // 필살의 
-				case 7: dwMul1 = 5; break;  // 예리한
-				case 2: dwMul1 = 6; break;  // 중독의
-				case 3: dwMul1 = 15; break; // 정의의 
-				case 9: dwMul1 = 20; break; // 고대문명 
-				default: dwMul1 = 1; break;
-				}
+			// 아이템 특성치에 따른 가격 상승. All four affix slots contribute:
+			// Main-1/Main-2 fold into dwAddPrice1 and Sub-1/Sub-2 into dwAddPrice2,
+			// so the existing weighting line below stays unchanged.
+			dwAddPrice1 = _dwGetAffixAddPrice(iPrice, (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x00F00000) >> 20,
+											  (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x000F0000) >> 16, TRUE)
+						+ _dwGetAffixAddPrice(iPrice, (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute2 & 0x00F00000) >> 20,
+											  (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute2 & 0x000F0000) >> 16, TRUE);
 
-				d1 = (double)iPrice*dwMul1;
-				switch (dwSWEValue) {
-				case 1: d2 = 10.0f; break;
-				case 2: d2 = 20.0f; break;
-				case 3: d2 = 30.0f; break;
-				case 4: d2 = 35.0f; break;
-				case 5: d2 = 40.0f; break;
-				case 6: d2 = 50.0f; break;
-				case 7: d2 = 100.0f; break;
-				case 8: d2 = 200.0f; break;
-				case 9: d2 = 300.0f; break;
-				case 10: d2 = 400.0f; break;
-				case 11: d2 = 500.0f; break;
-				case 12: d2 = 700.0f; break;
-				case 13: d2 = 900.0f; break;
-				default: d2 = 0.0f; break;
-				}
-				d3 = d1*(d2/100.0f);
-				dwAddPrice1 = (int)(d1 + d3);
-			}
-
-			// v1.42 희귀 아이템이라면 Sub 효과를 설정한다. 공격무기는 1개만 장착된다고 했을때만 유효함.
-			if ((m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x0000F000) != NULL) {
-				dwSWEType  = (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x0000F000) >> 12;  
-				dwSWEValue = (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x00000F00) >> 8;
-				
-				// 희귀 아이템 효과 종류: 
-				//추가 독성저항(1), 추가 명중값(2), 추가 방어값(3), HP 회복량 추가(4), SP 회복량 추가(5)
-				//MP 회복량 추가(6), 추가 마법저항(7), 물리 대미지 흡수(8), 마법 대미지 흡수(9)
-				//연타 대미지 추가(10), 더 많은 경험치(11), 더많은 Gold(12)
-				switch (dwSWEType) {
-				case 1: 
-				case 12: dwMul2 = 2; break;
-					
-				case 2:
-				case 3:
-				case 4:
-				case 5:
-				case 6:
-				case 7: dwMul2 = 4; break;
-					
-				case 8:
-				case 9:
-				case 10:
-				case 11: dwMul2 = 6; break;
-				}
-					
-				d1 = (double)iPrice*dwMul2;
-				switch (dwSWEValue) {
-				case 1: d2 = 10.0f; break;
-				case 2: d2 = 20.0f; break;
-				case 3: d2 = 30.0f; break;
-				case 4: d2 = 35.0f; break;
-				case 5: d2 = 40.0f; break;
-				case 6: d2 = 50.0f; break;
-				case 7: d2 = 100.0f; break;
-				case 8: d2 = 200.0f; break;
-				case 9: d2 = 300.0f; break;
-				case 10: d2 = 400.0f; break;
-				case 11: d2 = 500.0f; break;
-				case 12: d2 = 700.0f; break;
-				case 13: d2 = 900.0f; break;
-				default: d2 = 0.0f; break;
-				}
-				d3 = d1*(d2/100.0f);
-				dwAddPrice2 = (int)(d1 + d3);
-			}
+			dwAddPrice2 = _dwGetAffixAddPrice(iPrice, (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x0000F000) >> 12,
+											  (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute & 0x00000F00) >> 8, FALSE)
+						+ _dwGetAffixAddPrice(iPrice, (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute2 & 0x0000F000) >> 12,
+											  (m_pClientList[iClientH]->m_pItemList[cItemID]->m_dwAttribute2 & 0x00000F00) >> 8, FALSE);
 
 			iPrice = iPrice + (dwAddPrice1 - (dwAddPrice1/3)) + (dwAddPrice2 - (dwAddPrice2/3));
 
@@ -31482,6 +31505,9 @@ void CGame::ReqSellItemConfirmHandler(int iClientH, char cItemID, int iNum, char
 		dwp = (DWORD *)cp;
 		*dwp = pItemGold->m_dwAttribute;
 		cp += 4;
+		dwp = (DWORD *)cp;
+		*dwp = pItemGold->m_dwAttribute2;
+		cp += 4;
 		/*
 		*cp = (char)(pItemGold->m_dwAttribute & 0x00000001); // Custom-Item인지의 여부 
 		cp++;
@@ -31491,7 +31517,7 @@ void CGame::ReqSellItemConfirmHandler(int iClientH, char cItemID, int iNum, char
 			delete pItemGold;
 		
 		// 아이템 정보 전송 
-		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 53);
+		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 57);
 		
 		// 소지품 총 중량 재 계산 
 		iCalcTotalWeight(iClientH);
@@ -32557,6 +32583,72 @@ void CGame::___RestorePlayerCharacteristics(int iClientH)
 	}
 }
 
+// Both affix DWORDs feed the same effect tables, so the Main/Sub switches live
+// here and are called once per slot instead of being duplicated per branch.
+// The ATTACK and DEFENSE Main pools do not overlap (attack rolls 1/2/3/5/6/7/8/9,
+// defense rolls 6/8/11/12), so a single combined Main switch is safe for both.
+void CGame::_ApplyMainAffixEffect(int iClientH, short sItemIndex, DWORD dwSWEType, DWORD dwSWEValue)
+{
+	if (m_pClientList[iClientH] == NULL) return;
+
+	// 희귀 아이템 효과 종류:
+	// 0-None 1-필살기대미지추가 2-중독효과 3-정의의 4-저주의
+	// 5-민첩의 6-가벼운 7-예리한 8-강화된 9-고대문명의 10-마법성공의 11-마나변환의 12-필살충전의
+	switch (dwSWEType) {
+	case 7: // 예리한
+		m_pClientList[iClientH]->m_cAttackDiceRange_SM++;
+		m_pClientList[iClientH]->m_cAttackDiceRange_L++;
+		break;
+
+	case 9: // 고대문명의
+		m_pClientList[iClientH]->m_cAttackDiceRange_SM += 2;
+		m_pClientList[iClientH]->m_cAttackDiceRange_L  += 2;
+		break;
+
+	// v2.04
+	case 11: // 마나 변환의
+		m_pClientList[iClientH]->m_iAddTransMana += dwSWEValue;
+		if (m_pClientList[iClientH]->m_iAddTransMana > 13) m_pClientList[iClientH]->m_iAddTransMana = 13;
+		break;
+
+	case 12: // 필살 충전의
+		m_pClientList[iClientH]->m_iAddChargeCritical += dwSWEValue;
+		if (m_pClientList[iClientH]->m_iAddChargeCritical > 20) m_pClientList[iClientH]->m_iAddChargeCritical = 20;
+		break;
+	}
+}
+
+void CGame::_ApplySubAffixEffect(int iClientH, short sItemIndex, DWORD dwSWEType, DWORD dwSWEValue)
+{
+	if (m_pClientList[iClientH] == NULL) return;
+	if (m_pClientList[iClientH]->m_pItemList[sItemIndex] == NULL) return;
+
+	// 희귀 아이템 효과 종류:
+	//추가 독성저항(1), 추가 명중값(2), 추가 방어값(3), HP 회복량 추가(4), SP 회복량 추가(5)
+	//MP 회복량 추가(6), 추가 마법저항(7), 물리 대미지 흡수(8), 마법 대미지 흡수(9)
+	//연타 대미지 추가(10), 더 많은 경험치(11), 더많은 Gold(12)
+	switch (dwSWEType) {
+	case 0:  break;
+	case 1:  m_pClientList[iClientH]->m_iAddPR += (int)dwSWEValue*7; break;
+	case 2:  m_pClientList[iClientH]->m_iAddAR += (int)dwSWEValue*7; break;
+	case 3:  m_pClientList[iClientH]->m_iAddDR += (int)dwSWEValue*7; break;
+	case 4:  m_pClientList[iClientH]->m_iAddHP += (int)dwSWEValue*7; break;
+	case 5:  m_pClientList[iClientH]->m_iAddSP += (int)dwSWEValue*7; break;
+	case 6:  m_pClientList[iClientH]->m_iAddMP += (int)dwSWEValue*7; break;
+	case 7:  m_pClientList[iClientH]->m_iAddMR += (int)dwSWEValue*7; break;
+	case 8:  m_pClientList[iClientH]->m_iDamageAbsorption_Armor[m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_cEquipPos] += (int)dwSWEValue*3; break;
+	case 9:  m_pClientList[iClientH]->m_iAddAbsMD += (int)dwSWEValue*3; break;
+	case 10: m_pClientList[iClientH]->m_iAddCD    += (int)dwSWEValue; break;
+	case 11: m_pClientList[iClientH]->m_iAddExp   += (int)dwSWEValue*10; break;
+	case 12: m_pClientList[iClientH]->m_iAddGold  += (int)dwSWEValue*10; break;
+	}
+
+	// v2.04 특성치 제한을 붙임.
+	switch (dwSWEType) {
+	case 9: if (m_pClientList[iClientH]->m_iAddAbsMD > 80) m_pClientList[iClientH]->m_iAddAbsMD = 80; break; // 마법 대미지 흡수 최대 80%
+	}
+}
+
 void CGame::CalcTotalItemEffect(int iClientH, int iEquipItemID, BOOL bNotify)
 {
  register short sItemIndex;
@@ -32763,60 +32855,38 @@ void CGame::CalcTotalItemEffect(int iClientH, int iEquipItemID, BOOL bNotify)
 				}
 			}
 
-			// v1.42 희귀 아이템이라면 Main 효과를 설정한다. 공격무기는 1개만 장착된다고 했을때만 유효함.
+			// v1.42 Rare-item Main effect. Slot 1 stays the authoritative
+			// "special weapon effect" - that field is single-valued (it drives
+			// on-hit procs), so Main-2 contributes only its additive bonuses.
 			if ((m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x00F00000) != NULL) {
-				dwSWEType  = (m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x00F00000) >> 20;  
+				dwSWEType  = (m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x00F00000) >> 20;
 				dwSWEValue = (m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x000F0000) >> 16;
-				
-				// 희귀 아이템 효과 종류: 
-				// 0-None 1-필살기대미지추가 2-중독효과 3-정의의 4-저주의 
-				// 5-민첩의 6-가벼운 7-예리한 8-강화된 9-고대문명의 10-마법 성공의
-				m_pClientList[iClientH]->m_iSpecialWeaponEffectType  = (int)dwSWEType;	
+
+				m_pClientList[iClientH]->m_iSpecialWeaponEffectType  = (int)dwSWEType;
 				m_pClientList[iClientH]->m_iSpecialWeaponEffectValue = (int)dwSWEValue;
 
-				switch (dwSWEType) {
-				case 7: // 예리한 
-					m_pClientList[iClientH]->m_cAttackDiceRange_SM++;
-					m_pClientList[iClientH]->m_cAttackDiceRange_L++;
-					break;
-
-				case 9: // 고대문명의
-					m_pClientList[iClientH]->m_cAttackDiceRange_SM += 2;
-					m_pClientList[iClientH]->m_cAttackDiceRange_L  += 2;
-					break;
-				}
+				_ApplyMainAffixEffect(iClientH, sItemIndex, dwSWEType, dwSWEValue);
 			}
 
-			// v1.42 희귀 아이템이라면 Sub 효과를 설정한다. 공격무기는 1개만 장착된다고 했을때만 유효함.
-			if ((m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x0000F000) != NULL) {
-				dwSWEType  = (m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x0000F000) >> 12;  
-				dwSWEValue = (m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x00000F00) >> 8;
-				
-				// 희귀 아이템 효과 종류: 
-				//추가 독성저항(1), 추가 명중값(2), 추가 방어값(3), HP 회복량 추가(4), SP 회복량 추가(5)
-				//MP 회복량 추가(6), 추가 마법저항(7), 물리 대미지 흡수(8), 마법 대미지 흡수(9)
-				//연타 대미지 추가(10), 더 많은 경험치(11), 더많은 Gold(12)
-				
-				switch (dwSWEType) {
-				case 0:  break;
-				case 1:  m_pClientList[iClientH]->m_iAddPR += (int)dwSWEValue*7; break;
-				case 2:  m_pClientList[iClientH]->m_iAddAR += (int)dwSWEValue*7; break;
-				case 3:  m_pClientList[iClientH]->m_iAddDR += (int)dwSWEValue*7; break;
-				case 4:  m_pClientList[iClientH]->m_iAddHP += (int)dwSWEValue*7; break;
-				case 5:  m_pClientList[iClientH]->m_iAddSP += (int)dwSWEValue*7; break;
-				case 6:  m_pClientList[iClientH]->m_iAddMP += (int)dwSWEValue*7; break;
-				case 7:  m_pClientList[iClientH]->m_iAddMR += (int)dwSWEValue*7; break;
-				case 8:  m_pClientList[iClientH]->m_iDamageAbsorption_Armor[m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_cEquipPos] += (int)dwSWEValue*3; break;
-				case 9:  m_pClientList[iClientH]->m_iAddAbsMD += (int)dwSWEValue*3; break;
-				case 10: m_pClientList[iClientH]->m_iAddCD    += (int)dwSWEValue; break;
-				case 11: m_pClientList[iClientH]->m_iAddExp   += (int)dwSWEValue*10; break;
-				case 12: m_pClientList[iClientH]->m_iAddGold  += (int)dwSWEValue*10; break;
-				}
+			// Affix slot 3 (Main-2).
+			if ((m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute2 & 0x00F00000) != NULL) {
+				_ApplyMainAffixEffect(iClientH, sItemIndex,
+					(m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute2 & 0x00F00000) >> 20,
+					(m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute2 & 0x000F0000) >> 16);
+			}
 
-				// v2.04 특성치 제한을 붙임.
-				switch (dwSWEType) {
-				case 9: if (m_pClientList[iClientH]->m_iAddAbsMD > 80) m_pClientList[iClientH]->m_iAddAbsMD = 80; break;
-				}
+			// v1.42 Rare-item Sub effect.
+			if ((m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x0000F000) != NULL) {
+				_ApplySubAffixEffect(iClientH, sItemIndex,
+					(m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x0000F000) >> 12,
+					(m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x00000F00) >> 8);
+			}
+
+			// Affix slot 4 (Sub-2).
+			if ((m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute2 & 0x0000F000) != NULL) {
+				_ApplySubAffixEffect(iClientH, sItemIndex,
+					(m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute2 & 0x0000F000) >> 12,
+					(m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute2 & 0x00000F00) >> 8);
 			}
 
 			// 일반 공격 이외의 효과를 설정.
@@ -33025,67 +33095,29 @@ void CGame::CalcTotalItemEffect(int iClientH, int iEquipItemID, BOOL bNotify)
 			}
 
 			if ((m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x00F00000) != NULL) {
-				dwSWEType  = (m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x00F00000) >> 20;  
-				dwSWEValue = (m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x000F0000) >> 16;
-				
-				// 희귀 아이템 효과 종류: 
-				// 0-None 1-필살기대미지추가 2-중독효과 3-정의의 4-저주의 
-				// 5-민첩의 6-가벼운 7-예리한 8-강화된 9-고대문명의 10-마법성공의 11-마나변환의 12-필살충전의
-			
-				switch (dwSWEType) {
-				case 7: // 예리한 
-					m_pClientList[iClientH]->m_cAttackDiceRange_SM++;
-					m_pClientList[iClientH]->m_cAttackDiceRange_L++;
-					break;
-
-				case 9: // 고대문명의
-					m_pClientList[iClientH]->m_cAttackDiceRange_SM += 2;
-					m_pClientList[iClientH]->m_cAttackDiceRange_L  += 2;
-					break;
-
-				// v2.04 
-				case 11: // 마나 변환의 
-					m_pClientList[iClientH]->m_iAddTransMana += dwSWEValue;
-					if (m_pClientList[iClientH]->m_iAddTransMana > 13) m_pClientList[iClientH]->m_iAddTransMana = 13;
-					break;
-
-				case 12: // 필살 충전의 
-					m_pClientList[iClientH]->m_iAddChargeCritical += dwSWEValue;
-					if (m_pClientList[iClientH]->m_iAddChargeCritical > 20) m_pClientList[iClientH]->m_iAddChargeCritical = 20;
-					break;
-				}
+				_ApplyMainAffixEffect(iClientH, sItemIndex,
+					(m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x00F00000) >> 20,
+					(m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x000F0000) >> 16);
 			}
 
-			// v1.42 희귀 아이템이라면 Sub 효과를 설정한다. 공격무기는 1개만 장착된다고 했을때만 유효함.
-			if ((m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x0000F000) != NULL) {
-				dwSWEType  = (m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x0000F000) >> 12;  
-				dwSWEValue = (m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x00000F00) >> 8;
-				
-				// 희귀 아이템 효과 종류: 
-				//추가 독성저항(1), 추가 명중값(2), 추가 방어값(3), HP 회복량 추가(4), SP 회복량 추가(5)
-				//MP 회복량 추가(6), 추가 마법저항(7), 물리 대미지 흡수(8), 마법 대미지 흡수(9)
-				//연타 대미지 추가(10), 더 많은 경험치(11), 더많은 Gold(12)
-				
-				switch (dwSWEType) {
-				case 0:  break;
-				case 1:  m_pClientList[iClientH]->m_iAddPR += (int)dwSWEValue*7; break;
-				case 2:  m_pClientList[iClientH]->m_iAddAR += (int)dwSWEValue*7; break;
-				case 3:  m_pClientList[iClientH]->m_iAddDR += (int)dwSWEValue*7; break;
-				case 4:  m_pClientList[iClientH]->m_iAddHP += (int)dwSWEValue*7; break;
-				case 5:  m_pClientList[iClientH]->m_iAddSP += (int)dwSWEValue*7; break;
-				case 6:  m_pClientList[iClientH]->m_iAddMP += (int)dwSWEValue*7; break;
-				case 7:  m_pClientList[iClientH]->m_iAddMR += (int)dwSWEValue*7; break;
-				case 8:  m_pClientList[iClientH]->m_iDamageAbsorption_Armor[m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_cEquipPos] += (int)dwSWEValue*3; break;
-				case 9:  m_pClientList[iClientH]->m_iAddAbsMD += (int)dwSWEValue*3; break;
-				case 10: m_pClientList[iClientH]->m_iAddCD    += (int)dwSWEValue; break;
-				case 11: m_pClientList[iClientH]->m_iAddExp   += (int)dwSWEValue*10; break;
-				case 12: m_pClientList[iClientH]->m_iAddGold  += (int)dwSWEValue*10; break;
-				}
+			// Affix slot 3 (Main-2).
+			if ((m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute2 & 0x00F00000) != NULL) {
+				_ApplyMainAffixEffect(iClientH, sItemIndex,
+					(m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute2 & 0x00F00000) >> 20,
+					(m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute2 & 0x000F0000) >> 16);
+			}
 
-				// v2.04 특성치 제한을 붙임.
-				switch (dwSWEType) {
-				case 9: if (m_pClientList[iClientH]->m_iAddAbsMD > 80) m_pClientList[iClientH]->m_iAddAbsMD = 80; break; // 마법 대미지 흡수 최대 80%
-				}
+			if ((m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x0000F000) != NULL) {
+				_ApplySubAffixEffect(iClientH, sItemIndex,
+					(m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x0000F000) >> 12,
+					(m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute & 0x00000F00) >> 8);
+			}
+
+			// Affix slot 4 (Sub-2).
+			if ((m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute2 & 0x0000F000) != NULL) {
+				_ApplySubAffixEffect(iClientH, sItemIndex,
+					(m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute2 & 0x0000F000) >> 12,
+					(m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_dwAttribute2 & 0x00000F00) >> 8);
 			}
 
 			switch ( cEquipPos ) {
@@ -35918,6 +35950,9 @@ RCPH_LOOPBREAK:;
 				dwp = (DWORD *)cp;
 				*dwp = pItem->m_dwAttribute;
 				cp += 4;
+				dwp = (DWORD *)cp;
+				*dwp = pItem->m_dwAttribute2;
+				cp += 4;
 				/*
 				*cp = (char)(pItem->m_dwAttribute & 0x00000001); // Custom-Item인지의 여부 
 				cp++;
@@ -35925,7 +35960,7 @@ RCPH_LOOPBREAK:;
 				
 				if (iEraseReq == 1) delete pItem;
 				
-				iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 53);
+				iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 57);
 				switch (iRet) {
 				case DEF_XSOCKEVENT_QUENEFULL:
 				case DEF_XSOCKEVENT_SOCKETERROR:
@@ -36619,10 +36654,13 @@ void CGame::ReqCreateCraftingHandler(int iClientH, char* pData)
 				dwp = (DWORD*)cp;
 				*dwp = pItem->m_dwAttribute;
 				cp += 4;
+				dwp = (DWORD*)cp;
+				*dwp = pItem->m_dwAttribute2;
+				cp += 4;
 				/*	*cp = (char)(pItem->m_dwAttribute & 0x00000001); // Custom-Item
 				cp++;	*/
 				if (iEraseReq == 1) delete pItem;
-				iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 53);
+				iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 57);
 				switch (iRet) {
 				case DEF_XSOCKEVENT_QUENEFULL:
 				case DEF_XSOCKEVENT_SOCKETERROR:
@@ -37724,6 +37762,9 @@ void CGame::GetOccupyFlagHandler(int iClientH)
 				dwp = (DWORD *)cp;
 				*dwp = pItem->m_dwAttribute;
 				cp += 4;
+				dwp = (DWORD *)cp;
+				*dwp = pItem->m_dwAttribute2;
+				cp += 4;
 				/*
 				*cp = (char)(pItem->m_dwAttribute & 0x00000001); // Custom-Item인지의 여부 
 				cp++;
@@ -37732,7 +37773,7 @@ void CGame::GetOccupyFlagHandler(int iClientH)
 				if (iEraseReq == 1) delete pItem;
 				
 				// 아이템 정보 전송 
-				iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 53);
+				iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 57);
 				
 				// 소지품 총 중량 재 계산 
 				iCalcTotalWeight(iClientH);
@@ -37895,11 +37936,14 @@ void CGame::GetFightzoneTicketHandler(int iClientH)
 		dwp = (DWORD *)cp;
 		*dwp = pItem->m_dwAttribute;
 		cp += 4;
+		dwp = (DWORD *)cp;
+		*dwp = pItem->m_dwAttribute2;
+		cp += 4;
 													
 		if (iEraseReq == 1) delete pItem;
 				
 		// 아이템 정보 전송 
-		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 53);
+		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 57);
 				
 		// 소지품 총 중량 재 계산 
 		iCalcTotalWeight(iClientH);
@@ -38268,6 +38312,9 @@ void CGame::GetHeroMantleHandler(int iClientH,int iItemID,char * pString)
            dwp = (DWORD *)cp; 
            *dwp = pItem->m_dwAttribute; 
            cp += 4; 
+           dwp = (DWORD *)cp; 
+           *dwp = pItem->m_dwAttribute2; 
+           cp += 4; 
            /* 
            *cp = (char)(pItem->m_dwAttribute & 0x00000001); // Custom-Item??? ?? 
            cp++; 
@@ -38275,7 +38322,7 @@ void CGame::GetHeroMantleHandler(int iClientH,int iItemID,char * pString)
                                  
            if (iEraseReq == 1) delete pItem; 
             
-           iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 53); 
+           iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 57); 
             
            iCalcTotalWeight(iClientH); 
             
@@ -38889,6 +38936,9 @@ BOOL CGame::bAddItem(int iClientH, CItem * pItem, char cMode)
 		dwp = (DWORD *)cp;
 		*dwp = pItem->m_dwAttribute;
 		cp += 4;
+		dwp = (DWORD *)cp;
+		*dwp = pItem->m_dwAttribute2;
+		cp += 4;
 		/*
 		*cp = (char)(pItem->m_dwAttribute & 0x00000001); // Custom-Item인지의 여부 
 		cp++;
@@ -38903,7 +38953,7 @@ BOOL CGame::bAddItem(int iClientH, CItem * pItem, char cMode)
 		}
 		
 		// 아이템 정보 전송 
-		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 53);
+		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 57);
 		
 		return TRUE;
 	}
@@ -39759,12 +39809,15 @@ void CGame::SendItemNotifyMsg(int iClientH, WORD wMsgType, CItem *pItem, int iV1
 		dwp = (DWORD *)cp;
 		*dwp = pItem->m_dwAttribute;
 		cp += 4;
+		dwp = (DWORD *)cp;
+		*dwp = pItem->m_dwAttribute2;
+		cp += 4;
 		/*
 		*cp = (char)(pItem->m_dwAttribute & 0x00000001); // Custom-Item인지의 여부 
 		cp++;
 		*/
 
-		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 53);
+		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 57);
 		break;
 	
 	case DEF_NOTIFY_ITEMPURCHASED:
@@ -41331,43 +41384,116 @@ BOOL CGame::_bCheckDupItemID(CItem *pItem)
 	return FALSE;
 }
 
-void CGame::_AdjustRareItemValue(CItem *pItem)
+void CGame::_ApplyRareItemValueEffect(CItem *pItem, DWORD dwSWEType, DWORD dwSWEValue)
 {
- DWORD dwSWEType, dwSWEValue;
  double dV1, dV2, dV3;
 
-	if ((pItem->m_dwAttribute & 0x00F00000) != NULL) {
-		dwSWEType  = (pItem->m_dwAttribute & 0x00F00000) >> 20;  
-		dwSWEValue = (pItem->m_dwAttribute & 0x000F0000) >> 16;
-		// 희귀 아이템 효과 종류: 
-		// 0-None 1-필살기대미지추가 2-중독효과 3-정의의 
-		// 5-민첩의 6-가벼운 7-예리한 8-강화된 9-고대문명의
-		switch (dwSWEType) {
-		case 0: break;
-		
-		case 5: // 민첩의 
-			pItem->m_cSpeed--;
-			if (pItem->m_cSpeed < 0) pItem->m_cSpeed = 0;
-			break;
+	// 희귀 아이템 효과 종류:
+	// 0-None 1-필살기대미지추가 2-중독효과 3-정의의
+	// 5-민첩의 6-가벼운 7-예리한 8-강화된 9-고대문명의
+	switch (dwSWEType) {
+	case 0: break;
 
-		case 6: // 가벼운 
-			dV2 = (double)pItem->m_wWeight;
-			dV3 = (double)(dwSWEValue*4);
-			dV1 = (dV3/100.0f)*dV2;
-			pItem->m_wWeight -= (int)dV1;
+	case 5: // 민첩의
+		pItem->m_cSpeed--;
+		if (pItem->m_cSpeed < 0) pItem->m_cSpeed = 0;
+		break;
 
-			if (pItem->m_wWeight < 1) pItem->m_wWeight = 1;
-			break;
+	case 6: // 가벼운
+		dV2 = (double)pItem->m_wWeight;
+		dV3 = (double)(dwSWEValue*4);
+		dV1 = (dV3/100.0f)*dV2;
+		pItem->m_wWeight -= (int)dV1;
 
-		case 8: // 강화된 
-		case 9: // 고대문명의 
-			dV2 = (double)pItem->m_wMaxLifeSpan;
-			dV3 = (double)(dwSWEValue*7);
-			dV1 = (dV3/100.0f)*dV2;
-			pItem->m_wMaxLifeSpan += (int)dV1;
-			break;
-		}
+		if (pItem->m_wWeight < 1) pItem->m_wWeight = 1;
+		break;
+
+	case 8: // 강화된
+	case 9: // 고대문명의
+		dV2 = (double)pItem->m_wMaxLifeSpan;
+		dV3 = (double)(dwSWEValue*7);
+		dV1 = (dV3/100.0f)*dV2;
+		pItem->m_wMaxLifeSpan += (int)dV1;
+		break;
 	}
+}
+
+void CGame::_AdjustRareItemValue(CItem *pItem)
+{
+	// Both affix DWORDs carry a Main effect, so apply each of them once.
+	// This has to stay exactly-once per item load: the adjustments above are
+	// cumulative rather than idempotent (m_cSpeed--, m_wWeight -=,
+	// m_wMaxLifeSpan +=), so calling this twice compounds the bonuses.
+	if ((pItem->m_dwAttribute & 0x00F00000) != NULL)
+		_ApplyRareItemValueEffect(pItem,
+			(pItem->m_dwAttribute & 0x00F00000) >> 20,
+			(pItem->m_dwAttribute & 0x000F0000) >> 16);
+
+	if ((pItem->m_dwAttribute2 & 0x00F00000) != NULL)
+		_ApplyRareItemValueEffect(pItem,
+			(pItem->m_dwAttribute2 & 0x00F00000) >> 20,
+			(pItem->m_dwAttribute2 & 0x000F0000) >> 16);
+}
+
+BOOL CGame::_bRollEligibleAffixType(const AffixDef * pPool, int iPoolSize, int iGenLevel, DWORD dwExclude, DWORD * pdwType)
+{
+ const int iMaxEligible = 16;
+ DWORD dwEligible[16];
+ int   i, iCount = 0;
+
+	if ((pPool == NULL) || (pdwType == NULL)) return FALSE;
+
+	// Build the subset this kill is strong enough to reach, minus the type the
+	// other slot already took, so slot 2 never duplicates slot 1.
+	for (i = 0; i < iPoolSize; i++) {
+		if (pPool[i].iLevelReq > iGenLevel) continue;
+		if ((dwExclude != NULL) && (pPool[i].dwType == dwExclude)) continue;
+		if (iCount >= iMaxEligible) break;
+		dwEligible[iCount] = pPool[i].dwType;
+		iCount++;
+	}
+
+	if (iCount == 0) return FALSE;
+
+	// Selection stays uniform within whatever is eligible - only the size of the
+	// eligible set varies with iGenLevel.
+	*pdwType = dwEligible[iDice(1, iCount) - 1];
+	return TRUE;
+}
+
+DWORD CGame::_dwRollAffixValue(int iGenLevel)
+{
+ DWORD dwValue;
+ int   iResult, iCap;
+
+	iResult = iDice(1, 30000);
+	if ((iResult >= 1) && (iResult < 7250))            dwValue = 1;  // 7250/30000 = 24.2%
+	else if ((iResult >= 7250) && (iResult < 12800))   dwValue = 2;  // 5550/30000 = 18.5%
+	else if ((iResult >= 12800) && (iResult < 17050))  dwValue = 3;  // 4250/30000 = 14.2%
+	else if ((iResult >= 17050) && (iResult < 20300))  dwValue = 4;  // 3250/30000 = 10.8%
+	else if ((iResult >= 20300) && (iResult < 22800))  dwValue = 5;  // 2500/30000 = 8.3%
+	else if ((iResult >= 22800) && (iResult < 24700))  dwValue = 6;  // 1900/30000 = 6.3%
+	else if ((iResult >= 24700) && (iResult < 26150))  dwValue = 7;  // 1450/30000 = 4.8%
+	else if ((iResult >= 26150) && (iResult < 27300))  dwValue = 8;  // 1150/30000 = 3.8%
+	else if ((iResult >= 27300) && (iResult < 28150))  dwValue = 9;  // 850/30000 = 2.8%
+	else if ((iResult >= 28150) && (iResult < 28800))  dwValue = 10; // 650/30000 = 2.2%
+	else if ((iResult >= 28800) && (iResult < 29300))  dwValue = 11; // 500/30000 = 1.7%
+	else if ((iResult >= 29300) && (iResult < 29700))  dwValue = 12; // 400/30000 = 1.3%
+	else if ((iResult >= 29700) && (iResult <= 30000)) dwValue = 13; // 300/30000 = 1.0%
+	else dwValue = 1; // v2.03 906
+
+	// Level-gated magnitude ceiling. Replaces the old flat
+	// "if ((iGenLevel <= 2) && (dwValue > 7)) dwValue = 7;" clamp so magnitude
+	// scales across all 12 tiers instead of only being trimmed at the bottom.
+	if (iGenLevel <= 2)      iCap = 5;
+	else if (iGenLevel <= 4) iCap = 7;
+	else if (iGenLevel <= 6) iCap = 9;
+	else if (iGenLevel <= 8) iCap = 11;
+	else                     iCap = 13;
+
+	if (dwValue > (DWORD)iCap) dwValue = (DWORD)iCap;
+
+	return dwValue;
 }
 
 void CGame::RequestNoticementHandler(int iClientH, char * pData)
@@ -41960,6 +42086,9 @@ void CGame::AdminOrder_CreateItem(int iClientH, char *pData, DWORD dwMsgSize)
 		dwp = (DWORD *)cp;
 		*dwp = pItem->m_dwAttribute;
 		cp += 4;
+		dwp = (DWORD *)cp;
+		*dwp = pItem->m_dwAttribute2;
+		cp += 4;
 
 		// v2.15 로그 관련 수정
 		if (iEraseReq == 1) {
@@ -41968,7 +42097,7 @@ void CGame::AdminOrder_CreateItem(int iClientH, char *pData, DWORD dwMsgSize)
 		}
 		
 		// 아이템 정보 전송 
-		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 53);
+		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 57);
 		
 
 		// v2.14 Admin Log
@@ -44646,7 +44775,8 @@ BOOL CGame::bCopyItemContents(CItem * pCopy, CItem *pOriginal)
 	pCopy->m_sItemSpecEffectValue2 = pOriginal->m_sItemSpecEffectValue2;
 	pCopy->m_sItemSpecEffectValue3 = pOriginal->m_sItemSpecEffectValue3;
 	pCopy->m_wCurLifeSpan = pOriginal->m_wCurLifeSpan;
-	pCopy->m_dwAttribute = pOriginal->m_dwAttribute;			
+	pCopy->m_dwAttribute = pOriginal->m_dwAttribute;
+	pCopy->m_dwAttribute2 = pOriginal->m_dwAttribute2;
 
 	return TRUE;
 }
@@ -46452,11 +46582,14 @@ void CGame::ReqCreateSlateHandler(int iClientH, char* pData)
 			dwp  = (DWORD *)cp;
 			*dwp = pItem->m_dwAttribute;
 			cp += 4;
+			dwp  = (DWORD *)cp;
+			*dwp = pItem->m_dwAttribute2;
+			cp += 4;
 
 			if (iEraseReq == 1) delete pItem;
 
 			// 아이템 정보 전송 
-			iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 53);
+			iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 57);
 			switch (iRet) {
 				case DEF_XSOCKEVENT_QUENEFULL:
 				case DEF_XSOCKEVENT_SOCKETERROR:
@@ -48107,6 +48240,122 @@ BOOL CGame::bGetMultipleItemNamesWhenDeleteNpc(short sNpcType, int iProbability,
 } // bGetMultipleItemNamesWhenDeleteNpc... duh...korean morons
 
 // 05/21/2004 - Hypnotoad - Balances to drop status
+// --- Rare-item affix pools -------------------------------------------------
+// Every affix carries a minimum iGenLevel (1-12, derived from the killed NPC's
+// type), so a weak monster mechanically cannot drop the strongest affixes at
+// all. Within whatever is eligible for a given kill the pick stays uniform.
+// The type IDs themselves are unchanged - only their reachability is new.
+
+static const AffixDef s_AttackMainPool[] = {
+	{ 6, 1 },  // Light
+	{ 8, 1 },  // Enhanced
+	{ 5, 2 },  // Agile
+	{ 3, 2 },  // Justice
+	{ 1, 3 },  // Critical
+	{ 2, 3 },  // Poison
+	{ 7, 5 },  // Sharp
+	{ 9, 8 },  // Ancient
+};
+
+// Shared by the ATTACK family and ATTACK_MANASAVE - both roll the same Sub pool.
+static const AffixDef s_SubPool[] = {
+	{ 2,  1 }, // Hit
+	{ 10, 2 }, // Combo damage
+	{ 12, 4 }, // Gold
+	{ 11, 6 }, // EXP
+};
+
+static const AffixDef s_DefenseMainPool[] = {
+	{ 8,  1 }, // Enhanced
+	{ 6,  1 }, // Light
+	{ 11, 5 }, // Mana conversion
+	{ 12, 7 }, // Critical charge
+};
+
+static const AffixDef s_DefenseSubPool[] = {
+	{ 1, 1 }, // Poison resistance
+	{ 3, 1 }, // Defense ratio
+	{ 5, 2 }, // SP
+	{ 4, 2 }, // HP
+	{ 6, 2 }, // MP
+	{ 7, 4 }, // Magic resistance
+	{ 8, 6 }, // Physical absorption
+	{ 9, 8 }, // Magic absorption
+};
+
+#define DEF_AFFIXPOOLSIZE(a) (sizeof(a) / sizeof((a)[0]))
+
+// Per-type magnitude rules. These are pre-existing balance constraints kept
+// verbatim; they just live in one place now so both affix slots share them.
+static DWORD _dwApplyAttackMainValueRule(DWORD dwType, DWORD dwValue)
+{
+	switch (dwType) {
+	case 1: if (dwValue <= 5) dwValue = 5; break;
+	case 2: if (dwValue <= 4) dwValue = 4; break;
+	case 6: if (dwValue <= 4) dwValue = 4; break;
+	case 8: if (dwValue <= 2) dwValue = 2; break;
+	}
+	return dwValue;
+}
+
+static DWORD _dwApplySubValueRule(DWORD dwType, DWORD dwValue)
+{
+	switch (dwType) {
+	case 2:  if (dwValue <= 3) dwValue = 3; break;
+	case 10: if (dwValue > 7)  dwValue = 7; break;
+	case 11: dwValue = 2; break;
+	case 12: dwValue = 5; break;
+	}
+	return dwValue;
+}
+
+static DWORD _dwApplyDefenseMainValueRule(DWORD dwType, DWORD dwValue, int iGenLevel)
+{
+	switch (dwType) {
+	case 6: if (dwValue <= 4) dwValue = 4; break;
+	case 8: if (dwValue <= 2) dwValue = 2; break;
+
+	case 11:
+	case 12:
+		// v2.04
+		dwValue = (dwValue + 1) / 2;
+		if (dwValue < 1) dwValue = 1;
+		if ((iGenLevel <= 3) && (dwValue > 2)) dwValue = 2;
+		break;
+	}
+	return dwValue;
+}
+
+static DWORD _dwApplyDefenseSubValueRule(DWORD dwType, DWORD dwValue)
+{
+	switch (dwType) {
+	case 1:
+	case 3:
+	case 7:
+	case 8:
+	case 9:
+		if (dwValue <= 3) dwValue = 3;
+		break;
+	}
+	return dwValue;
+}
+
+// A weapon's colour is keyed off its Main-1 affix type, unchanged from before.
+static char _cGetAttackMainColor(DWORD dwType)
+{
+	switch (dwType) {
+	case 5: return 1;
+	case 6: return 2;
+	case 8: return 3;
+	case 2: return 4;
+	case 1: return 5;
+	case 7: return 6;
+	case 3: return 7;
+	case 9: return 8;
+	}
+	return 0;
+}
+
 void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType)
 {
 	class CItem * pItem;
@@ -48114,7 +48363,7 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 	BOOL  bIsGold;
 	short sCreditH;
 	int   iGenLevel = 0, iResult, iItemID;
-	DWORD dwType, dwValue;
+	DWORD dwType, dwValue, dwMainType1, dwSubType1;
 	double dTmp1, dTmp2, dTmp3;
 
 	if (m_pNpcList[iNpcH] == NULL) return;
@@ -48629,276 +48878,110 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 				}
 
 				if ((pItem->m_sItemEffectType == DEF_ITEMEFFECTTYPE_ATTACK) || (pItem->m_sItemEffectType == DEF_ITEMEFFECTTYPE_ATTACK_ARROW) || (pItem->m_sItemEffectType == DEF_ITEMEFFECTTYPE_ATTACK_DEFENSE)) {
-					// Each of the 8 Main affixes has an equal 1/8 chance.
-					switch (iDice(1,8)) {
-					case 1: dwType = 6; cColor = 2; break;
-					case 2: dwType = 8; cColor = 3; break;
-					case 3: dwType = 1; cColor = 5; break;
-					case 4: dwType = 5; cColor = 1; break;
-					case 5: dwType = 3; cColor = 7; break;
-					case 6: dwType = 2; cColor = 4; break;
-					case 7: dwType = 7; cColor = 6; break;
-					case 8: dwType = 9; cColor = 8; break;
+
+					pItem->m_dwAttribute  = NULL;
+					pItem->m_dwAttribute2 = NULL;
+					dwMainType1 = NULL;
+					dwSubType1  = NULL;
+
+					if (_bRollEligibleAffixType(s_AttackMainPool, DEF_AFFIXPOOLSIZE(s_AttackMainPool), iGenLevel, NULL, &dwType) == TRUE) {
+						dwMainType1 = dwType;
+						cColor = _cGetAttackMainColor(dwType);
+						pItem->m_cItemColor = cColor;
+
+						dwValue = _dwApplyAttackMainValueRule(dwType, _dwRollAffixValue(iGenLevel));
+						pItem->m_dwAttribute = pItem->m_dwAttribute | (dwType << 20) | (dwValue << 16);
 					}
-
-					pItem->m_cItemColor = cColor;
-
-					iResult = iDice(1, 30000);
-					if ((iResult >= 1) && (iResult < 7250))            dwValue = 1;  // 7250/30000 = 24.2%
-					else if ((iResult >= 7250) && (iResult < 12800))   dwValue = 2;  // 5550/30000 = 18.5%
-					else if ((iResult >= 12800) && (iResult < 17050))  dwValue = 3;  // 4250/30000 = 14.2%
-					else if ((iResult >= 17050) && (iResult < 20300))  dwValue = 4;  // 3250/30000 = 10.8%
-					else if ((iResult >= 20300) && (iResult < 22800))  dwValue = 5;  // 2500/30000 = 8.3%
-					else if ((iResult >= 22800) && (iResult < 24700))  dwValue = 6;  // 1900/30000 = 6.3%
-					else if ((iResult >= 24700) && (iResult < 26150))  dwValue = 7;  // 1450/30000 = 4.8%
-					else if ((iResult >= 26150) && (iResult < 27300))  dwValue = 8;  // 1150/30000 = 3.8%
-					else if ((iResult >= 27300) && (iResult < 28150))  dwValue = 9;  // 850/30000 = 2.8%
-					else if ((iResult >= 28150) && (iResult < 28800))  dwValue = 10; // 650/30000 = 2.2%
-					else if ((iResult >= 28800) && (iResult < 29300))  dwValue = 11; // 500/30000 = 1.7%
-					else if ((iResult >= 29300) && (iResult < 29700))  dwValue = 12; // 400/30000 = 1.3%
-					else if ((iResult >= 29700) && (iResult <= 30000))  dwValue = 13; // 300/30000 = 1.0%
-					else dwValue = 1; // v2.03 906
-
-					switch (dwType) {
-					case 1:
-						if (dwValue <= 5) dwValue = 5;
-						break; 
-					case 2: // 
-						if (dwValue <= 4) dwValue = 4;
-						break; 
-					case 6: // 
-						if (dwValue <= 4) dwValue = 4;
-						break; 
-					case 8: // 					
-						if (dwValue <= 2) dwValue = 2;
-						break; 
-					}
-					if ((iGenLevel <= 2) && (dwValue > 7)) dwValue = 7;
-
-					pItem->m_dwAttribute = NULL;
-					dwType  = dwType << 20;
-					dwValue = dwValue << 16;
-					pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue;
 
 					if (iDice(1,10000) >= 6000) {
-
-						// Each of the 4 Sub affixes has an equal 1/4 chance.
-						switch (iDice(1,4)) {
-						case 1: dwType = 2;  break;
-						case 2: dwType = 10; break;
-						case 3: dwType = 12; break;
-						case 4: dwType = 11; break;
+						if (_bRollEligibleAffixType(s_SubPool, DEF_AFFIXPOOLSIZE(s_SubPool), iGenLevel, NULL, &dwType) == TRUE) {
+							dwSubType1 = dwType;
+							dwValue = _dwApplySubValueRule(dwType, _dwRollAffixValue(iGenLevel));
+							pItem->m_dwAttribute = pItem->m_dwAttribute | (dwType << 12) | (dwValue << 8);
 						}
+					}
 
-						iResult = iDice(1, 30000);
-						if ((iResult >= 1) && (iResult < 7250))            dwValue = 1;  // 7250/30000 = 24.2%
-						else if ((iResult >= 7250) && (iResult < 12800))   dwValue = 2;  // 5550/30000 = 18.5%
-						else if ((iResult >= 12800) && (iResult < 17050))  dwValue = 3;  // 4250/30000 = 14.2%
-						else if ((iResult >= 17050) && (iResult < 20300))  dwValue = 4;  // 3250/30000 = 10.8%
-						else if ((iResult >= 20300) && (iResult < 22800))  dwValue = 5;  // 2500/30000 = 8.3%
-						else if ((iResult >= 22800) && (iResult < 24700))  dwValue = 6;  // 1900/30000 = 6.3%
-						else if ((iResult >= 24700) && (iResult < 26150))  dwValue = 7;  // 1450/30000 = 4.8%
-						else if ((iResult >= 26150) && (iResult < 27300))  dwValue = 8;  // 1150/30000 = 3.8%
-						else if ((iResult >= 27300) && (iResult < 28150))  dwValue = 9;  // 850/30000 = 2.8%
-						else if ((iResult >= 28150) && (iResult < 28800))  dwValue = 10; // 650/30000 = 2.2%
-						else if ((iResult >= 28800) && (iResult < 29300))  dwValue = 11; // 500/30000 = 1.7%
-						else if ((iResult >= 29300) && (iResult < 29700))  dwValue = 12; // 400/30000 = 1.3%
-						else if ((iResult >= 29700) && (iResult <= 30000))  dwValue = 13; // 300/30000 = 1.0%
-						else dwValue = 1; // v2.03 906
-
-						switch (dwType) {
-						case 2:
-							if (dwValue <= 3) dwValue = 3;
-							break;
-						case 10:
-							if (dwValue > 7) dwValue = 7;
-							break;
-						case 11:
-							dwValue = 2;
-							break;
-						case 12:
-							dwValue = 5;
-							break;
+					// Slots 3 and 4 roll independently at 20% each, and each one
+					// excludes the type its slot-1 counterpart already took.
+					if (iDice(1,10000) >= 8000) {
+						if (_bRollEligibleAffixType(s_AttackMainPool, DEF_AFFIXPOOLSIZE(s_AttackMainPool), iGenLevel, dwMainType1, &dwType) == TRUE) {
+							dwValue = _dwApplyAttackMainValueRule(dwType, _dwRollAffixValue(iGenLevel));
+							pItem->m_dwAttribute2 = pItem->m_dwAttribute2 | (dwType << 20) | (dwValue << 16);
 						}
-						if ((iGenLevel <= 2) && (dwValue > 7)) dwValue = 7;
+					}
 
-						dwType  = dwType << 12;
-						dwValue = dwValue << 8;
-
-						pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue;
+					if (iDice(1,10000) >= 8000) {
+						if (_bRollEligibleAffixType(s_SubPool, DEF_AFFIXPOOLSIZE(s_SubPool), iGenLevel, dwSubType1, &dwType) == TRUE) {
+							dwValue = _dwApplySubValueRule(dwType, _dwRollAffixValue(iGenLevel));
+							pItem->m_dwAttribute2 = pItem->m_dwAttribute2 | (dwType << 12) | (dwValue << 8);
+						}
 					}
 				}
 
 				else if (pItem->m_sItemEffectType == DEF_ITEMEFFECTTYPE_ATTACK_MANASAVE) {
+
+					pItem->m_dwAttribute  = NULL;
+					pItem->m_dwAttribute2 = NULL;
+					dwSubType1 = NULL;
+
+					// Mana-save weapons always carry the same Main affix.
 					dwType = 10;
 					cColor = 5;
-
 					pItem->m_cItemColor = cColor;
 
-					iResult = iDice(1, 30000);
-					if ((iResult >= 1) && (iResult < 7250))            dwValue = 1;  // 7250/30000 = 24.2%
-					else if ((iResult >= 7250) && (iResult < 12800))   dwValue = 2;  // 5550/30000 = 18.5%
-					else if ((iResult >= 12800) && (iResult < 17050))  dwValue = 3;  // 4250/30000 = 14.2%
-					else if ((iResult >= 17050) && (iResult < 20300))  dwValue = 4;  // 3250/30000 = 10.8%
-					else if ((iResult >= 20300) && (iResult < 22800))  dwValue = 5;  // 2500/30000 = 8.3%
-					else if ((iResult >= 22800) && (iResult < 24700))  dwValue = 6;  // 1900/30000 = 6.3%
-					else if ((iResult >= 24700) && (iResult < 26150))  dwValue = 7;  // 1450/30000 = 4.8%
-					else if ((iResult >= 26150) && (iResult < 27300))  dwValue = 8;  // 1150/30000 = 3.8%
-					else if ((iResult >= 27300) && (iResult < 28150))  dwValue = 9;  // 850/30000 = 2.8%
-					else if ((iResult >= 28150) && (iResult < 28800))  dwValue = 10; // 650/30000 = 2.2%
-					else if ((iResult >= 28800) && (iResult < 29300))  dwValue = 11; // 500/30000 = 1.7%
-					else if ((iResult >= 29300) && (iResult < 29700))  dwValue = 12; // 400/30000 = 1.3%
-					else if ((iResult >= 29700) && (iResult <= 30000))  dwValue = 13; // 300/30000 = 1.0%
-					else dwValue = 1; // v2.03 906
-
-					if ((iGenLevel <= 2) && (dwValue > 7)) dwValue = 7;
-
-					pItem->m_dwAttribute = NULL;
-					dwType  = dwType << 20;
-					dwValue = dwValue << 16;
-					pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue;
+					dwValue = _dwRollAffixValue(iGenLevel);
+					pItem->m_dwAttribute = pItem->m_dwAttribute | (dwType << 20) | (dwValue << 16);
 
 					if (iDice(1,10000) >= 6000) {
-
-						// Each of the 4 Sub affixes has an equal 1/4 chance.
-						switch (iDice(1,4)) {
-						case 1: dwType = 2;  break;
-						case 2: dwType = 10; break;
-						case 3: dwType = 12; break;
-						case 4: dwType = 11; break;
+						if (_bRollEligibleAffixType(s_SubPool, DEF_AFFIXPOOLSIZE(s_SubPool), iGenLevel, NULL, &dwType) == TRUE) {
+							dwSubType1 = dwType;
+							dwValue = _dwApplySubValueRule(dwType, _dwRollAffixValue(iGenLevel));
+							pItem->m_dwAttribute = pItem->m_dwAttribute | (dwType << 12) | (dwValue << 8);
 						}
+					}
 
-						iResult = iDice(1, 30000);
-						if ((iResult >= 1) && (iResult < 7250))            dwValue = 1;  // 7250/30000 = 24.2%
-						else if ((iResult >= 7250) && (iResult < 12800))   dwValue = 2;  // 5550/30000 = 18.5%
-						else if ((iResult >= 12800) && (iResult < 17050))  dwValue = 3;  // 4250/30000 = 14.2%
-						else if ((iResult >= 17050) && (iResult < 20300))  dwValue = 4;  // 3250/30000 = 10.8%
-						else if ((iResult >= 20300) && (iResult < 22800))  dwValue = 5;  // 2500/30000 = 8.3%
-						else if ((iResult >= 22800) && (iResult < 24700))  dwValue = 6;  // 1900/30000 = 6.3%
-						else if ((iResult >= 24700) && (iResult < 26150))  dwValue = 7;  // 1450/30000 = 4.8%
-						else if ((iResult >= 26150) && (iResult < 27300))  dwValue = 8;  // 1150/30000 = 3.8%
-						else if ((iResult >= 27300) && (iResult < 28150))  dwValue = 9;  // 850/30000 = 2.8%
-						else if ((iResult >= 28150) && (iResult < 28800))  dwValue = 10; // 650/30000 = 2.2%
-						else if ((iResult >= 28800) && (iResult < 29300))  dwValue = 11; // 500/30000 = 1.7%
-						else if ((iResult >= 29300) && (iResult < 29700))  dwValue = 12; // 400/30000 = 1.3%
-						else if ((iResult >= 29700) && (iResult <= 30000))  dwValue = 13; // 300/30000 = 1.0%
-						else dwValue = 1; // v2.03 906
-
-						if ((iGenLevel <= 2) && (dwValue > 7)) dwValue = 7;
-
-						switch (dwType) {
-						case 2:
-							if (dwValue <= 3) dwValue = 3;
-							break;
-						case 10:
-							if (dwValue > 7) dwValue = 7;
-							break;
-						case 11:
-							dwValue = 2;
-							break;
-						case 12:
-							dwValue = 5;
-							break;
+					// Main is fixed here, so only Sub-2 is added.
+					if (iDice(1,10000) >= 8000) {
+						if (_bRollEligibleAffixType(s_SubPool, DEF_AFFIXPOOLSIZE(s_SubPool), iGenLevel, dwSubType1, &dwType) == TRUE) {
+							dwValue = _dwApplySubValueRule(dwType, _dwRollAffixValue(iGenLevel));
+							pItem->m_dwAttribute2 = pItem->m_dwAttribute2 | (dwType << 12) | (dwValue << 8);
 						}
-
-						dwType  = dwType << 12;
-						dwValue = dwValue << 8;
-						pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue;
 					}
 				}
+
 				else if (pItem->m_sItemEffectType == DEF_ITEMEFFECTTYPE_DEFENSE) {
 
-					// Each of the 4 Main affixes has an equal 1/4 chance.
-					switch (iDice(1,4)) {
-					case 1: dwType = 8;  break;
-					case 2: dwType = 6;  break;
-					case 3: dwType = 11; break;
-					case 4: dwType = 12; break;
+					pItem->m_dwAttribute  = NULL;
+					pItem->m_dwAttribute2 = NULL;
+					dwMainType1 = NULL;
+					dwSubType1  = NULL;
+
+					if (_bRollEligibleAffixType(s_DefenseMainPool, DEF_AFFIXPOOLSIZE(s_DefenseMainPool), iGenLevel, NULL, &dwType) == TRUE) {
+						dwMainType1 = dwType;
+						dwValue = _dwApplyDefenseMainValueRule(dwType, _dwRollAffixValue(iGenLevel), iGenLevel);
+						pItem->m_dwAttribute = pItem->m_dwAttribute | (dwType << 20) | (dwValue << 16);
 					}
-
-					iResult = iDice(1, 30000);
-					if ((iResult >= 1) && (iResult < 7250))            dwValue = 1;  // 7250/30000 = 24.2%
-					else if ((iResult >= 7250) && (iResult < 12800))   dwValue = 2;  // 5550/30000 = 18.5%
-					else if ((iResult >= 12800) && (iResult < 17050))  dwValue = 3;  // 4250/30000 = 14.2%
-					else if ((iResult >= 17050) && (iResult < 20300))  dwValue = 4;  // 3250/30000 = 10.8%
-					else if ((iResult >= 20300) && (iResult < 22800))  dwValue = 5;  // 2500/30000 = 8.3%
-					else if ((iResult >= 22800) && (iResult < 24700))  dwValue = 6;  // 1900/30000 = 6.3%
-					else if ((iResult >= 24700) && (iResult < 26150))  dwValue = 7;  // 1450/30000 = 4.8%
-					else if ((iResult >= 26150) && (iResult < 27300))  dwValue = 8;  // 1150/30000 = 3.8%
-					else if ((iResult >= 27300) && (iResult < 28150))  dwValue = 9;  // 850/30000 = 2.8%
-					else if ((iResult >= 28150) && (iResult < 28800))  dwValue = 10; // 650/30000 = 2.2%
-					else if ((iResult >= 28800) && (iResult < 29300))  dwValue = 11; // 500/30000 = 1.7%
-					else if ((iResult >= 29300) && (iResult < 29700))  dwValue = 12; // 400/30000 = 1.3%
-					else if ((iResult >= 29700) && (iResult <= 30000))  dwValue = 13; // 300/30000 = 1.0%
-					else dwValue = 1; // v2.03 906
-
-					switch (dwType) {
-					case 6:
-						if (dwValue <= 4) dwValue = 4;
-						break;
-					case 8:
-						if (dwValue <= 2) dwValue = 2;
-						break;
-
-					case 11:
-					case 12:
-						// v2.04
-						dwValue = (dwValue+1) / 2;
-						if (dwValue < 1) dwValue = 1;
-						if ((iGenLevel <= 3) && (dwValue > 2)) dwValue = 2;
-						break;
-					}
-					if ((iGenLevel <= 2) && (dwValue > 7)) dwValue = 7;
-
-					pItem->m_dwAttribute = NULL;
-					dwType  = dwType << 20;
-					dwValue = dwValue << 16;
-					pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue;
 
 					if (iDice(1,10000) >= 6000) {
-
-						// Each of the 8 Sub affixes has an equal 1/8 chance.
-						switch (iDice(1,8)) {
-						case 1: dwType = 3; break;
-						case 2: dwType = 1; break;
-						case 3: dwType = 5; break;
-						case 4: dwType = 4; break;
-						case 5: dwType = 6; break;
-						case 6: dwType = 7; break;
-						case 7: dwType = 8; break;
-						case 8: dwType = 9; break;
+						if (_bRollEligibleAffixType(s_DefenseSubPool, DEF_AFFIXPOOLSIZE(s_DefenseSubPool), iGenLevel, NULL, &dwType) == TRUE) {
+							dwSubType1 = dwType;
+							dwValue = _dwApplyDefenseSubValueRule(dwType, _dwRollAffixValue(iGenLevel));
+							pItem->m_dwAttribute = pItem->m_dwAttribute | (dwType << 12) | (dwValue << 8);
 						}
+					}
 
-						iResult = iDice(1, 30000);
-						if ((iResult >= 1) && (iResult < 7250))            dwValue = 1;  // 7250/30000 = 24.2%
-						else if ((iResult >= 7250) && (iResult < 12800))   dwValue = 2;  // 5550/30000 = 18.5%
-						else if ((iResult >= 12800) && (iResult < 17050))  dwValue = 3;  // 4250/30000 = 14.2%
-						else if ((iResult >= 17050) && (iResult < 20300))  dwValue = 4;  // 3250/30000 = 10.8%
-						else if ((iResult >= 20300) && (iResult < 22800))  dwValue = 5;  // 2500/30000 = 8.3%
-						else if ((iResult >= 22800) && (iResult < 24700))  dwValue = 6;  // 1900/30000 = 6.3%
-						else if ((iResult >= 24700) && (iResult < 26150))  dwValue = 7;  // 1450/30000 = 4.8%
-						else if ((iResult >= 26150) && (iResult < 27300))  dwValue = 8;  // 1150/30000 = 3.8%
-						else if ((iResult >= 27300) && (iResult < 28150))  dwValue = 9;  // 850/30000 = 2.8%
-						else if ((iResult >= 28150) && (iResult < 28800))  dwValue = 10; // 650/30000 = 2.2%
-						else if ((iResult >= 28800) && (iResult < 29300))  dwValue = 11; // 500/30000 = 1.7%
-						else if ((iResult >= 29300) && (iResult < 29700))  dwValue = 12; // 400/30000 = 1.3%
-						else if ((iResult >= 29700) && (iResult <= 30000))  dwValue = 13; // 300/30000 = 1.0%
-						else dwValue = 1; // v2.03 906
-
-						switch (dwType) {
-						case 1:
-						case 3:
-						case 7:
-						case 8:
-						case 9:
-							if (dwValue <= 3) dwValue = 3;
-							break;
+					if (iDice(1,10000) >= 8000) {
+						if (_bRollEligibleAffixType(s_DefenseMainPool, DEF_AFFIXPOOLSIZE(s_DefenseMainPool), iGenLevel, dwMainType1, &dwType) == TRUE) {
+							dwValue = _dwApplyDefenseMainValueRule(dwType, _dwRollAffixValue(iGenLevel), iGenLevel);
+							pItem->m_dwAttribute2 = pItem->m_dwAttribute2 | (dwType << 20) | (dwValue << 16);
 						}
-						if ((iGenLevel <= 2) && (dwValue > 7)) dwValue = 7;
+					}
 
-						dwType  = dwType << 12;
-						dwValue = dwValue << 8;
-						pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue;
+					if (iDice(1,10000) >= 8000) {
+						if (_bRollEligibleAffixType(s_DefenseSubPool, DEF_AFFIXPOOLSIZE(s_DefenseSubPool), iGenLevel, dwSubType1, &dwType) == TRUE) {
+							dwValue = _dwApplyDefenseSubValueRule(dwType, _dwRollAffixValue(iGenLevel));
+							pItem->m_dwAttribute2 = pItem->m_dwAttribute2 | (dwType << 12) | (dwValue << 8);
+						}
 					}
 				}
 
@@ -51922,7 +52005,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 				dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
 				dwTemp = dwTemp & 0x0FFFFFFF;
 				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28);
-				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 				_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int)-1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
 			}
 			else
@@ -51990,7 +52073,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 
 						if (_bInitItemAttr(m_pClientList[iClientH]->m_pItemList[iItemIndex] , 709) == FALSE) {
 							// 업그레이드 하고자 하는 아이템이 아이템 리스트상에 없다. 업그레이드가 불가능하다.
-							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 							return;
 						}
 
@@ -52012,7 +52095,8 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSpriteFrame,
 							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemColor,
 							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2,
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute ) ;
+							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute,
+							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2 ) ;
 						_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
 						break ;
 
@@ -52033,7 +52117,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 
 						if (_bInitItemAttr(m_pClientList[iClientH]->m_pItemList[iItemIndex] , 709) == FALSE) {
 							// 업그레이드 하고자 하는 아이템이 아이템 리스트상에 없다. 업그레이드가 불가능하다.
-							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 							return;
 						}
 
@@ -52057,7 +52141,8 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSpriteFrame,
 							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemColor,
 							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2,
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute ) ;
+							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute,
+							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2 ) ;
 
 						_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
 						break;
@@ -52077,7 +52162,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 
 						if (_bInitItemAttr(m_pClientList[iClientH]->m_pItemList[iItemIndex] , 745) == FALSE) {
 							// 업그레이드 하고자 하는 아이템이 아이템 리스트상에 없다. 업그레이드가 불가능하다.
-							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 							return;
 						}
 
@@ -52101,7 +52186,8 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSpriteFrame,
 							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemColor,
 							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2,
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute ) ;
+							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute,
+							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2 ) ;
 
 						_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
 						break;
@@ -52121,7 +52207,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 
 						if (_bInitItemAttr(m_pClientList[iClientH]->m_pItemList[iItemIndex] , 737) == FALSE) {
 							// 업그레이드 하고자 하는 아이템이 아이템 리스트상에 없다. 업그레이드가 불가능하다.
-							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 							return;
 						}
 
@@ -52145,7 +52231,8 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSpriteFrame,
 							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemColor,
 							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2,
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute ) ;
+							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute,
+							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2 ) ;
 
 						_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
 						break;
@@ -52156,7 +52243,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 						dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
 						dwTemp = dwTemp & 0x0FFFFFFF; // 비트 클리어 
 						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // 업그레이드된 비트값 입력
-						SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+						SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 						_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
 					}
 					break;
@@ -52186,7 +52273,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 						if (iSoX > 0) {
 							if (bCheckIsItemUpgradeSuccess(iClientH, iItemIndex, iSoxH) == FALSE) {
 								// 업그레이드 실패 
-								SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+								SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 								// 스톤 오브 제리마 없앤다. (실패해도 대상 아이템은 파괴되지 않음)
 								ItemDepleteHandler(iClientH, iSoxH, FALSE);
 								return;
@@ -52222,13 +52309,13 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 							}
 						}
 
-						SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+						SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 						break;
 			}
 			break;
 
 	case 3: // 활 
-		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 		break;
 
 	case 5: // 방패
@@ -52265,7 +52352,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 				// 업그레이드 성공 확률 계산.
 				if (bCheckIsItemUpgradeSuccess(iClientH, iItemIndex, iSomH,TRUE) == FALSE) {
 					// 업그레이드 실패 
-					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 					// 스톤 오브 메리엔 없앤다. (실패해도 대상 아이템은 파괴되지 않음)
 					ItemDepleteHandler(iClientH, iSomH, FALSE);
 					return;
@@ -52302,7 +52389,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 					ItemDepleteHandler(iClientH, iSomH, FALSE);	
 				}
 			}
-			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue1, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2);
+			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue1, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 			break;
 
 	case 6: // armors upgrade
@@ -52349,7 +52436,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 					}		
 					if (iSoM > 0) {
 						if (bCheckIsItemUpgradeSuccess(iClientH, iItemIndex, iSomH, TRUE) == FALSE) {
-							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 							// 실패해도 대상 아이템은 파괴되지 않음
 							ItemDepleteHandler(iClientH, iSomH, FALSE);
 							return;
@@ -52380,7 +52467,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 							ItemDepleteHandler(iClientH, iSomH, FALSE);
 						}
 					}
-					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue1, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2);
+					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue1, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 					break;
 		}
 		break;
@@ -52445,7 +52532,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 
 					if (_bInitItemAttr(m_pClientList[iClientH]->m_pItemList[iItemIndex] , 738) == FALSE) {
 						// 업그레이드 하고자 하는 아이템이 아이템 리스트상에 없다. 업그레이드가 불가능하다.
-						SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+						SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 						return;
 					}
 
@@ -52467,7 +52554,8 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSpriteFrame,
 						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemColor,
 						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2,
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute ) ;
+						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute,
+						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2 ) ;
 					_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
 					break;
 
@@ -52488,7 +52576,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 
 					if (_bInitItemAttr(m_pClientList[iClientH]->m_pItemList[iItemIndex] , 746) == FALSE) {
 						// 업그레이드 하고자 하는 아이템이 아이템 리스트상에 없다. 업그레이드가 불가능하다.
-						SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+						SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 						return;
 					}
 
@@ -52510,7 +52598,8 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSpriteFrame,
 						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemColor,
 						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2,
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute ) ;
+						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute,
+						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2 ) ;
 					_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
 					break;
 
@@ -52531,7 +52620,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 
 					if (_bInitItemAttr(m_pClientList[iClientH]->m_pItemList[iItemIndex] , 892) == FALSE) {
 						// 업그레이드 하고자 하는 아이템이 아이템 리스트상에 없다. 업그레이드가 불가능하다.
-						SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+						SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 						return;
 					}
 
@@ -52553,7 +52642,8 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSpriteFrame,
 						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemColor,
 						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2,
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute ) ;
+						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute,
+						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2 ) ;
 					_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
 					break;
 
@@ -52565,7 +52655,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 					dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
 					dwTemp = dwTemp & 0x0FFFFFFF; // 비트 클리어 
 					m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // 업그레이드된 비트값 입력
-					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 					_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
 					break;
 				}
@@ -52586,7 +52676,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 						// 업그레이드 성공 확률 계산.
 						if (bCheckIsItemUpgradeSuccess(iClientH, iItemIndex, iSoxH) == FALSE) {
 							// 업그레이드 실패 
-							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 							// 스톤 오브 제리마 없앤다. (실패해도 대상 아이템은 파괴되지 않음)
 							ItemDepleteHandler(iClientH, iSoxH, FALSE);
 							return;
@@ -52605,7 +52695,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 						}
 					}
 
-					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 
 					break;
 		}
@@ -52663,12 +52753,12 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 
 					if (bugint == 400) {
 						if (_bInitItemAttr(m_pClientList[iClientH]->m_pItemList[iItemIndex] , 427) == FALSE) {
-							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 							return;
 						}
 					} else {
 						if (_bInitItemAttr(m_pClientList[iClientH]->m_pItemList[iItemIndex] , 428) == FALSE) {
-							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 							return;
 						}
 					}
@@ -52686,7 +52776,8 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSpriteFrame,
 						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemColor,
 						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2,
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute ) ;
+						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute,
+						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2 ) ;
 					_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
 					break;
 
@@ -52699,7 +52790,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 
 	default:
 		// 업그레이드 된 것 없음.
-		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute2);
 		break;
 	}
 }
@@ -56655,12 +56746,15 @@ m_pClientList[iClientH]->m_cSkillMastery[3] = 20;
            dwp = (DWORD *)cp; 
            *dwp = pItem->m_dwAttribute; 
            cp += 4;  
+           dwp = (DWORD *)cp; 
+           *dwp = pItem->m_dwAttribute2; 
+           cp += 4;  
            //*cp = (char)(pItem->m_dwAttribute & 0x00000001); // Custom-Item??? ?? 
            //cp++; 
                                  
            if (iEraseReq == 1) delete pItem; 
             
-           iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 53); 
+           iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 57); 
             
            iCalcTotalWeight(iClientH); 
             
@@ -56882,8 +56976,11 @@ void CGame::GetAngelHandler(int iClientH, char* pData, DWORD dwMsgSize)
 			dwp = (DWORD*)cp;
 			*dwp = pItem->m_dwAttribute;
 			cp += 4;
+			dwp = (DWORD*)cp;
+			*dwp = pItem->m_dwAttribute2;
+			cp += 4;
 			if (iEraseReq == 1) delete pItem;
-			iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 53);
+			iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 57);
 			switch (iRet) {
 			case DEF_XSOCKEVENT_QUENEFULL:
 			case DEF_XSOCKEVENT_SOCKETERROR:

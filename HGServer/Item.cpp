@@ -38,6 +38,7 @@ CItem::CItem()
 	
 	m_wCurLifeSpan = 0;
 	m_dwAttribute   = 0;
+	m_dwAttribute2  = 0;
 
 	m_cCategory = NULL;
 	m_sIDnum    = 0;

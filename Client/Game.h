@@ -368,7 +368,7 @@ public:
 	void _SetIlusionEffect(int iOwnerH);
 	int _iGetFOE(int iStatus);
 	void NoticementHandler(char * pData);
-	void GetItemName(char * cItemName, DWORD dwAttribute, char *pStr1, char *pStr2, char *pStr3);
+	void GetItemName(char * cItemName, DWORD dwAttribute, DWORD dwAttribute2, char *pStr1, char *pStr2, char *pStr3);
 	void GetItemName(class CItem * pItem, char * pStr1, char * pStr2, char * pStr3);
 	void _InitOnCreateNewCharacter();
 	void _LoadGameMsgTextContents();
@@ -866,7 +866,7 @@ public:
 
 	unsigned char m_cInputMaxLen;
 	char m_cEdit[4];
-	char G_cTxt[128];
+	char G_cTxt[256];	// enlarged from 128: 4-affix item text (cStr1+cStr2+cStr3) can now exceed the old size
 	char m_cGameModeCount;
 	char m_cBGMmapName[12];
 	char m_cItemOrder[DEF_MAXITEMS];

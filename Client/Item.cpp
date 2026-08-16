@@ -14,6 +14,7 @@ CItem::CItem()
 	m_sSprite = 0;
 	m_sSpriteFrame = 0;
 	m_dwAttribute = NULL;
+	m_dwAttribute2 = NULL;
 	m_sItemSpecEffectValue1 = 0;
 	m_sItemSpecEffectValue2 = 0;
 	m_sItemSpecEffectValue3 = 0;

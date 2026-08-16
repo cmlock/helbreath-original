@@ -213,7 +213,16 @@
 
 #define NO_MSGSPEEDCHECK
 
-class CGame  
+// One entry in a rare-item affix pool. iLevelReq is the minimum iGenLevel (1-12,
+// derived from the killed NPC's type) at which this affix becomes reachable at
+// all - weak monsters mechanically cannot drop the strongest affixes.
+struct AffixDef
+{
+	DWORD dwType;
+	int   iLevelReq;
+};
+
+class CGame
 {
 public:
 
@@ -432,6 +441,9 @@ public:
 	void _bDecodeNoticementFileContents(char * pData, DWORD dwMsgSize);
 	void RequestNoticementHandler(int iClientH, char * pData);
 	void _AdjustRareItemValue(class CItem * pItem);
+	void _ApplyRareItemValueEffect(class CItem * pItem, DWORD dwSWEType, DWORD dwSWEValue);
+	BOOL _bRollEligibleAffixType(const AffixDef * pPool, int iPoolSize, int iGenLevel, DWORD dwExclude, DWORD * pdwType);
+	DWORD _dwRollAffixValue(int iGenLevel);
 	BOOL _bCheckDupItemID(class CItem * pItem);
 	BOOL _bDecodeDupItemIDFileContents(char * pData, DWORD dwMsgSize);
 	void NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType);
@@ -536,6 +548,9 @@ public:
 	void RequestAdminUserMode(int iClientH, char * pData);
 	int _iGetPlayerNumberOnSpot(short dX, short dY, char cMapIndex, char cRange);
 	void CalcTotalItemEffect(int iClientH, int iEquipItemID, BOOL bNotify = TRUE);
+	void _ApplyMainAffixEffect(int iClientH, short sItemIndex, DWORD dwSWEType, DWORD dwSWEValue);
+	void _ApplySubAffixEffect(int iClientH, short sItemIndex, DWORD dwSWEType, DWORD dwSWEValue);
+	DWORD _dwGetAffixAddPrice(int iPrice, DWORD dwSWEType, DWORD dwSWEValue, BOOL bIsMainSlot);
 	void ___RestorePlayerCharacteristics(int iClientH);
 	void GetPlayerProfile(int iClientH, char * pMsg, DWORD dwMsgSize);
 	void SetPlayerProfile(int iClientH, char * pMsg, DWORD dwMsgSize);

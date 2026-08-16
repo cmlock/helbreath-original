@@ -126,15 +126,22 @@ public:
 	char  m_cItemColor; // v1.4 에서 아이템 색으로 변경되었다. 
 	short m_sItemSpecEffectValue1, m_sItemSpecEffectValue2, m_sItemSpecEffectValue3;
 	WORD  m_wCurLifeSpan;
-	DWORD m_dwAttribute;				// aaaa bbbb cccc dddd eeee ffff xxxx xxx1 
-										// 1: Custom-Made Item flag 
-										// a: Item 속성 종류 
+	DWORD m_dwAttribute;				// aaaa bbbb cccc dddd eeee ffff xxxx xxx1
+										// 1: Custom-Made Item flag
+										// a: Item 속성 종류
 										// b: Item 속성 정도
-										// c: 특수 아이템 성질 Flag 
-										// d: 특수 아이템 성질 정도 
+										// c: 특수 아이템 성질 Flag
+										// d: 특수 아이템 성질 정도
 										// e: 특수 아이템 추가 성질 Flag
-										// f: 특수 아이템 추가 성질 정도 
-										 
+										// f: 특수 아이템 추가 성질 정도
+
+	DWORD m_dwAttribute2;				// Affix slots 3 and 4, packed with the same nibble
+										// convention as m_dwAttribute above:
+										// 0x00F00000 Main-2 type, 0x000F0000 Main-2 value
+										// 0x0000F000 Sub-2 type,  0x00000F00 Sub-2 value
+										// All other bits are unused here - the upgrade
+										// counter (0xF0000000) and the Custom-Made flag
+										// (0x00000001) live only in m_dwAttribute.
 
 };
 

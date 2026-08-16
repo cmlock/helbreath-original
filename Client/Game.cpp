@@ -15720,6 +15720,9 @@ void CGame::InitItemList(char * pData)
 		dwp = (DWORD *)cp;
 		m_pItemList[i]->m_dwAttribute = *dwp;
 		cp += 4;
+		dwp = (DWORD *)cp;
+		m_pItemList[i]->m_dwAttribute2 = *dwp;
+		cp += 4;
 		/*
 		m_pItemList[i]->m_bIsCustomMade = (BOOL)*cp;
 		cp++;
@@ -15801,6 +15804,9 @@ void CGame::InitItemList(char * pData)
 
 		dwp = (DWORD *)cp;
 		m_pBankList[i]->m_dwAttribute = *dwp;
+		cp += 4;
+		dwp = (DWORD *)cp;
+		m_pBankList[i]->m_dwAttribute2 = *dwp;
 		cp += 4;
 		/*
 		m_pBankList[i]->m_bIsCustomMade = (BOOL)*cp;
@@ -18131,14 +18137,14 @@ void CGame::DrawDialogBox_WarningMsg(short msX, short msY)//6
 void CGame::DrawDialogBox_ItemDrop(short msX, short msY)
 {
     short sX, sY;
-    char cTxt[120], cStr1[64], cStr2[64], cStr3[64];
+    char cTxt[120], cStr1[192], cStr2[192], cStr3[192];
 
 	sX = m_stDialogBoxInfo[4].sX;
 	sY = m_stDialogBoxInfo[4].sY;
 
 	DrawNewDialogBox(DEF_SPRID_INTERFACE_ND_GAME1, sX, sY, 2);
 
-	GetItemName(m_pItemList[m_stDialogBoxInfo[4].sView]->m_cName, m_pItemList[m_stDialogBoxInfo[4].sView]->m_dwAttribute, cStr1, cStr2, cStr3 );
+	GetItemName(m_pItemList[m_stDialogBoxInfo[4].sView]->m_cName, m_pItemList[m_stDialogBoxInfo[4].sView]->m_dwAttribute, m_pItemList[m_stDialogBoxInfo[4].sView]->m_dwAttribute2, cStr1, cStr2, cStr3 );
 
 	if (strlen(m_stDialogBoxInfo[4].cStr) == 0)  wsprintf(cTxt, "%s", cStr1);
 
@@ -25875,6 +25881,9 @@ void CGame::NotifyMsgHandler(char * pData)
 		dwp = (DWORD *) cp ;
 		m_pItemList[sV1]->m_dwAttribute =  *dwp ;
 		cp +=4 ;
+		dwp = (DWORD *) cp ;
+		m_pItemList[sV1]->m_dwAttribute2 =  *dwp ;
+		cp +=4 ;
 		ZeroMemory( m_pItemList[sV1]->m_cName, sizeof(m_pItemList[sV1]->m_cName) );
 		memcpy(m_pItemList[sV1]->m_cName,cp,20) ;
 		cp += 20 ;
@@ -25912,6 +25921,9 @@ void CGame::NotifyMsgHandler(char * pData)
 		cp += 4;
 		dwp  = (DWORD *)cp;
 		if (*dwp != 0) m_pItemList[sV1]->m_sItemSpecEffectValue2 = (short)*dwp;
+		cp += 4;
+		dwp  = (DWORD *)cp;
+		m_pItemList[sV1]->m_dwAttribute2 = *dwp;
 		cp += 4;
 		if (dwTemp == m_pItemList[sV1]->m_dwAttribute)
 		{	if (m_bIsDialogEnabled[34] == TRUE)
@@ -27499,7 +27511,7 @@ void CGame::RetrieveItemHandler(char *pData)
 
 		if (m_pBankList[cBankItemIndex] != NULL) {
 			// v1.42
-			char cStr1[64], cStr2[64], cStr3[64];
+			char cStr1[192], cStr2[192], cStr3[192];
 			GetItemName(m_pBankList[cBankItemIndex], cStr1, cStr2, cStr3);
 
 			ZeroMemory(cTxt, sizeof(cTxt));
@@ -27552,7 +27564,7 @@ RIH_STEP2:;
 
 void CGame::EraseItem(char cItemID)
 {int i;
- char cStr1[64], cStr2[64], cStr3[64];
+ char cStr1[192], cStr2[192], cStr3[192];
 	ZeroMemory(cStr1, sizeof(cStr1));
 	ZeroMemory(cStr2, sizeof(cStr2));
 	ZeroMemory(cStr3, sizeof(cStr3));
@@ -27772,7 +27784,7 @@ void CGame::DlbBoxDoubleClick_Character(short msX, short msY)
 		bSendCommand(MSGID_COMMAND_COMMON, DEF_COMMONTYPE_REQ_REPAIRITEM, NULL, cItemID, m_stDialogBoxInfo[39].sV3, NULL, m_pItemList[cItemID]->m_cName, m_stDialogBoxInfo[39].sV4); // v1.4
 	else {
 		if (m_bIsItemEquipped[m_stMCursor.sSelectedObjectID] == TRUE)
-		{	char cStr1[64], cStr2[64], cStr3[64];
+		{	char cStr1[192], cStr2[192], cStr3[192];
 			GetItemName(m_pItemList[m_stMCursor.sSelectedObjectID], cStr1, cStr2, cStr3);
 			ZeroMemory(G_cTxt, sizeof(G_cTxt) );
 			wsprintf(G_cTxt, ITEM_EQUIPMENT_RELEASED, cStr1);//"
@@ -27843,7 +27855,7 @@ void CGame::DlbBoxDoubleClick_Inventory(short msX, short msY)
  register int i;
  char  cItemID, cTxt[120];
  short sX, sY, x1, x2, y1, y2;
- char cStr1[64], cStr2[64], cStr3[64];
+ char cStr1[192], cStr2[192], cStr3[192];
 	//if (m_iHP <= 0) return;
 	if (m_bItemUsingStatus == TRUE)
 	{	AddEventList(BDLBBOX_DOUBLE_CLICK_INVENTORY1, 10);
@@ -29477,6 +29489,71 @@ void CGame::GetItemName(CItem *pItem, char *pStr1, char *pStr2, char *pStr3)
 				strcpy(pStr3, cTxt);
 	}	}	}
 
+	// Affix slots 3/4 (m_dwAttribute2) - same nibble layout/type IDs as slots 1/2 above.
+	if ((pItem->m_dwAttribute2 & 0x00F0F000) != 0)
+	{	m_bIsSpecial = TRUE;
+		dwType1  = (pItem->m_dwAttribute2 & 0x00F00000) >> 20;
+		dwValue1 = (pItem->m_dwAttribute2 & 0x000F0000) >> 16;
+		dwType2  = (pItem->m_dwAttribute2 & 0x0000F000) >> 12;
+		dwValue2 = (pItem->m_dwAttribute2 & 0x00000F00) >> 8;
+		if (dwType1 != 0)
+		{	ZeroMemory(cTxt, sizeof(cTxt));
+			switch (dwType1) {
+			case 1: strcpy(cTxt, GET_ITEM_NAME3);   break;
+			case 2: strcpy(cTxt, GET_ITEM_NAME4);   break; // "Poisoning "
+			case 3: strcpy(cTxt, GET_ITEM_NAME5);   break; // "Righteous "
+			case 4: break;
+			case 5: strcpy(cTxt, GET_ITEM_NAME6);   break; // "Agile "
+			case 6: strcpy(cTxt, GET_ITEM_NAME7);   break;
+			case 7: strcpy(cTxt, GET_ITEM_NAME8);   break;
+			case 8: strcpy(cTxt, GET_ITEM_NAME9);   break;
+			case 9: strcpy(cTxt, GET_ITEM_NAME10);  break;
+			case 10: strcpy(cTxt, GET_ITEM_NAME11); break;
+			case 11: strcpy(cTxt, GET_ITEM_NAME12); break;
+			case 12: strcpy(cTxt, GET_ITEM_NAME13); break;
+			}
+			strcat(cTxt, pStr1);
+			ZeroMemory(pStr1, sizeof(pStr1));
+			strcpy(pStr1, cTxt);
+
+			ZeroMemory(cTxt, sizeof(cTxt));
+			switch (dwType1) {
+			case 1: wsprintf(cTxt, GET_ITEM_NAME14, dwValue1); break; // "Critical Hit Damage+%d"
+			case 2: wsprintf(cTxt, GET_ITEM_NAME15, dwValue1*5); break; // "Poison Damage+%d"
+			case 3: break;
+			case 4: break;
+			case 5: strcpy(cTxt, GET_ITEM_NAME16); break; // "Attack Speed -1"
+			case 6: wsprintf(cTxt, GET_ITEM_NAME17, dwValue1*4); break;
+			case 7: strcpy(cTxt, GET_ITEM_NAME18); break;
+			case 8: wsprintf(cTxt, GET_ITEM_NAME19, dwValue1*7); break;
+			case 9: strcpy(cTxt, GET_ITEM_NAME20); break;
+			case 10: wsprintf(cTxt, GET_ITEM_NAME21, dwValue1*3); break;
+			case 11: wsprintf(cTxt, GET_ITEM_NAME22, dwValue1); break;
+			case 12: wsprintf(cTxt, GET_ITEM_NAME23, dwValue1); break;
+			}
+			if ((cTxt[0] != '\0') && (strlen(pStr2) != 0)) strcat(pStr2, ", ");
+			strcat(pStr2, cTxt);
+
+			if (dwType2 != 0) {
+				ZeroMemory(cTxt, sizeof(cTxt));
+				switch (dwType2) {
+				case 1:  wsprintf(cTxt, GET_ITEM_NAME24, dwValue2*7); break;
+				case 2:  wsprintf(cTxt, GET_ITEM_NAME25, dwValue2*7); break;
+				case 3:  wsprintf(cTxt, GET_ITEM_NAME26, dwValue2*7); break;
+				case 4:  wsprintf(cTxt, GET_ITEM_NAME27, dwValue2*7); break;
+				case 5:  wsprintf(cTxt, GET_ITEM_NAME28, dwValue2*7); break;//"SPrec
+				case 6:  wsprintf(cTxt, GET_ITEM_NAME29, dwValue2*7); break;//"MPrec
+				case 7:  wsprintf(cTxt, GET_ITEM_NAME30, dwValue2*7); break;
+				case 8:  wsprintf(cTxt, GET_ITEM_NAME31, dwValue2*3); break;
+				case 9:  wsprintf(cTxt, GET_ITEM_NAME32, dwValue2*3); break;
+				case 10: wsprintf(cTxt, GET_ITEM_NAME33, dwValue2);   break;
+				case 11: wsprintf(cTxt, GET_ITEM_NAME34, dwValue2*10); break;
+				case 12: wsprintf(cTxt, GET_ITEM_NAME35, dwValue2*10); break;//"Gold +%
+				}
+				if (strlen(pStr3) != 0) strcat(pStr3, ", ");
+				strcat(pStr3, cTxt);
+	}	}	}
+
 	dwValue3 = (pItem->m_dwAttribute & 0xF0000000) >> 28;
 	if (dwValue3 > 0)
 	{	if (pStr1[strlen(pStr1)-2] == '+')
@@ -29494,7 +29571,7 @@ void CGame::GetItemName(CItem *pItem, char *pStr1, char *pStr2, char *pStr3)
 	}	}
 }
 
-void CGame::GetItemName(char * cItemName, DWORD dwAttribute, char *pStr1, char *pStr2, char *pStr3)
+void CGame::GetItemName(char * cItemName, DWORD dwAttribute, DWORD dwAttribute2, char *pStr1, char *pStr2, char *pStr3)
 {
  int i;
  char cTxt[256], cTxt2[256], cName[51];
@@ -29605,6 +29682,71 @@ void CGame::GetItemName(char * cItemName, DWORD dwAttribute, char *pStr1, char *
 				case 12: wsprintf(cTxt, GET_ITEM_NAME35, dwValue2*10); break;
 				}
 				strcpy(pStr3, cTxt);
+	}	}	}
+
+	// Affix slots 3/4 (dwAttribute2) - same nibble layout/type IDs as slots 1/2 above.
+	if ((dwAttribute2 & 0x00F0F000) != 0)
+	{	m_bIsSpecial = TRUE;
+		dwType1  = (dwAttribute2 & 0x00F00000) >> 20;
+		dwValue1 = (dwAttribute2 & 0x000F0000) >> 16;
+		dwType2  = (dwAttribute2 & 0x0000F000) >> 12;
+		dwValue2 = (dwAttribute2 & 0x00000F00) >> 8;
+		if (dwType1 != 0)
+		{	ZeroMemory(cTxt, sizeof(cTxt));
+			switch (dwType1) {
+			case 1: strcpy(cTxt, GET_ITEM_NAME3); break;
+			case 2: strcpy(cTxt, GET_ITEM_NAME4); break;
+			case 3: strcpy(cTxt, GET_ITEM_NAME5); break;
+			case 4: break;
+			case 5: strcpy(cTxt, GET_ITEM_NAME6); break;
+			case 6: strcpy(cTxt, GET_ITEM_NAME7); break;
+			case 7: strcpy(cTxt, GET_ITEM_NAME8); break;
+			case 8: strcpy(cTxt, GET_ITEM_NAME9); break;
+			case 9: strcpy(cTxt, GET_ITEM_NAME10); break;
+			case 10: strcpy(cTxt, GET_ITEM_NAME11); break;
+			case 11: strcpy(cTxt, GET_ITEM_NAME12); break;
+			case 12: strcpy(cTxt, GET_ITEM_NAME13); break;
+			}
+			strcat(cTxt, pStr1);
+			ZeroMemory(pStr1, sizeof(pStr1));
+			strcpy(pStr1, cTxt);
+
+			ZeroMemory(cTxt, sizeof(cTxt));
+			switch (dwType1) {
+			case 1: wsprintf(cTxt, GET_ITEM_NAME14, dwValue1); break;
+			case 2: wsprintf(cTxt, GET_ITEM_NAME15, dwValue1*5); break;
+			case 3: break;
+			case 4: break;
+			case 5: strcpy(cTxt, GET_ITEM_NAME16); break;
+			case 6: wsprintf(cTxt, GET_ITEM_NAME17, dwValue1*4); break;
+			case 7: strcpy(cTxt, GET_ITEM_NAME18); break;
+			case 8: wsprintf(cTxt, GET_ITEM_NAME19, dwValue1*7); break;
+			case 9: strcpy(cTxt, GET_ITEM_NAME20); break;
+			case 10: wsprintf(cTxt, GET_ITEM_NAME21, dwValue1*3); break;
+			case 11: wsprintf(cTxt, GET_ITEM_NAME22, dwValue1); break;
+			case 12: wsprintf(cTxt, GET_ITEM_NAME23, dwValue1); break;
+			}
+			if ((cTxt[0] != '\0') && (strlen(pStr2) != 0)) strcat(pStr2, ", ");
+			strcat(pStr2, cTxt);
+
+			if (dwType2 != 0)
+			{	ZeroMemory(cTxt, sizeof(cTxt));
+				switch (dwType2) {
+				case 1:  wsprintf(cTxt, GET_ITEM_NAME24, dwValue2*7);  break;
+				case 2:  wsprintf(cTxt, GET_ITEM_NAME25, dwValue2*7);  break;
+				case 3:  wsprintf(cTxt, GET_ITEM_NAME26, dwValue2*7);  break;
+				case 4:  wsprintf(cTxt, GET_ITEM_NAME27, dwValue2*7);  break;
+				case 5:  wsprintf(cTxt, GET_ITEM_NAME28, dwValue2*7);  break;
+				case 6:  wsprintf(cTxt, GET_ITEM_NAME29, dwValue2*7);  break;
+				case 7:  wsprintf(cTxt, GET_ITEM_NAME30, dwValue2*7);  break;
+				case 8:  wsprintf(cTxt, GET_ITEM_NAME31, dwValue2*3);  break;
+				case 9:  wsprintf(cTxt, GET_ITEM_NAME32, dwValue2*3);  break;
+				case 10: wsprintf(cTxt, GET_ITEM_NAME33, dwValue2);    break;
+				case 11: wsprintf(cTxt, GET_ITEM_NAME34, dwValue2*10); break;
+				case 12: wsprintf(cTxt, GET_ITEM_NAME35, dwValue2*10); break;
+				}
+				if (strlen(pStr3) != 0) strcat(pStr3, ", ");
+				strcat(pStr3, cTxt);
 	}	}	}
 
 	dwValue3 = (dwAttribute & 0xF0000000) >> 28;
@@ -29976,7 +30118,7 @@ void CGame::UpdateScreen_OnGame()
 		}else m_pSprite[DEF_SPRID_ITEMPACK_PIVOTPOINT + m_pItemList[m_stMCursor.sSelectedObjectID]->m_sSprite]->PutSpriteFast(msX - m_stMCursor.sDistX, msY - m_stMCursor.sDistY,
 					                                                  m_pItemList[m_stMCursor.sSelectedObjectID]->m_sSpriteFrame, dwTime);
 
-		char cStr1[64], cStr2[64], cStr3[64];
+		char cStr1[192], cStr2[192], cStr3[192];
 		int  iLoc;
 		GetItemName(m_pItemList[m_stMCursor.sSelectedObjectID], cStr1, cStr2, cStr3);
 
@@ -31736,7 +31878,7 @@ void CGame::DrawDialogBox_Bank(short msX, short msY, short msZ, char cLB)
 {	short sX, sY, szX;
 	int  i, iTotalLines, iPointerLoc, iLoc;
 	double d1, d2, d3;
-	char cItemColor, cStr1[64], cStr2[64], cStr3[64];
+	char cItemColor, cStr1[192], cStr2[192], cStr3[192];
 	BOOL bFlag = FALSE;
 
 	sX = m_stDialogBoxInfo[14].sX;
@@ -33016,7 +33158,7 @@ void CGame::DrawDialogBox_Exchange(short msX, short msY)
  short sX, sY, szX, sXadd;
  DWORD dwTime = m_dwCurTime;
  char cItemColor, cTxt[120], cTxt2[128];
- char cNameStr[120], cSubStr1[120], cSubStr2[120];
+ char cNameStr[192], cSubStr1[192], cSubStr2[192];
  int iLoc, i;
 
 	sX = m_stDialogBoxInfo[27].sX;
@@ -33049,7 +33191,7 @@ void CGame::DrawDialogBox_Exchange(short msX, short msY)
 								 , m_stDialogBoxExchangeInfo[i].sV2,  m_wR[cItemColor] -m_wR[0], m_wG[cItemColor] -m_wG[0], m_wB[cItemColor] -m_wB[0], dwTime);
 						break;
 				}	}
-				GetItemName(m_stDialogBoxExchangeInfo[i].cStr1, m_stDialogBoxExchangeInfo[i].dwV1, cNameStr, cSubStr1, cSubStr2);
+				GetItemName(m_stDialogBoxExchangeInfo[i].cStr1, m_stDialogBoxExchangeInfo[i].dwV1, 0, cNameStr, cSubStr1, cSubStr2);
 				// If pointer over item then show this item data
 				if ( (msX >= sX + sXadd - 6) && (msX <= sX + sXadd + 42)
 					&& (msY >= sY + 61) && (msY <= sY + 200) )
@@ -33152,7 +33294,7 @@ void CGame::DrawDialogBox_Exchange(short msX, short msY)
 								 , m_stDialogBoxExchangeInfo[i].sV2, m_wR[cItemColor] -m_wR[0], m_wG[cItemColor] -m_wG[0], m_wB[cItemColor] -m_wB[0], dwTime);
 						break;
 				}	}
-				GetItemName(m_stDialogBoxExchangeInfo[i].cStr1, m_stDialogBoxExchangeInfo[i].dwV1, cNameStr, cSubStr1, cSubStr2);
+				GetItemName(m_stDialogBoxExchangeInfo[i].cStr1, m_stDialogBoxExchangeInfo[i].dwV1, 0, cNameStr, cSubStr1, cSubStr2);
 				// If pointer over item then show this item data
 				if ( (msX >= sX + sXadd - 6) && (msX <= sX + sXadd + 42)
 					&& (msY >= sY + 61) && (msY <= sY + 200) )
@@ -33229,8 +33371,8 @@ void CGame::DrawDialogBox_Fishing(short msX, short msY)
 
 	DrawNewDialogBox(DEF_SPRID_INTERFACE_ND_GAME1, sX, sY, 2);
 
-	char cStr1[64], cStr2[64], cStr3[64];
-	GetItemName(m_stDialogBoxInfo[24].cStr, NULL, cStr1, cStr2, cStr3);
+	char cStr1[192], cStr2[192], cStr3[192];
+	GetItemName(m_stDialogBoxInfo[24].cStr, NULL, 0, cStr1, cStr2, cStr3);
 
 	switch (m_stDialogBoxInfo[24].cMode) {
 	case 0:
@@ -33952,7 +34094,7 @@ void CGame::DrawDialogBox_NpcActionQuery(short msX, short msY)
 {
  short sX, sY, szX;
 
- char cTxt[120], cTxt2[120],  cStr1[64], cStr2[64], cStr3[64];
+ char cTxt[120], cTxt2[120],  cStr1[192], cStr2[192], cStr3[192];
 
 	ZeroMemory(cStr1, sizeof(cStr1));
 	ZeroMemory(cStr2, sizeof(cStr2));
@@ -34054,7 +34196,7 @@ void CGame::DrawDialogBox_NpcActionQuery(short msX, short msY)
 
 	case 1: // Other char
 		DrawNewDialogBox(DEF_SPRID_INTERFACE_ND_GAME2, sX, sY, 6);
-		GetItemName(m_pItemList[m_stDialogBoxInfo[20].sV1]->m_cName, m_pItemList[m_stDialogBoxInfo[20].sV1]->m_dwAttribute, cStr1, cStr2, cStr3);
+		GetItemName(m_pItemList[m_stDialogBoxInfo[20].sV1]->m_cName, m_pItemList[m_stDialogBoxInfo[20].sV1]->m_dwAttribute, m_pItemList[m_stDialogBoxInfo[20].sV1]->m_dwAttribute2, cStr1, cStr2, cStr3);
 		wsprintf(cTxt, DRAW_DIALOGBOX_NPCACTION_QUERY29, m_stDialogBoxInfo[20].sV3, cStr1); //"%d %s to"
 		wsprintf(cTxt2, DRAW_DIALOGBOX_NPCACTION_QUERY29_1, m_stDialogBoxInfo[20].cStr); // "%s"
 
@@ -34082,7 +34224,7 @@ void CGame::DrawDialogBox_NpcActionQuery(short msX, short msY)
 
 	case 2: // Shop / BS
 		DrawNewDialogBox(DEF_SPRID_INTERFACE_ND_GAME2, sX, sY, 5);
-		GetItemName(m_pItemList[ m_stDialogBoxInfo[20].sV1 ]->m_cName, m_pItemList[ m_stDialogBoxInfo[20].sV1 ]->m_dwAttribute, cStr1, cStr2, cStr3);
+		GetItemName(m_pItemList[ m_stDialogBoxInfo[20].sV1 ]->m_cName, m_pItemList[ m_stDialogBoxInfo[20].sV1 ]->m_dwAttribute, m_pItemList[ m_stDialogBoxInfo[20].sV1 ]->m_dwAttribute2, cStr1, cStr2, cStr3);
 
 		wsprintf(cTxt, DRAW_DIALOGBOX_NPCACTION_QUERY29, m_stDialogBoxInfo[20].sV3, cStr1);//"%d %s to"
 		wsprintf(cTxt2, DRAW_DIALOGBOX_NPCACTION_QUERY29_1, m_stDialogBoxInfo[20].cStr);//"%s"
@@ -34121,7 +34263,7 @@ void CGame::DrawDialogBox_NpcActionQuery(short msX, short msY)
 
 	case 3: // WH
 		DrawNewDialogBox(DEF_SPRID_INTERFACE_ND_GAME2, sX, sY, 6);
-		GetItemName(m_pItemList[m_stDialogBoxInfo[20].sV1]->m_cName, m_pItemList[m_stDialogBoxInfo[20].sV1]->m_dwAttribute, cStr1, cStr2, cStr3);
+		GetItemName(m_pItemList[m_stDialogBoxInfo[20].sV1]->m_cName, m_pItemList[m_stDialogBoxInfo[20].sV1]->m_dwAttribute, m_pItemList[m_stDialogBoxInfo[20].sV1]->m_dwAttribute2, cStr1, cStr2, cStr3);
 
 		wsprintf(cTxt, DRAW_DIALOGBOX_NPCACTION_QUERY29, m_stDialogBoxInfo[20].sV3, cStr1);//"%d %s to"
 		wsprintf(cTxt2, DRAW_DIALOGBOX_NPCACTION_QUERY29_1, m_stDialogBoxInfo[20].cStr);//"%s"
@@ -34417,7 +34559,7 @@ void CGame::DrawDialogBox_Party(short msX, short msY)
 void CGame::DrawDialogBox_QueryDropItemAmount()
 {
  short sX, sY;
- char cTxt[120], cStr1[64], cStr2[64], cStr3[64];
+ char cTxt[120], cStr1[192], cStr2[192], cStr3[192];
 
 	sX = m_stDialogBoxInfo[17].sX;
 	sY = m_stDialogBoxInfo[17].sY;
@@ -34426,7 +34568,7 @@ void CGame::DrawDialogBox_QueryDropItemAmount()
 
 	switch (m_stDialogBoxInfo[17].cMode) {
 	case 1:
-		GetItemName( m_pItemList[m_stDialogBoxInfo[17].sView]->m_cName, m_pItemList[m_stDialogBoxInfo[17].sView]->m_dwAttribute, cStr1, cStr2, cStr3 );
+		GetItemName( m_pItemList[m_stDialogBoxInfo[17].sView]->m_cName, m_pItemList[m_stDialogBoxInfo[17].sView]->m_dwAttribute, m_pItemList[m_stDialogBoxInfo[17].sView]->m_dwAttribute2, cStr1, cStr2, cStr3 );
 		if (strlen(m_stDialogBoxInfo[17].cStr) == 0)
 			 wsprintf(cTxt, DRAW_DIALOGBOX_QUERY_DROP_ITEM_AMOUNT1, cStr1);
 		else wsprintf(cTxt, DRAW_DIALOGBOX_QUERY_DROP_ITEM_AMOUNT2, cStr1, m_stDialogBoxInfo[17].cStr);//"%s:
@@ -34442,7 +34584,7 @@ void CGame::DrawDialogBox_QueryDropItemAmount()
 		break;
 
 	case 20:
-		GetItemName( m_pItemList[m_stDialogBoxInfo[17].sView]->m_cName, m_pItemList[m_stDialogBoxInfo[17].sView]->m_dwAttribute, cStr1, cStr2, cStr3 );
+		GetItemName( m_pItemList[m_stDialogBoxInfo[17].sView]->m_cName, m_pItemList[m_stDialogBoxInfo[17].sView]->m_dwAttribute, m_pItemList[m_stDialogBoxInfo[17].sView]->m_dwAttribute2, cStr1, cStr2, cStr3 );
 		if (strlen(m_stDialogBoxInfo[17].cStr) == 0) // v1.4
 			 wsprintf(cTxt, DRAW_DIALOGBOX_QUERY_DROP_ITEM_AMOUNT1, cStr1);//"%s:
 		else wsprintf(cTxt, DRAW_DIALOGBOX_QUERY_DROP_ITEM_AMOUNT2, cStr1, m_stDialogBoxInfo[17].cStr);//"%s:
@@ -34589,7 +34731,7 @@ void CGame::DrawDialogBox_SellList(short msX, short msY)
 {
  short sX, sY, szX;
  int  i, iItem;
- char cTemp[255], cStr1[64], cStr2[64], cStr3[64];
+ char cTemp[255], cStr1[192], cStr2[192], cStr3[192];
 
 	sX = m_stDialogBoxInfo[31].sX;
 	sY = m_stDialogBoxInfo[31].sY;
@@ -34603,7 +34745,7 @@ void CGame::DrawDialogBox_SellList(short msX, short msY)
 	if (m_stSellItemList[i].iIndex != -1)
 	{
 		ZeroMemory(cTemp, sizeof(cTemp));
-		GetItemName(m_pItemList[m_stSellItemList[i].iIndex]->m_cName, m_pItemList[m_stSellItemList[i].iIndex]->m_dwAttribute, cStr1, cStr2, cStr3);
+		GetItemName(m_pItemList[m_stSellItemList[i].iIndex]->m_cName, m_pItemList[m_stSellItemList[i].iIndex]->m_dwAttribute, m_pItemList[m_stSellItemList[i].iIndex]->m_dwAttribute2, cStr1, cStr2, cStr3);
 		if (m_stSellItemList[i].iAmount > 1 )
 		{	wsprintf(cTemp, DRAW_DIALOGBOX_SELL_LIST1, m_stSellItemList[i].iAmount, cStr1);
 			if ((msX > sX + 25) && (msX < sX + 250) && (msY >= sY + 55 + i*15) && (msY <= sY + 55 + 14 + i*15))
@@ -34696,7 +34838,7 @@ void CGame::DrawDialogBox_SellorRepairItem(short msX, short msY)
 {
  short sX, sY;
  DWORD dwTime = m_dwCurTime;
- char cItemID, cItemColor, cTxt[120], cTemp[120], cStr2[120], cStr3[120];
+ char cItemID, cItemColor, cTxt[120], cTemp[192], cStr2[192], cStr3[192];
 
 	sX = m_stDialogBoxInfo[23].sX;
 	sY = m_stDialogBoxInfo[23].sY;
@@ -34730,7 +34872,7 @@ void CGame::DrawDialogBox_SellorRepairItem(short msX, short msY)
 		ZeroMemory(cStr2, sizeof(cStr2));
 		ZeroMemory(cStr3, sizeof(cStr3));
 
-		GetItemName(m_pItemList[cItemID]->m_cName, m_pItemList[cItemID]->m_dwAttribute, cTemp, cStr2, cStr3);
+		GetItemName(m_pItemList[cItemID]->m_cName, m_pItemList[cItemID]->m_dwAttribute, m_pItemList[cItemID]->m_dwAttribute2, cTemp, cStr2, cStr3);
 		if( m_stDialogBoxInfo[23].sV4 == 1 ) strcpy( cTxt, cTemp );
 		else wsprintf(cTxt, DRAW_DIALOGBOX_SELLOR_REPAIR_ITEM1, m_stDialogBoxInfo[23].sV4, cTemp);
 
@@ -34836,7 +34978,7 @@ void CGame::DrawDialogBox_ConvertItem(short msX, short msY)
 {
  short sX, sY;
  DWORD dwTime = m_dwCurTime;
- char cItemID, cItemColor, cTxt[120], cTemp[120], cStr2[120], cStr3[120];
+ char cItemID, cItemColor, cTxt[120], cTemp[192], cStr2[192], cStr3[192];
 
 	sX = m_stDialogBoxInfo[52].sX;
 	sY = m_stDialogBoxInfo[52].sY;
@@ -34869,7 +35011,7 @@ void CGame::DrawDialogBox_ConvertItem(short msX, short msY)
 	ZeroMemory(cTemp, sizeof(cTemp));
 	ZeroMemory(cStr2, sizeof(cStr2));
 	ZeroMemory(cStr3, sizeof(cStr3));
-	GetItemName(m_pItemList[cItemID]->m_cName, m_pItemList[cItemID]->m_dwAttribute, cTemp, cStr2, cStr3);
+	GetItemName(m_pItemList[cItemID]->m_cName, m_pItemList[cItemID]->m_dwAttribute, m_pItemList[cItemID]->m_dwAttribute2, cTemp, cStr2, cStr3);
 
 	PutAlignedString(sX + 25, sX + 240, sY + 60, cTemp, 45,25,25);
 	PutAlignedString(sX + 25 +1, sX + 240 +1, sY + 60, cTemp, 45,25,25);
@@ -35347,7 +35489,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
  int i, iLoc ,iAdjX, iAdjY;
  char cTemp[120], cTemp2[120];
  short sX, sY, szX;
- char cStr1[64], cStr2[64], cStr3[64];
+ char cStr1[192], cStr2[192], cStr3[192];
  DWORD dwTime = m_dwCurTime;
 
 	iAdjX = 5 ;
@@ -35470,7 +35612,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 		if (m_pDispBuildItemList[i + m_stDialogBoxInfo[26].sView] != NULL) {
 
 			ZeroMemory(cTemp, sizeof(cTemp));
-			GetItemName( m_pDispBuildItemList[i + m_stDialogBoxInfo[26].sView]->m_cName, NULL, cStr1, cStr2, cStr3 );
+			GetItemName( m_pDispBuildItemList[i + m_stDialogBoxInfo[26].sView]->m_cName, NULL, 0, cStr1, cStr2, cStr3 );
 			wsprintf(cTemp, "%s", cStr1);
 			ZeroMemory(cTemp2, sizeof(cTemp2));
 			wsprintf(cTemp2, "%d%%", m_pDispBuildItemList[i + m_stDialogBoxInfo[26].sView]->m_iMaxSkill);
@@ -35542,7 +35684,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 		          m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_iSprFrame, dwTime);
 
 		ZeroMemory(cTemp, sizeof(cTemp));
-		GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cName, 0, cStr1, cStr2, cStr3 );
+		GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cName, 0, 0, cStr1, cStr2, cStr3 );
 		wsprintf(cTemp, "%s", cStr1);
 		PutString(sX + iAdjX + 44 +10 +60, sY + iAdjY + 55, cTemp, RGB(255,255,255));
 
@@ -35554,7 +35696,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 
 		iLoc = 4;
 		if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_iElementCount[1] != 0) {
-			GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName1, 0, cStr1, cStr2, cStr3 );
+			GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName1, 0, 0, cStr1, cStr2, cStr3 );
 			wsprintf(cTemp, "%s", cStr1);
 			if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_bElementFlag[1] == TRUE)
 				 PutString(sX + iAdjX + 44 +20 +60, sY + iAdjY + 55 +iLoc*15 +5, cTemp, RGB(45,25,25));
@@ -35563,7 +35705,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 		}
 
 		if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_iElementCount[2] != 0) {
-			GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName2, 0, cStr1, cStr2, cStr3 );
+			GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName2, 0, 0, cStr1, cStr2, cStr3 );
 			wsprintf(cTemp, "%s", cStr1);
 			if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_bElementFlag[2] == TRUE)
 				 PutString(sX + iAdjX + 44 +20 +60, sY + iAdjY + 55 +iLoc*15 +5, cTemp, RGB(45,25,25));
@@ -35572,7 +35714,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 		}
 
 		if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_iElementCount[3] != 0) {
-			GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName3, 0, cStr1, cStr2, cStr3 );
+			GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName3, 0, 0, cStr1, cStr2, cStr3 );
 			wsprintf(cTemp, "%s", cStr1);
 			if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_bElementFlag[3] == TRUE)
 				 PutString(sX + iAdjX + 44 +20 +60, sY + iAdjY + 55 +iLoc*15 +5, cTemp, RGB(45,25,25));
@@ -35581,7 +35723,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 		}
 
 		if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_iElementCount[4] != 0) {
-			GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName4, 0, cStr1, cStr2, cStr3 );
+			GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName4, 0, 0, cStr1, cStr2, cStr3 );
 			wsprintf(cTemp, "%s", cStr1);
 			if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_bElementFlag[4] == TRUE)
 				 PutString(sX + iAdjX + 44 +20 +60, sY + iAdjY + 55 +iLoc*15 +5, cTemp, RGB(45,25,25));
@@ -35590,7 +35732,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 		}
 
 		if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_iElementCount[5] != 0) {
-			GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName5, 0, cStr1, cStr2, cStr3 );
+			GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName5, 0, 0, cStr1, cStr2, cStr3 );
 			wsprintf(cTemp, "%s", cStr1);
 			if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_bElementFlag[5] == TRUE)
 				 PutString(sX + iAdjX + 44 +20 +60, sY + iAdjY + 55 +iLoc*15 +5, cTemp, RGB(45,25,25));
@@ -35599,7 +35741,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 		}
 
 		if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_iElementCount[6] != 0) {
-			GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName6, 0, cStr1, cStr2, cStr3 );
+			GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName6, 0, 0, cStr1, cStr2, cStr3 );
 			wsprintf(cTemp, "%s", cStr1);
 			if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_bElementFlag[6] == TRUE)
 				 PutString(sX + iAdjX + 44 +20 +60, sY + iAdjY + 55 +iLoc*15 +5, cTemp, RGB(45,25,25));
@@ -35687,7 +35829,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 		          m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_iSprFrame, dwTime);
 
 		ZeroMemory(cTemp, sizeof(cTemp));
-		GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cName, 0, cStr1, cStr2, cStr3 );
+		GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cName, 0, 0, cStr1, cStr2, cStr3 );
 		wsprintf(cTemp, "%s", cStr1);
 		PutString(sX + iAdjX + 44 +10 +60, sY + iAdjY + 55, cTemp, RGB(255,255,255));
 
@@ -35698,7 +35840,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 
 		iLoc = 4;
 		if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_iElementCount[1] != 0)
-		{	GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName1, 0, cStr1, cStr2, cStr3 );
+		{	GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName1, 0, 0, cStr1, cStr2, cStr3 );
 			wsprintf(cTemp, "%s", cStr1);
 			if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_bElementFlag[1] == TRUE)
 				 PutString(sX + iAdjX + 44 +20 +60, sY + iAdjY + 55 +iLoc*15 +5, cTemp, RGB(45,25,25));
@@ -35707,7 +35849,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 		}
 
 		if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_iElementCount[2] != 0)
-		{	GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName2, 0, cStr1, cStr2, cStr3 );
+		{	GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName2, 0, 0, cStr1, cStr2, cStr3 );
 			wsprintf(cTemp, "%s", cStr1);
 			if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_bElementFlag[2] == TRUE)
 				 PutString(sX + iAdjX + 44 +20 +60, sY + iAdjY + 55 +iLoc*15 +5, cTemp, RGB(45,25,25));
@@ -35716,7 +35858,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 		}
 
 		if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_iElementCount[3] != 0)
-		{	GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName3, 0, cStr1, cStr2, cStr3 );
+		{	GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName3, 0, 0, cStr1, cStr2, cStr3 );
 			wsprintf(cTemp, "%s", cStr1);
 			if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_bElementFlag[3] == TRUE)
 				 PutString(sX + iAdjX + 44 +20 +60, sY + iAdjY + 55 +iLoc*15 +5, cTemp, RGB(45,25,25));
@@ -35725,7 +35867,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 		}
 
 		if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_iElementCount[4] != 0)
-		{	GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName4, 0, cStr1, cStr2, cStr3 );
+		{	GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName4, 0, 0, cStr1, cStr2, cStr3 );
 			wsprintf(cTemp, "%s", cStr1);
 			if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_bElementFlag[4] == TRUE)
 				 PutString(sX + iAdjX + 44 +20 +60, sY + iAdjY + 55 +iLoc*15 +5, cTemp, RGB(45,25,25));
@@ -35734,7 +35876,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 		}
 
 		if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_iElementCount[5] != 0)
-		{	GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName5, 0, cStr1, cStr2, cStr3 );
+		{	GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName5, 0, 0, cStr1, cStr2, cStr3 );
 			wsprintf(cTemp, "%s", cStr1);
 			if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_bElementFlag[5] == TRUE)
 				 PutString(sX + iAdjX + 44 +20 +60, sY + iAdjY + 55 +iLoc*15 +5, cTemp, RGB(45,25,25));
@@ -35743,7 +35885,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 		}
 
 		if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_iElementCount[6] != 0)
-		{	GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName6, 0, cStr1, cStr2, cStr3 );
+		{	GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cElementName6, 0, 0, cStr1, cStr2, cStr3 );
 			wsprintf(cTemp, "%s", cStr1);
 			if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_bElementFlag[6] == TRUE)
 				 PutString(sX + iAdjX + 44 +20 +60, sY + iAdjY + 55 +iLoc*15 +5, cTemp, RGB(45,25,25));
@@ -35815,7 +35957,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 		          m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_iSprFrame, dwTime);
 
 		ZeroMemory(cTemp, sizeof(cTemp));
-		GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cName, 0, cStr1, cStr2, cStr3 );
+		GetItemName( m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_cName, 0, 0, cStr1, cStr2, cStr3 );
 
 		wsprintf(cTemp, "%s", cStr1);
 		PutString(sX + iAdjX + 44 +10 +60, sY + iAdjY + 55, cTemp, RGB(255,255,255));
@@ -36194,7 +36336,7 @@ void CGame::bItemDrop_Inventory(short msX, short msY)
     }else bSendCommand(MSGID_REQUEST_SETITEMPOS, NULL, (char)(m_stMCursor.sSelectedObjectID), dX, dY, NULL, NULL);
 
 	if (m_bIsItemEquipped[m_stMCursor.sSelectedObjectID] == TRUE)
-	{	char cStr1[64], cStr2[64], cStr3[64];
+	{	char cStr1[192], cStr2[192], cStr3[192];
 		GetItemName(m_pItemList[m_stMCursor.sSelectedObjectID], cStr1, cStr2, cStr3);
 		wsprintf(cTxt, ITEM_EQUIPMENT_RELEASED, cStr1);
 		AddEventList(cTxt, 10);
@@ -36243,7 +36385,7 @@ void CGame::bItemDrop_SellList(short msX, short msY)
 	if (m_pItemList[cItemID]->m_wCurLifeSpan == 0)
 	{
 		ZeroMemory( G_cTxt, sizeof(G_cTxt) );
-		char cStr1[64], cStr2[64], cStr3[64];
+		char cStr1[192], cStr2[192], cStr3[192];
 		GetItemName(m_pItemList[cItemID], cStr1, cStr2, cStr3);
 		wsprintf( G_cTxt, NOTIFYMSG_CANNOT_SELL_ITEM2, cStr1 );
 		AddEventList( G_cTxt, 10 );
@@ -37238,7 +37380,7 @@ void CGame::NotifyMsg_CannotGiveItem(char *pData)
 	memcpy(cName, cp, 20);
 	cp += 20;
 
-	char cStr1[64], cStr2[64], cStr3[64];
+	char cStr1[192], cStr2[192], cStr3[192];
 	GetItemName(m_pItemList[wItemIndex], cStr1, cStr2, cStr3);
 	if( iAmount == 1 ) wsprintf(cTxt, NOTIFYMSG_CANNOT_GIVE_ITEM2, cStr1, cName);
 	else wsprintf( cTxt, NOTIFYMSG_CANNOT_GIVE_ITEM1, iAmount, cStr1, cName);
@@ -37262,8 +37404,8 @@ void CGame::NotifyMsg_DropItemFin_CountChanged(char *pData)
 	iAmount = *ip;
 	cp += 4;
 
-	char cStr1[64], cStr2[64], cStr3[64];
-	GetItemName(m_pItemList[wItemIndex]->m_cName, m_pItemList[wItemIndex]->m_dwAttribute, cStr1, cStr2, cStr3);
+	char cStr1[192], cStr2[192], cStr3[192];
+	GetItemName(m_pItemList[wItemIndex]->m_cName, m_pItemList[wItemIndex]->m_dwAttribute, m_pItemList[wItemIndex]->m_dwAttribute2, cStr1, cStr2, cStr3);
 	wsprintf(cTxt, NOTIFYMSG_THROW_ITEM1, iAmount, cStr1);
 
 	AddEventList(cTxt, 10);
@@ -37315,7 +37457,7 @@ void CGame::NotifyMsg_CannotRating(char * pData)
 
 void CGame::NotifyMsg_CannotRepairItem(char * pData)
 {
- char * cp, cTxt[120], cStr1[64], cStr2[64], cStr3[64];
+ char * cp, cTxt[120], cStr1[192], cStr2[192], cStr3[192];
  WORD * wp, wV1, wV2;
 
 	cp = (char *)(pData + DEF_INDEX2_MSGTYPE + 2);
@@ -37345,7 +37487,7 @@ void CGame::NotifyMsg_CannotRepairItem(char * pData)
 
 void CGame::NotifyMsg_CannotConvertItem(char * pData)
 {
- char * cp, cTxt[120], cStr1[64], cStr2[64], cStr3[64];
+ char * cp, cTxt[120], cStr1[192], cStr2[192], cStr3[192];
  WORD * wp, wV1, wV2;
 
 	cp = (char *)(pData + DEF_INDEX2_MSGTYPE + 2);
@@ -37379,7 +37521,7 @@ void CGame::NotifyMsg_CannotConvertItem(char * pData)
 
 void CGame::NotifyMsg_CannotSellItem(char * pData)
 {
- char * cp, cTxt[120], cStr1[64], cStr2[64], cStr3[64];
+ char * cp, cTxt[120], cStr1[192], cStr2[192], cStr3[192];
  WORD * wp, wV1, wV2;
 
 	cp = (char *)(pData + DEF_INDEX2_MSGTYPE + 2);
@@ -37460,7 +37602,7 @@ void CGame::NotifyMsg_DropItemFin_EraseItem(char *pData)
 	iAmount = *ip;
 	cp += 4;
 
-	char cStr1[64], cStr2[64], cStr3[64];
+	char cStr1[192], cStr2[192], cStr3[192];
 	GetItemName(m_pItemList[sItemIndex], cStr1, cStr2, cStr3);
 
 	ZeroMemory(cTxt, sizeof(cTxt));
@@ -37662,8 +37804,8 @@ void CGame::NotifyMsg_GiveItemFin_CountChanged(char *pData)
 	memcpy(cName, cp, 20);
 	cp += 20;
 
-	char cStr1[64], cStr2[64], cStr3[64];
-	GetItemName(m_pItemList[wItemIndex]->m_cName, m_pItemList[wItemIndex]->m_dwAttribute, cStr1, cStr2, cStr3);
+	char cStr1[192], cStr2[192], cStr3[192];
+	GetItemName(m_pItemList[wItemIndex]->m_cName, m_pItemList[wItemIndex]->m_dwAttribute, m_pItemList[wItemIndex]->m_dwAttribute2, cStr1, cStr2, cStr3);
 	if( iAmount == 1 ) wsprintf(cTxt, NOTIFYMSG_GIVEITEMFIN_COUNTCHANGED1, cStr1, cName);
 	wsprintf(cTxt, NOTIFYMSG_GIVEITEMFIN_COUNTCHANGED2, iAmount, cStr1, cName);
 	AddEventList(cTxt, 10);
@@ -37692,8 +37834,8 @@ void CGame::NotifyMsg_GiveItemFin_EraseItem(char *pData)
 	memcpy(cName, cp, 20);
 	cp += 20;
 
-	char cStr1[64], cStr2[64], cStr3[64];
-	GetItemName(m_pItemList[sItemIndex]->m_cName, m_pItemList[sItemIndex]->m_dwAttribute, cStr1, cStr2, cStr3);
+	char cStr1[192], cStr2[192], cStr3[192];
+	GetItemName(m_pItemList[sItemIndex]->m_cName, m_pItemList[sItemIndex]->m_dwAttribute, m_pItemList[sItemIndex]->m_dwAttribute2, cStr1, cStr2, cStr3);
 
 	if (m_bIsItemEquipped[sItemIndex] == TRUE) {
 		wsprintf(cTxt, ITEM_EQUIPMENT_RELEASED, cStr1);
@@ -37805,7 +37947,7 @@ void CGame::NotifyMsg_ItemColorChange(char *pData)
 	cp += 2;
 
 	if (m_pItemList[sItemIndex] != NULL) {
-		char cStr1[64], cStr2[64], cStr3[64];
+		char cStr1[192], cStr2[192], cStr3[192];
 		GetItemName( m_pItemList[sItemIndex], cStr1, cStr2, cStr3 );
 		if (sItemColor != -1) {
 			m_pItemList[sItemIndex]->m_cItemColor = (char)sItemColor;
@@ -37838,7 +37980,7 @@ void CGame::NotifyMsg_ItemDepleted_EraseItem(char * pData)
 
 	ZeroMemory(cTxt, sizeof(cTxt));
 
-	char cStr1[64], cStr2[64], cStr3[64];
+	char cStr1[192], cStr2[192], cStr3[192];
 	GetItemName(m_pItemList[sItemIndex], cStr1, cStr2, cStr3);
 
 	if (m_bIsItemEquipped[sItemIndex] == TRUE) {
@@ -37903,7 +38045,7 @@ void CGame::NotifyMsg_ItemLifeSpanEnd(char * pData)
 	sItemIndex = *sp;
 	cp += 2;
 
-	char cStr1[64], cStr2[64], cStr3[64];
+	char cStr1[192], cStr2[192], cStr3[192];
 	GetItemName( m_pItemList[sItemIndex], cStr1, cStr2, cStr3 );
 	wsprintf(cTxt, NOTIFYMSG_ITEMLIFE_SPANEND1, cStr1);
 	AddEventList(cTxt, 10);
@@ -37921,7 +38063,7 @@ void CGame::NotifyMsg_ItemObtained(char * pData)
  DWORD * dwp;
  int i, j;
 
- DWORD dwCount, dwAttribute;
+ DWORD dwCount, dwAttribute, dwAttribute2;
  char  cName[21], cItemType, cEquipPos;
  BOOL  bIsEquipped;
  short sSprite, sSpriteFrame, sLevelLimit, sSpecialEV2;
@@ -37981,13 +38123,16 @@ void CGame::NotifyMsg_ItemObtained(char * pData)
 	dwp = (DWORD *)cp;
 	dwAttribute = *dwp;
 	cp += 4;
+	dwp = (DWORD *)cp;
+	dwAttribute2 = *dwp;
+	cp += 4;
 	/*
 	bIsCustomMade = (BOOL)*cp;
 	cp++;
 	*/
 
-	char cStr1[64], cStr2[64], cStr3[64];
-	GetItemName(cName, dwAttribute, cStr1, cStr2, cStr3);
+	char cStr1[192], cStr2[192], cStr3[192];
+	GetItemName(cName, dwAttribute, dwAttribute2, cStr1, cStr2, cStr3);
 
 	ZeroMemory(cTxt, sizeof(cTxt));
 	if( dwCount == 1 ) wsprintf(cTxt, NOTIFYMSG_ITEMOBTAINED2, cStr1);
@@ -38041,6 +38186,7 @@ void CGame::NotifyMsg_ItemObtained(char * pData)
 		m_pItemList[i]->m_cItemColor   = cItemColor;
 		m_pItemList[i]->m_sItemSpecEffectValue2 = sSpecialEV2; // v1.41
 		m_pItemList[i]->m_dwAttribute = dwAttribute;
+		m_pItemList[i]->m_dwAttribute2 = dwAttribute2;
 		//m_pItemList[i]->m_bIsCustomMade = bIsCustomMade;
 
 		_bCheckBuildItemStatus();
@@ -38119,8 +38265,8 @@ void CGame::NotifyMsg_ItemPurchased(char * pData)
 	wp = (WORD *)cp;
 	wCost = *wp;
 	ZeroMemory(cTxt, sizeof(cTxt));
-	char cStr1[64], cStr2[64], cStr3[64];
-	GetItemName( cName, NULL, cStr1, cStr2, cStr3 );
+	char cStr1[192], cStr2[192], cStr3[192];
+	GetItemName( cName, NULL, 0, cStr1, cStr2, cStr3 );
 	wsprintf(cTxt, NOTIFYMSG_ITEMPURCHASED, cStr1, wCost);
 	AddEventList(cTxt, 10);
 
@@ -38189,7 +38335,7 @@ void CGame::NotifyMsg_ItemReleased(char * pData)
 	sItemIndex = *sp;
 	cp += 2;
 
-	char cStr1[64], cStr2[64], cStr3[64];
+	char cStr1[192], cStr2[192], cStr3[192];
 	GetItemName(m_pItemList[sItemIndex], cStr1, cStr2, cStr3);
 	wsprintf(cTxt, ITEM_EQUIPMENT_RELEASED, cStr1);
 	AddEventList(cTxt, 10);
@@ -38217,7 +38363,7 @@ void CGame::NotifyMsg_ItemRepaired(char * pData)
 
 	m_pItemList[dwItemID]->m_wCurLifeSpan = (WORD)dwLife;
 	m_bIsItemDisabled[dwItemID] = FALSE;
-	char cStr1[64], cStr2[64], cStr3[64];
+	char cStr1[192], cStr2[192], cStr3[192];
 	GetItemName( m_pItemList[dwItemID], cStr1, cStr2, cStr3 );
 
 	wsprintf(cTxt, NOTIFYMSG_ITEMREPAIRED1, cStr1);
@@ -38230,7 +38376,7 @@ void CGame::NotifyMsg_ItemConverted(char * pData)
  char * cp, cItemID, cName[21], cExtra[14], cTxt[120];
  short * sp;
  WORD  * wp;
- char cStr1[64], cStr2[64], cStr3[64];
+ char cStr1[192], cStr2[192], cStr3[192];
 
 	cp = (char *)(pData + DEF_INDEX2_MSGTYPE + 2);
 
@@ -38289,7 +38435,7 @@ void CGame::NotifyMsg_ItemConverted(char * pData)
 void CGame::NotifyMsg_ItemToBank(char *pData)
 {
  char * cp, cIndex;
- DWORD * dwp, dwCount, dwAttribute;
+ DWORD * dwp, dwCount, dwAttribute, dwAttribute2;
  char  cName[21], cItemType, cEquipPos, cGenderLimit, cItemColor;
  BOOL  bIsEquipped;
  short * sp, sSprite, sSpriteFrame, sLevelLimit, sItemEffectValue2, sItemSpecEffectValue2;
@@ -38354,11 +38500,14 @@ void CGame::NotifyMsg_ItemToBank(char *pData)
 	dwp = (DWORD *)cp;
 	dwAttribute = *dwp;
 	cp += 4;
+	dwp = (DWORD *)cp;
+	dwAttribute2 = *dwp;
+	cp += 4;
 	sItemSpecEffectValue2 = (short) *cp ;
 	cp ++ ;
 
-	char cStr1[64], cStr2[64], cStr3[64];
-	GetItemName(cName, dwAttribute, cStr1, cStr2, cStr3);
+	char cStr1[192], cStr2[192], cStr3[192];
+	GetItemName(cName, dwAttribute, dwAttribute2, cStr1, cStr2, cStr3);
 
 
 	if (m_pBankList[cIndex] == NULL) {
@@ -38379,6 +38528,7 @@ void CGame::NotifyMsg_ItemToBank(char *pData)
 		m_pBankList[cIndex]->m_cItemColor   = cItemColor;
 		m_pBankList[cIndex]->m_sItemEffectValue2  = sItemEffectValue2;
 		m_pBankList[cIndex]->m_dwAttribute        = dwAttribute;
+		m_pBankList[cIndex]->m_dwAttribute2       = dwAttribute2;
 		m_pBankList[cIndex]->m_sItemSpecEffectValue2 = sItemSpecEffectValue2 ;
 
 		ZeroMemory(cTxt, sizeof(cTxt));
@@ -40933,7 +41083,7 @@ void CGame::DrawDialogBox_Help(int msX, int msY)
 
 void CGame::DrawDialogBox_ItemUpgrade(int msX, int msY)
 {int i, sX, sY, iValue;
- char cItemColor, cStr1[120], cStr2[120], cStr3[120];
+ char cItemColor, cStr1[192], cStr2[192], cStr3[192];
  DWORD dwTime = timeGetTime();
 
 	sX = m_stDialogBoxInfo[34].sX;
@@ -41281,7 +41431,7 @@ void CGame::UseShortCut( int num )
 					m_sRecentShortCut = -1;
 					return;
 				}
-				char cStr1[64], cStr2[64], cStr3[64];
+				char cStr1[192], cStr2[192], cStr3[192];
 				ZeroMemory(cStr1, sizeof(cStr1));
 				ZeroMemory(cStr2, sizeof(cStr2));
 				ZeroMemory(cStr3, sizeof(cStr3));
@@ -41383,7 +41533,7 @@ void CGame::UseMagic(int iMagicNo)
 
 
 void CGame::ReleaseEquipHandler(char cEquipPos)
-{	char cStr1[64], cStr2[64], cStr3[64];
+{	char cStr1[192], cStr2[192], cStr3[192];
 	if( m_sItemEquipmentStatus[cEquipPos] < 0 ) return;
 	// Remove Angelic Stats
 	if (   (cEquipPos >= 11)
@@ -41500,7 +41650,7 @@ void CGame::ItemEquipHandler(char cItemID)
 			m_iAngelicMag = 1 + iAngelValue;
 	}	}
 
-	char cStr1[64], cStr2[64], cStr3[64];
+	char cStr1[192], cStr2[192], cStr3[192];
 	GetItemName(m_pItemList[cItemID], cStr1, cStr2, cStr3);
 	wsprintf(G_cTxt, BITEMDROP_CHARACTER9, cStr1);
 	AddEventList(G_cTxt, 10);
