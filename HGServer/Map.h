@@ -89,6 +89,8 @@ public:
 	void ClearDeadOwner(short sX, short sY);
 	void ClearOwner(int iDebugCode, short sOwnerH, char cOwnerType, short sX, short sY);
 	BOOL bGetMoveable(short dX, short dY, short * pDOtype = NULL, short * pTopItem = NULL);
+	BOOL bGetMoveableDir(short sX, short sY, char cDir);
+	BOOL bFindPathStep(short sX, short sY, short dX, short dY, char * pcDir);
 	void GetOwner(short * pOwner, char * pOwnerClass, short sX, short sY);
 	void SetOwner(short sOwner, char cOwnerClass, short sX, short sY);
 	void SetDeadOwner(short sOwner, char cOwnerClass, short sX, short sY);

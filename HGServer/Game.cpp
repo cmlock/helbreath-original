@@ -10007,7 +10007,7 @@ int CGame::iClientMotion_Attack_Handler(int iClientH, short sX, short sY, short 
 char CGame::cGetNextMoveDir(short sX, short sY, short dstX, short dstY, char cMapIndex, char cTurn, int * pError)
 {
  register char  cDir, cTmpDir;
- register int   aX, aY, dX, dY;
+ register int   dX, dY;
  register int   i, iResX, iResY;
 
 	if ((sX == dstX) && (sY == dstY)) return 0;
@@ -10023,22 +10023,21 @@ char CGame::cGetNextMoveDir(short sX, short sY, short dstX, short dstY, char cMa
 
 	cDir = m_Misc.cGetNextMoveDir(dX, dY, iResX, iResY);
 
+	// bGetMoveableDir (rather than a plain bGetMoveable on the destination tile) also
+	// rejects diagonal steps that would clip through a solid wall corner - i.e. both tiles
+	// flanking the diagonal blocked while the diagonal gap itself happens to be open.
 	if (cTurn == 0)
 	for (i = cDir; i <= cDir + 7;i++) {
 		cTmpDir = i;
 		if (cTmpDir > 8) cTmpDir -= 8;
-		aX = _tmp_cTmpDirX[cTmpDir];
-		aY = _tmp_cTmpDirY[cTmpDir];
-		if (m_pMapList[cMapIndex]->bGetMoveable(dX + aX, dY + aY) == TRUE) return cTmpDir;
+		if (m_pMapList[cMapIndex]->bGetMoveableDir(dX, dY, cTmpDir) == TRUE) return cTmpDir;
 	}
 
 	if (cTurn == 1)
 	for (i = cDir; i >= cDir - 7;i--) {
 		cTmpDir = i;
 		if (cTmpDir < 1) cTmpDir += 8;
-		aX = _tmp_cTmpDirX[cTmpDir];
-		aY = _tmp_cTmpDirY[cTmpDir];
-		if (m_pMapList[cMapIndex]->bGetMoveable(dX + aX, dY + aY) == TRUE) return cTmpDir;
+		if (m_pMapList[cMapIndex]->bGetMoveableDir(dX, dY, cTmpDir) == TRUE) return cTmpDir;
 	}
 
 	return 0;
@@ -10847,13 +10846,20 @@ NBA_CHASE:;
 		m_pNpcList[iNpcH]->m_iAttackCount = 0;
 
 		{
-			// dX/dY here is the target's live position, which is a different line every tick while it
-			// moves. m_tmp_iError is a Bresenham accumulator meant to persist across repeated steps of
-			// the SAME line (as used for waypoint travel); reusing it across ticks with a constantly
-			// changing slope biases the direction pick toward stale, unrelated lines and produces the
-			// zigzagging seen when chasing a moving target. Reset it so each chase step is computed fresh.
-			m_pNpcList[iNpcH]->m_tmp_iError = 0;
-			cDir = cGetNextMoveDir(sX, sY, dX, dY,m_pNpcList[iNpcH]->m_cMapIndex, m_pNpcList[iNpcH]->m_cTurn, &m_pNpcList[iNpcH]->m_tmp_iError);
+			// Bounded-radius A* first, since the target is close (chase range is short - see
+			// DEF_PATHFIND_RADIUS's comment in Map.cpp) - this is what actually routes around
+			// obstacles instead of just dodging the immediately-adjacent tile. Falls back to the
+			// plain stepper if the target is outside the search box or genuinely unreachable in it.
+			if (m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->bFindPathStep(sX, sY, dX, dY, &cDir) == FALSE) {
+				// dX/dY here is the target's live position, which is a different line every tick
+				// while it moves. m_tmp_iError is a Bresenham accumulator meant to persist across
+				// repeated steps of the SAME line (as used for waypoint travel); reusing it across
+				// ticks with a constantly changing slope biases the direction pick toward stale,
+				// unrelated lines and produces the zigzagging seen when chasing a moving target.
+				// Reset it so each fallback chase step is computed fresh.
+				m_pNpcList[iNpcH]->m_tmp_iError = 0;
+				cDir = cGetNextMoveDir(sX, sY, dX, dY,m_pNpcList[iNpcH]->m_cMapIndex, m_pNpcList[iNpcH]->m_cTurn, &m_pNpcList[iNpcH]->m_tmp_iError);
+			}
 			if (cDir == 0) {
 				return;
 			}
@@ -11326,11 +11332,14 @@ void CGame::NpcBehavior_Flee(int iNpcH)
 	dX = sX - (dX - sX);
 	dY = sY - (dY - sY);
 
-	// Same stale-accumulator issue as the ATTACK chase step: the flee point is recomputed from the
-	// target's live position every tick, so the persisted Bresenham error from a previous, unrelated
-	// line must not carry over here either.
-	m_pNpcList[iNpcH]->m_tmp_iError = 0;
-	cDir = cGetNextMoveDir(sX, sY, dX, dY, m_pNpcList[iNpcH]->m_cMapIndex, m_pNpcList[iNpcH]->m_cTurn, &m_pNpcList[iNpcH]->m_tmp_iError);
+	// Bounded-radius A* first, same as the ATTACK chase step - see its comment for why.
+	if (m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->bFindPathStep(sX, sY, dX, dY, &cDir) == FALSE) {
+		// Same stale-accumulator issue as the ATTACK chase step: the flee point is recomputed from
+		// the target's live position every tick, so the persisted Bresenham error from a previous,
+		// unrelated line must not carry over here either.
+		m_pNpcList[iNpcH]->m_tmp_iError = 0;
+		cDir = cGetNextMoveDir(sX, sY, dX, dY, m_pNpcList[iNpcH]->m_cMapIndex, m_pNpcList[iNpcH]->m_cTurn, &m_pNpcList[iNpcH]->m_tmp_iError);
+	}
 	if (cDir == 0) {
 	}
 	else {

@@ -288,6 +288,224 @@ BOOL CMap::bGetMoveable(short dX, short dY, short * pDOtype, short * pTopItem)
 	return TRUE;
 }
 
+// 8-direction compass codes, matching the convention used by Game.cpp's _tmp_cTmpDirX/Y
+// (1=N, 2=NE, 3=E, 4=SE, 5=S, 6=SW, 7=W, 8=NW). Duplicated locally rather than shared
+// because Game.cpp's table is a file-local global, not exposed via a header.
+static char  s_cPathDirX[9]    = {  0,  0, 1, 1, 1, 0,-1,-1,-1 };
+static char  s_cPathDirY[9]    = {  0, -1,-1, 0, 1, 1, 1, 0,-1 };
+static short s_cPathDirCost[9] = {  0, 10,14,10,14,10,14,10,14 }; // orthogonal=10, diagonal=14 (~10*sqrt2)
+
+BOOL CMap::bGetMoveableDir(short sX, short sY, char cDir)
+{
+ char cFlankA, cFlankB;
+ short dX, dY;
+
+	dX = sX + s_cPathDirX[cDir];
+	dY = sY + s_cPathDirY[cDir];
+
+	if (bGetMoveable(dX, dY) == FALSE) return FALSE;
+
+	if ((cDir % 2) == 0) {
+		// Diagonal step: also require both tiles flanking the corner to be open, otherwise
+		// the mover is allowed to clip through a solid wall corner between two blocked tiles.
+		cFlankA = cDir - 1; if (cFlankA < 1) cFlankA += 8;
+		cFlankB = cDir + 1; if (cFlankB > 8) cFlankB -= 8;
+
+		if (bGetMoveable(sX + s_cPathDirX[cFlankA], sY + s_cPathDirY[cFlankA]) == FALSE) return FALSE;
+		if (bGetMoveable(sX + s_cPathDirX[cFlankB], sY + s_cPathDirY[cFlankB]) == FALSE) return FALSE;
+	}
+
+	return TRUE;
+}
+
+// ---------------------------------------------------------------------------------------
+// Bounded-radius A*, used for NPC target chase/flee only (short, obstacle-heavy routes
+// where the old greedy "step toward target, sidestep if blocked" logic gets stuck on
+// concave obstacles). Waypoint wandering keeps using the simpler stepper - those routes
+// are long and mostly open, so the greedy approach is cheap and good enough there.
+//
+// The search area is a small fixed box centered on the mover, so cost is bounded
+// regardless of overall map size. NPC TargetSearchRange in NPC.cfg tops out at 9 tiles,
+// so a 20-tile radius leaves generous room to route around obstacles without ever needing
+// a map-spanning search.
+// ---------------------------------------------------------------------------------------
+
+#define DEF_PATHFIND_RADIUS  20
+#define DEF_PATHFIND_DIM     (DEF_PATHFIND_RADIUS*2 + 1)
+#define DEF_PATHFIND_CELLS   (DEF_PATHFIND_DIM*DEF_PATHFIND_DIM)
+#define DEF_PATHFIND_HEAPCAP (DEF_PATHFIND_CELLS*4)
+
+struct SPathNode
+{
+	BOOL  bVisited;
+	BOOL  bClosed;
+	short sG;
+	char  cFromDir;   // direction taken from the parent to reach this cell; 0 at the start node
+};
+
+// Single-threaded server (the game loop itself is not multithreaded - only the debug UI
+// runs on its own thread), so static reuse across calls is safe and avoids re-allocating
+// ~1700 cells' worth of scratch state on the stack every time an NPC takes a chase step.
+static SPathNode s_stPathNode[DEF_PATHFIND_CELLS];
+static int       s_iPathHeapNode[DEF_PATHFIND_HEAPCAP];
+static int       s_iPathHeapF[DEF_PATHFIND_HEAPCAP];
+static int       s_iPathHeapSize;
+
+static void _PathHeapPush(int iNode, int iF)
+{
+ int i, iParent, iTmp;
+
+	if (s_iPathHeapSize >= DEF_PATHFIND_HEAPCAP) return; // search area is bounded, this can't overflow in practice
+
+	i = s_iPathHeapSize++;
+	s_iPathHeapNode[i] = iNode;
+	s_iPathHeapF[i]    = iF;
+
+	while (i > 0) {
+		iParent = (i - 1) / 2;
+		if (s_iPathHeapF[iParent] <= s_iPathHeapF[i]) break;
+
+		iTmp = s_iPathHeapNode[iParent]; s_iPathHeapNode[iParent] = s_iPathHeapNode[i]; s_iPathHeapNode[i] = iTmp;
+		iTmp = s_iPathHeapF[iParent];    s_iPathHeapF[iParent]    = s_iPathHeapF[i];    s_iPathHeapF[i]    = iTmp;
+		i = iParent;
+	}
+}
+
+static BOOL _PathHeapPop(int * piNode)
+{
+ int i, iLeft, iRight, iSmallest, iTmp;
+
+	if (s_iPathHeapSize <= 0) return FALSE;
+
+	*piNode = s_iPathHeapNode[0];
+
+	s_iPathHeapSize--;
+	s_iPathHeapNode[0] = s_iPathHeapNode[s_iPathHeapSize];
+	s_iPathHeapF[0]    = s_iPathHeapF[s_iPathHeapSize];
+
+	i = 0;
+	for (;;) {
+		iLeft     = i*2 + 1;
+		iRight    = i*2 + 2;
+		iSmallest = i;
+		if ((iLeft  < s_iPathHeapSize) && (s_iPathHeapF[iLeft]  < s_iPathHeapF[iSmallest])) iSmallest = iLeft;
+		if ((iRight < s_iPathHeapSize) && (s_iPathHeapF[iRight] < s_iPathHeapF[iSmallest])) iSmallest = iRight;
+		if (iSmallest == i) break;
+
+		iTmp = s_iPathHeapNode[iSmallest]; s_iPathHeapNode[iSmallest] = s_iPathHeapNode[i]; s_iPathHeapNode[i] = iTmp;
+		iTmp = s_iPathHeapF[iSmallest];    s_iPathHeapF[iSmallest]    = s_iPathHeapF[i];    s_iPathHeapF[i]    = iTmp;
+		i = iSmallest;
+	}
+
+	return TRUE;
+}
+
+// Octile-distance heuristic consistent with the 10/14 step costs above.
+static int _iPathHeuristic(int ox, int oy, int iGoalOx, int iGoalOy)
+{
+ int dx, dy;
+
+	dx = abs(ox - iGoalOx);
+	dy = abs(oy - iGoalOy);
+
+	if (dx > dy) return dx*10 + dy*4;
+	else         return dy*10 + dx*4;
+}
+
+// Finds the first step of a short obstacle-avoiding route from (sX,sY) toward (dX,dY) and
+// returns it as a compass direction (1-8) in *pcDir. The search stops as soon as it reaches
+// a tile adjacent to the goal rather than the goal tile itself, since the goal is usually
+// occupied (the chased/fleeing target standing on it) and callers only ever need to get
+// next to it. Returns FALSE - caller should fall back to the plain greedy stepper - if the
+// target is outside the bounded search radius or genuinely unreachable within it.
+BOOL CMap::bFindPathStep(short sX, short sY, short dX, short dY, char * pcDir)
+{
+ int  iOriginX, iOriginY;
+ int  ox, oy, oxN, oyN;
+ int  iCur, iNext, iIdx;
+ int  iG, iF;
+ int  iGoalOx, iGoalOy;
+ char cDir;
+ int  i;
+
+	if ((abs((int)sX - (int)dX) > DEF_PATHFIND_RADIUS) || (abs((int)sY - (int)dY) > DEF_PATHFIND_RADIUS)) return FALSE;
+	if ((abs((int)sX - (int)dX) <= 1) && (abs((int)sY - (int)dY) <= 1)) return FALSE; // already adjacent
+
+	iOriginX = sX - DEF_PATHFIND_RADIUS;
+	iOriginY = sY - DEF_PATHFIND_RADIUS;
+
+	iGoalOx = dX - iOriginX;
+	iGoalOy = dY - iOriginY;
+
+	ZeroMemory(s_stPathNode, sizeof(s_stPathNode));
+	s_iPathHeapSize = 0;
+
+	ox = sX - iOriginX;
+	oy = sY - iOriginY;
+	iCur = oy*DEF_PATHFIND_DIM + ox;
+	s_stPathNode[iCur].bVisited = TRUE;
+	s_stPathNode[iCur].sG       = 0;
+	s_stPathNode[iCur].cFromDir = 0;
+	_PathHeapPush(iCur, _iPathHeuristic(ox, oy, iGoalOx, iGoalOy));
+
+	iIdx = -1; // will hold the closed node adjacent to the goal, once found
+
+	while (_PathHeapPop(&iCur)) {
+
+		if (s_stPathNode[iCur].bClosed == TRUE) continue;
+		s_stPathNode[iCur].bClosed = TRUE;
+
+		ox = iCur % DEF_PATHFIND_DIM;
+		oy = iCur / DEF_PATHFIND_DIM;
+
+		if ((abs(ox - iGoalOx) <= 1) && (abs(oy - iGoalOy) <= 1)) {
+			iIdx = iCur;
+			break;
+		}
+
+		for (cDir = 1; cDir <= 8; cDir++) {
+			oxN = ox + s_cPathDirX[cDir];
+			oyN = oy + s_cPathDirY[cDir];
+
+			if ((oxN < 0) || (oxN >= DEF_PATHFIND_DIM) || (oyN < 0) || (oyN >= DEF_PATHFIND_DIM)) continue;
+
+			iNext = oyN*DEF_PATHFIND_DIM + oxN;
+			if (s_stPathNode[iNext].bClosed == TRUE) continue;
+
+			if (bGetMoveableDir((short)(iOriginX + ox), (short)(iOriginY + oy), cDir) == FALSE) continue;
+
+			iG = s_stPathNode[iCur].sG + s_cPathDirCost[cDir];
+
+			if ((s_stPathNode[iNext].bVisited == FALSE) || (iG < s_stPathNode[iNext].sG)) {
+				s_stPathNode[iNext].bVisited = TRUE;
+				s_stPathNode[iNext].sG       = (short)iG;
+				s_stPathNode[iNext].cFromDir = cDir;
+				iF = iG + _iPathHeuristic(oxN, oyN, iGoalOx, iGoalOy);
+				_PathHeapPush(iNext, iF);
+			}
+		}
+	}
+
+	if (iIdx < 0) return FALSE; // nothing adjacent to the goal is reachable inside the box
+
+	// Walk the parent chain back from the arrival node to the start; the last direction
+	// visited (i.e. the step out of the start node) is the one to actually take this tick.
+	cDir = 0;
+	for (i = 0; i < DEF_PATHFIND_CELLS; i++) {
+		if (s_stPathNode[iIdx].cFromDir == 0) break; // reached the start node
+
+		cDir = s_stPathNode[iIdx].cFromDir;
+		ox   = (iIdx % DEF_PATHFIND_DIM) - s_cPathDirX[cDir];
+		oy   = (iIdx / DEF_PATHFIND_DIM) - s_cPathDirY[cDir];
+		iIdx = oy*DEF_PATHFIND_DIM + ox;
+	}
+
+	if (cDir == 0) return FALSE; // arrival node WAS the start (already adjacent - shouldn't happen, checked above)
+
+	*pcDir = cDir;
+	return TRUE;
+}
+
 BOOL CMap::bGetIsMoveAllowedTile(short dX, short dY)
 {
  class CTile * pTile;	
