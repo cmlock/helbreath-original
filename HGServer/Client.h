@@ -50,11 +50,12 @@ public:
 	// Hack Checkers
 	DWORD m_dwMagicFreqTime, m_dwMoveFreqTime, m_dwAttackFreqTime;
 	DWORD m_dwLastMagicCastTime; // separate from m_dwRecentAttackTime so melee swings don't gate spellcasting cadence
+	DWORD m_dwGroundItemInfoWindowStart; // ground-item label fetch throttle: ~20 req/sec, 1-sec sliding window
+	int   m_iGroundItemInfoReqCount;
 	BOOL m_bIsMoveBlocked, m_bMagicItem;
 	DWORD dwClientTime;
 	BOOL m_bMagicConfirm;
 	int m_iSpellCount;
-	BOOL m_bMagicPauseTime;
 	//int m_iUninteruptibleCheck;
 	//char m_cConnectionCheck;
 

@@ -339,6 +339,12 @@
 #define MSGID_SKILLCONFIGURATIONCONTENTS		0x0FA314DC // unused by client (used by client v3.62)
 #define MSGID_PLAYERITEMLISTCONTENTS			0x0FA314DD
 #define MSGID_PORTIONCONFIGURATIONCONTENTS		0x0FA314DE // unused by client
+
+// Ground-item label UI: on-demand descriptor for one tile's item stack (D4-style loot labels).
+// Verified unused - do not pick opportunistically from the 0x0FA314Dx block, DB/DC already collide.
+#define MSGID_REQUEST_GROUNDITEMINFO			0x0FA314DF	// client -> server: short sX, short sY
+#define MSGID_RESPONSE_GROUNDITEMINFO			0x0FA314E0	// server -> client: sX, sY, cCount, cCount * { cName[20], dwAttribute, dwAttribute2, dwCount, cItemColor }
+
 #define MSGID_PLAYERCHARACTERCONTENTS			0x0FA40000
 #define MSGID_QUESTCONFIGURATIONCONTENTS		0x0FA40001 // unused by client
 #define MSGID_BUILDITEMCONFIGURATIONCONTENTS	0x0FA40002 // unused by client	

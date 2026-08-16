@@ -406,26 +406,31 @@ BOOL CMap::bSetItem(short sX, short sY, class CItem * pItem)
 }
 
 
-class CItem * CMap::pGetItem(short sX, short sY, short * pRemainItemSprite, short * pRemainItemSpriteFrame, char * pRemainItemColor) //v1.4 color
+class CItem * CMap::pGetItem(short sX, short sY, short * pRemainItemSprite, short * pRemainItemSpriteFrame, char * pRemainItemColor, int iIndex) //v1.4 color
 {
- class CTile * pTile;	
+ class CTile * pTile;
  class CItem * pItem;
  register int i;
-	
+
 	if ((sX < 0) || (sX >= m_sSizeX) || (sY < 0) || (sY >= m_sSizeY)) return NULL;
 
 	pTile = (class CTile *)(m_pTile + sX + sY*m_sSizeY);
-	pItem =  pTile->m_pItem[0];
 	if (pTile->m_cTotalItem == 0) return NULL;
 
-	for (i = 0; i <= DEF_TILE_PER_ITEMS-2; i++)
+	// Ground-item UI lets a player pick a specific stack slot (not just the top item);
+	// a stale or out-of-range index falls back to the top rather than corrupting the tile.
+	if ((iIndex < 0) || (iIndex >= pTile->m_cTotalItem)) iIndex = 0;
+
+	pItem = pTile->m_pItem[iIndex];
+
+	for (i = iIndex; i <= DEF_TILE_PER_ITEMS-2; i++)
 		pTile->m_pItem[i] = pTile->m_pItem[i+1];
 	pTile->m_cTotalItem--;
 	pTile->m_pItem[pTile->m_cTotalItem] = NULL;
-	
+
 	if (pTile->m_pItem[0] == NULL) {
 		*pRemainItemSprite      = 0;
-		*pRemainItemSpriteFrame = 0;	
+		*pRemainItemSpriteFrame = 0;
 		*pRemainItemColor       = 0;
 	}
 	else
@@ -436,6 +441,32 @@ class CItem * CMap::pGetItem(short sX, short sY, short * pRemainItemSprite, shor
 	}
 
 	return pItem;
+}
+
+
+// Read-only snapshot of a tile's item stack for the ground-item info response; does not
+// pop or mutate anything, unlike pGetItem/pGetGoldItem above.
+int CMap::iGetItemStack(short sX, short sY, class CItem ** ppOut, int iMax)
+{
+ class CTile * pTile;
+ register int i, iCount;
+
+	if ((sX < 0) || (sX >= m_sSizeX) || (sY < 0) || (sY >= m_sSizeY)) return 0;
+
+	pTile = (class CTile *)(m_pTile + sX + sY*m_sSizeY);
+
+	iCount = pTile->m_cTotalItem;
+	if (iCount > iMax) iCount = iMax;
+
+	// Items occupy a contiguous prefix, so m_cTotalItem should never outrun the array - but
+	// stop at the first hole anyway: the caller dereferences every entry to build a network
+	// reply, and a count/array desync here would take the whole zone down.
+	for (i = 0; i < iCount; i++) {
+		if (pTile->m_pItem[i] == NULL) break;
+		ppOut[i] = pTile->m_pItem[i];
+	}
+
+	return i;
 }
 
 

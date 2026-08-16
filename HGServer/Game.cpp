@@ -1065,7 +1065,9 @@ void CGame::ClientMotionHandler(int iClientH, char * pData)
 		break;
 
 	case DEF_OBJECTGETITEM:
-		iRet = iClientMotion_GetItem_Handler(iClientH, sX, sY, cDir);
+		// wType carries the ground-item stack slot to pick up (Ground-item UI); unmodified
+		// clients always send 0 here, i.e. today's "top item" behaviour.
+		iRet = iClientMotion_GetItem_Handler(iClientH, sX, sY, cDir, wType);
 		if (iRet == 1) {
 			SendEventToNearClient_TypeA(iClientH, DEF_OWNERTYPE_PLAYER, MSGID_EVENT_MOTION, DEF_OBJECTGETITEM, NULL, NULL, NULL);
 		}
@@ -11563,6 +11565,10 @@ void CGame::MsgProcess()
 				ClientMotionHandler(iClientH, pData);
 				break;
 
+			case MSGID_REQUEST_GROUNDITEMINFO:
+				RequestGroundItemInfoHandler(iClientH, pData);
+				break;
+
 			case MSGID_COMMAND_CHECKCONNECTION:
 				CheckConnectionHandler(iClientH, pData);
 				break;
@@ -12285,12 +12291,12 @@ void CGame::DropItemHandler(int iClientH, short sItemIndex, int iAmount, char * 
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
-//  int CGame::iClientMotion_GetItem_Handler(int iClientH, short sX, short sY, char cDir)
+//  int CGame::iClientMotion_GetItem_Handler(int iClientH, short sX, short sY, char cDir, short sStackIndex)
 //  description			:: check if player is dropping item or picking up item
 //  last updated		:: October 29, 2004; 7:12 PM; Hypnotoad
 //	return value		:: int
 /////////////////////////////////////////////////////////////////////////////////////
-int CGame::iClientMotion_GetItem_Handler(int iClientH, short sX, short sY, char cDir)
+int CGame::iClientMotion_GetItem_Handler(int iClientH, short sX, short sY, char cDir, short sStackIndex)
 {
  DWORD * dwp;
  WORD  * wp;
@@ -12325,7 +12331,10 @@ int CGame::iClientMotion_GetItem_Handler(int iClientH, short sX, short sY, char 
 	m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->ClearOwner(0, iClientH, DEF_OWNERTYPE_PLAYER, sX, sY);
 	m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->SetOwner(iClientH, DEF_OWNERTYPE_PLAYER, sX, sY);
 
-	pItem = m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->pGetItem(sX, sY, &sRemainItemSprite, &sRemainItemSpriteFrame, &cRemainItemColor);
+	// sStackIndex (Ground-item UI) picks a specific slot off the tile; pGetItem clamps it
+	// to the tile's live item count, so an index for an item that's already gone (raced by
+	// another pickup) safely falls back to the top item instead of failing.
+	pItem = m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->pGetItem(sX, sY, &sRemainItemSprite, &sRemainItemSpriteFrame, &cRemainItemColor, sStackIndex);
 	if (pItem != NULL) {
 		if (_bAddClientItemList(iClientH, pItem, &iEraseReq) == TRUE) {
 
@@ -12446,6 +12455,104 @@ int CGame::iClientMotion_GetItem_Handler(int iClientH, short sX, short sY, char 
 	}
 
 	return 1;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+//  void CGame::RequestGroundItemInfoHandler(int iClientH, char * pData)
+//  description			:: Ground-item UI: lazy per-tile fetch of full item descriptors
+//                         (name/affixes/count/color) for one tile, on demand, so labels
+//                         can be drawn client-side without bloating iComposeInitMapData.
+/////////////////////////////////////////////////////////////////////////////////////
+void CGame::RequestGroundItemInfoHandler(int iClientH, char * pData)
+{
+ class CItem * pItemStack[DEF_TILE_PER_ITEMS];
+ char  * cp, cData[420];
+ DWORD * dwp, dwNow;
+ WORD  * wp;
+ short * sp, sX, sY;
+ int   i, iRet, iStackCount;
+
+	if (m_pClientList[iClientH] == NULL) return;
+	if (m_pClientList[iClientH]->m_bIsInitComplete == FALSE) return;
+	if (m_pClientList[iClientH]->m_bIsKilled == TRUE) return;
+	if (m_pMapList[m_pClientList[iClientH]->m_cMapIndex] == NULL) return;
+
+	cp = (char *)(pData + DEF_INDEX2_MSGTYPE + 2);
+
+	sp = (short *)cp;
+	sX = *sp;
+	cp += 2;
+
+	sp = (short *)cp;
+	sY = *sp;
+	cp += 2;
+
+	// Reject anything outside the client's own view box (same bounds iComposeInitMapData
+	// is called with) - otherwise this becomes a map-wide item scanner for a modified client.
+	if ((abs(sX - m_pClientList[iClientH]->m_sX) > 12) || (abs(sY - m_pClientList[iClientH]->m_sY) > 9)) return;
+
+	// ~20 req/sec per client, 1-second sliding window; drop silently rather than disconnect,
+	// since a burst here is more likely UI catch-up (screen scroll) than a hack attempt.
+	dwNow = timeGetTime();
+	if ((dwNow - m_pClientList[iClientH]->m_dwGroundItemInfoWindowStart) >= 1000) {
+		m_pClientList[iClientH]->m_dwGroundItemInfoWindowStart = dwNow;
+		m_pClientList[iClientH]->m_iGroundItemInfoReqCount = 0;
+	}
+	m_pClientList[iClientH]->m_iGroundItemInfoReqCount++;
+	if (m_pClientList[iClientH]->m_iGroundItemInfoReqCount > 20) return;
+
+	iStackCount = m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->iGetItemStack(sX, sY, pItemStack, DEF_TILE_PER_ITEMS);
+
+	ZeroMemory(cData, sizeof(cData));
+
+	dwp  = (DWORD *)(cData + DEF_INDEX4_MSGID);
+	*dwp = MSGID_RESPONSE_GROUNDITEMINFO;
+	wp   = (WORD *)(cData + DEF_INDEX2_MSGTYPE);
+	*wp  = 0;
+
+	cp = (char *)(cData + DEF_INDEX2_MSGTYPE + 2);
+
+	sp  = (short *)cp;
+	*sp = sX;
+	cp += 2;
+
+	sp  = (short *)cp;
+	*sp = sY;
+	cp += 2;
+
+	// cCount == 0 is a valid reply (empty tile) - the client uses it to clear its cache entry.
+	*cp = (char)iStackCount;
+	cp++;
+
+	for (i = 0; i < iStackCount; i++) {
+		memcpy(cp, pItemStack[i]->m_cName, 20);
+		cp += 20;
+
+		dwp  = (DWORD *)cp;
+		*dwp = pItemStack[i]->m_dwAttribute;
+		cp += 4;
+
+		dwp  = (DWORD *)cp;
+		*dwp = pItemStack[i]->m_dwAttribute2;
+		cp += 4;
+
+		dwp  = (DWORD *)cp;
+		*dwp = pItemStack[i]->m_dwCount;
+		cp += 4;
+
+		*cp = pItemStack[i]->m_cItemColor;
+		cp++;
+	}
+
+	iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 11 + iStackCount*33);
+	switch (iRet) {
+	case DEF_XSOCKEVENT_QUENEFULL:
+	case DEF_XSOCKEVENT_SOCKETERROR:
+	case DEF_XSOCKEVENT_CRITICALERROR:
+	case DEF_XSOCKEVENT_SOCKETCLOSED:
+		DeleteClient(iClientH, TRUE, TRUE);
+		return;
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////////////////

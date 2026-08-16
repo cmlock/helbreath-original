@@ -93,6 +93,17 @@
 #define DEF_MAXGUILDNAMES		100
 #define DEF_MAXSELLLIST			12
 
+// Ground-item label UI (D4-style loot labels)
+#define DEF_MAXGROUNDITEMCACHE		64	// flat LRU, keyed by absolute map coords - see m_stGroundItemCache
+#define DEF_MAXGROUNDITEMSCANTILES	128	// on-screen item tiles collected per frame in DrawObjects
+#define DEF_MAXGROUNDLABELS		64	// labels actually drawn/hit-testable in a given frame
+
+#define DEF_ITEMRARITY_COMMON		0
+#define DEF_ITEMRARITY_MAGIC		1
+#define DEF_ITEMRARITY_RARE		2
+#define DEF_ITEMRARITY_LEGENDARY	3
+#define DEF_ITEMRARITY_UNIQUE		4
+
 #define WM_USER_GAMESOCKETEVENT	WM_USER + 2000
 #define WM_USER_LOGSOCKETEVENT	WM_USER + 2001
 
@@ -370,6 +381,13 @@ public:
 	void NoticementHandler(char * pData);
 	void GetItemName(char * cItemName, DWORD dwAttribute, DWORD dwAttribute2, char *pStr1, char *pStr2, char *pStr3);
 	void GetItemName(class CItem * pItem, char * pStr1, char * pStr2, char * pStr3);
+	BOOL _bIsSpecialItemName(char * cName);
+	int  _iGetItemRarity(char * cName, DWORD dwAttribute, DWORD dwAttribute2);
+
+	// Ground-item label UI (D4-style loot labels)
+	int  _iFindGroundItemCacheSlot(short sX, short sY, BOOL bAllocIfMissing);
+	void ResponseGroundItemInfo(char * pData);
+	BOOL _bCheckGroundLabelClick(short msX, short msY);
 	void _InitOnCreateNewCharacter();
 	void _LoadGameMsgTextContents();
 	BOOL _bCheckCurrentBuildItemStatus();
@@ -673,6 +691,34 @@ public:
 		int iY;
 		int iCost;
 	} m_stTeleportList[20];
+
+	// Ground-item label UI: flat LRU cache of tile -> item-stack descriptors, keyed by
+	// absolute map coords (survives ShiftMapData for free). NOT stored on CTile - CMapData
+	// holds two 60x55 CTile arrays that get memcpy'd every step; per-tile storage here
+	// would cost megabytes and per-step copying. See Client/MapData.h.
+	struct {
+		short sX, sY;
+		DWORD dwRefTime;	// last-fresh time; while bPending, last-request time (dropped-reply retry). 0 + !bPending = free slot
+		BOOL  bPending;
+		char  cCount;
+		struct {
+			char  cName[21];
+			DWORD dwAttribute, dwAttribute2, dwCount;
+			char  cItemColor;
+		} stItem[12];
+	} m_stGroundItemCache[DEF_MAXGROUNDITEMCACHE];
+
+	// Per-frame list of labels actually drawn this frame, for click hit-testing.
+	struct {
+		RECT  rcRect;
+		short sX, sY;
+		char  cStackIndex;
+	} m_stGroundLabel[DEF_MAXGROUNDLABELS];
+	int  m_iGroundLabelCount;
+
+	BOOL  m_bShowGroundLabels;			// toggle lock (F10) - labels drawn even without Alt held
+	short m_sPendingPickupX, m_sPendingPickupY;	// -1 = no pending walk-then-pickup
+	char  m_cPendingPickupIndex;
 
 	class YWSound m_DSound;
 	class CSoundBuffer *	m_pCSound[DEF_MAXSOUNDEFFECTS];

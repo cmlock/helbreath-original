@@ -310,7 +310,9 @@ CClient::CClient(HWND hWnd)
 	m_bMagicConfirm = FALSE;
 	m_bMagicItem = FALSE;
 	m_iSpellCount = 0;
-	m_bMagicPauseTime = FALSE;
+
+	m_dwGroundItemInfoWindowStart = 0;
+	m_iGroundItemInfoReqCount = 0;
 }
 
 CClient::~CClient()

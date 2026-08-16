@@ -510,6 +510,17 @@ CGame::CGame()
 	m_bShiftPressed = FALSE;
 	m_bEnterPressed = FALSE;
 	m_bEscPressed	= FALSE;
+
+	// Ground-item label UI (D4-style loot labels) - CGame is HEAP_ZERO_MEMORY'd so this
+	// is mostly redundant, but the sentinel values (-1) need setting explicitly.
+	ZeroMemory(m_stGroundItemCache, sizeof(m_stGroundItemCache));
+	ZeroMemory(m_stGroundLabel, sizeof(m_stGroundLabel));
+	m_iGroundLabelCount   = 0;
+	m_bShowGroundLabels   = FALSE;
+	m_sPendingPickupX     = -1;
+	m_sPendingPickupY     = -1;
+	m_cPendingPickupIndex = 0;
+
 	m_bSoundFlag = FALSE;
 	m_dwDialogCloseTime = 0;
 	m_iTimeLeftSecAccount = NULL;
@@ -1804,6 +1815,20 @@ BOOL CGame::bSendCommand(DWORD dwMsgID, WORD wCommand, char cDir, int iV1, int i
 		iRet = m_pGSock->iSendMsg(cMsg, 12);
 		break;
 
+	case MSGID_REQUEST_GROUNDITEMINFO:
+		dwp = (DWORD *)(cMsg + DEF_INDEX4_MSGID);
+		*dwp = dwMsgID;
+		wp  = (WORD *)(cMsg + DEF_INDEX2_MSGTYPE);
+		*wp = NULL;
+		cp = (char*)(cMsg + 6);
+		sp  = (short *)cp;
+		*sp = (short)iV1;	// sX
+		cp += 2;
+		sp  = (short *)cp;
+		*sp = (short)iV2;	// sY
+		iRet = m_pGSock->iSendMsg(cMsg, 10, cKey);
+		break;
+
 	default:
 		if (m_bIsTeleportRequested == TRUE) return FALSE;
 
@@ -1897,6 +1922,12 @@ void CGame::DrawObjects(short sPivotX, short sPivotY, short sDivX, short sDivY, 
  int res_y = 599;
  int res_msy = 551;
 
+ // Ground-item label UI (D4-style loot labels): item-bearing on-screen tiles are
+ // collected below during the normal tile loop, then consumed by the label pass
+ // appended at the end of this function so labels draw above every sprite.
+ struct { short sX, sY, ix, iy; } stItemTile[DEF_MAXGROUNDITEMSCANTILES];
+ int iItemTileCount = 0;
+
 	if( sDivY < 0 || sDivX < 0) return ;
 	m_sMCX = NULL;
 	m_sMCY = NULL;
@@ -1952,7 +1983,14 @@ void CGame::DrawObjects(short sPivotX, short sPivotY, short sDivX, short sDivY, 
 			 	}
 
 				if ((bRet == TRUE) && (sItemSprite != 0))
-				{	if (cItemColor == 0)
+				{	if (iItemTileCount < DEF_MAXGROUNDITEMSCANTILES)
+					{	stItemTile[iItemTileCount].sX = indexX;
+						stItemTile[iItemTileCount].sY = indexY;
+						stItemTile[iItemTileCount].ix = ix;
+						stItemTile[iItemTileCount].iy = iy;
+						iItemTileCount++;
+					}
+					if (cItemColor == 0)
 						 m_pSprite[DEF_SPRID_ITEMGROUND_PIVOTPOINT + sItemSprite]->PutSpriteFast(ix, iy, sItemSpriteFrame, dwTime);
 					else
 					{	switch (sItemSprite) {
@@ -2492,6 +2530,132 @@ void CGame::DrawObjects(short sPivotX, short sPivotY, short sDivX, short sDivY, 
 		}else if ( (m_iPointCommandType >= 0) && (m_iPointCommandType < 50) ) // item
 		{	m_stMCursor.sCursorFrame = 10;				// hand to grap item
 	}	}
+
+	// ---- D4-style ground item labels (Alt-gated), drawn last so they sit above every sprite ----
+	if ((GetAsyncKeyState(VK_MENU) >> 15) || (m_bShowGroundLabels == TRUE))
+	{
+	 int iTile, iSlot, iReqSent, iCand, iPlaced, k;
+	 int iCandCount = 0;
+	 struct {
+		char  cText[256];
+		int   iX, iY;		// stack anchor, screen coords
+		short sX, sY;
+		char  cStackIndex;
+		BYTE  cR, cG, cB;
+		SIZE  size;
+		RECT  rc;
+	 } stCand[DEF_MAXGROUNDLABELS];
+	 char cTmpName[21], cStr2[256], cStr3[256], cCountTxt[256];
+	 BOOL bMoved;
+
+		iReqSent = 0;
+		for (iTile = 0; iTile < iItemTileCount; iTile++)
+		{
+			iSlot = _iFindGroundItemCacheSlot(stItemTile[iTile].sX, stItemTile[iTile].sY, FALSE);
+
+			if (iSlot < 0)
+			{	// never seen this tile - lazily request it, throttled to a few per frame
+				if (iReqSent < 3)
+				{	iSlot = _iFindGroundItemCacheSlot(stItemTile[iTile].sX, stItemTile[iTile].sY, TRUE);
+					m_stGroundItemCache[iSlot].bPending  = TRUE;
+					m_stGroundItemCache[iSlot].dwRefTime = dwTime;
+					bSendCommand(MSGID_REQUEST_GROUNDITEMINFO, NULL, NULL, stItemTile[iTile].sX, stItemTile[iTile].sY, NULL, NULL);
+					iReqSent++;
+				}
+				continue;
+			}
+
+			if (m_stGroundItemCache[iSlot].bPending == TRUE)
+			{	// dropped-reply retry, so a lost packet can't wedge this tile forever
+				if ((iReqSent < 3) && ((dwTime - m_stGroundItemCache[iSlot].dwRefTime) > 2000))
+				{	m_stGroundItemCache[iSlot].dwRefTime = dwTime;
+					bSendCommand(MSGID_REQUEST_GROUNDITEMINFO, NULL, NULL, stItemTile[iTile].sX, stItemTile[iTile].sY, NULL, NULL);
+					iReqSent++;
+				}
+				continue;
+			}
+
+			if (m_stGroundItemCache[iSlot].cCount <= 0) continue; // known-empty tile
+
+			for (k = 0; (k < (int)m_stGroundItemCache[iSlot].cCount) && (k < 12); k++)
+			{
+				if (iCandCount >= DEF_MAXGROUNDLABELS) break;
+
+				ZeroMemory(cTmpName, sizeof(cTmpName));
+				memcpy(cTmpName, m_stGroundItemCache[iSlot].stItem[k].cName, 20);
+
+				ZeroMemory(stCand[iCandCount].cText, sizeof(stCand[iCandCount].cText));
+				ZeroMemory(cStr2, sizeof(cStr2));
+				ZeroMemory(cStr3, sizeof(cStr3));
+				GetItemName(cTmpName, m_stGroundItemCache[iSlot].stItem[k].dwAttribute,
+					m_stGroundItemCache[iSlot].stItem[k].dwAttribute2, stCand[iCandCount].cText, cStr2, cStr3);
+
+				if (m_stGroundItemCache[iSlot].stItem[k].dwCount > 1)
+				{	wsprintf(cCountTxt, DRAW_DIALOGBOX_SELLOR_REPAIR_ITEM1, m_stGroundItemCache[iSlot].stItem[k].dwCount, stCand[iCandCount].cText); //"%d %s"
+					strcpy(stCand[iCandCount].cText, cCountTxt);
+				}
+
+				switch (_iGetItemRarity(cTmpName, m_stGroundItemCache[iSlot].stItem[k].dwAttribute, m_stGroundItemCache[iSlot].stItem[k].dwAttribute2)) {
+				case DEF_ITEMRARITY_MAGIC:     stCand[iCandCount].cR =  80; stCand[iCandCount].cG = 140; stCand[iCandCount].cB = 255; break;
+				case DEF_ITEMRARITY_RARE:      stCand[iCandCount].cR = 255; stCand[iCandCount].cG = 215; stCand[iCandCount].cB =  60; break;
+				case DEF_ITEMRARITY_LEGENDARY: stCand[iCandCount].cR = 255; stCand[iCandCount].cG = 140; stCand[iCandCount].cB =  40; break;
+				case DEF_ITEMRARITY_UNIQUE:    stCand[iCandCount].cR = 200; stCand[iCandCount].cG =  60; stCand[iCandCount].cB =  60; break;
+				default:                       stCand[iCandCount].cR = 200; stCand[iCandCount].cG = 200; stCand[iCandCount].cB = 200; break; // Common
+				}
+
+				stCand[iCandCount].iX          = stItemTile[iTile].ix;
+				stCand[iCandCount].iY          = stItemTile[iTile].iy - 26 - (k * 14); // slot 0 lowest, stacks upward
+				stCand[iCandCount].sX          = stItemTile[iTile].sX;
+				stCand[iCandCount].sY          = stItemTile[iTile].sY;
+				stCand[iCandCount].cStackIndex = (char)k;
+				iCandCount++;
+			}
+		}
+
+		if (iCandCount > 0)
+		{
+			m_DDraw._GetBackBufferDC();
+			for (iCand = 0; iCand < iCandCount; iCand++)
+				GetTextExtentPoint32(m_DDraw.m_hDC, stCand[iCand].cText, strlen(stCand[iCand].cText), &stCand[iCand].size);
+			m_DDraw._ReleaseBackBufferDC();
+
+			m_iGroundLabelCount = 0;
+			for (iCand = 0; iCand < iCandCount; iCand++)
+			{
+				SetRect(&stCand[iCand].rc,
+					stCand[iCand].iX - (stCand[iCand].size.cx / 2) - 4, stCand[iCand].iY - 11,
+					stCand[iCand].iX + (stCand[iCand].size.cx / 2) + 4, stCand[iCand].iY + 3);
+
+				// de-overlap: nudge upward while colliding with an already-placed label
+				for (k = 0, bMoved = TRUE; (bMoved == TRUE) && (k < 40); k++)
+				{	bMoved = FALSE;
+					for (iPlaced = 0; iPlaced < m_iGroundLabelCount; iPlaced++)
+					{	if ((stCand[iCand].rc.left   < m_stGroundLabel[iPlaced].rcRect.right)  &&
+							(stCand[iCand].rc.right  > m_stGroundLabel[iPlaced].rcRect.left)   &&
+							(stCand[iCand].rc.top    < m_stGroundLabel[iPlaced].rcRect.bottom) &&
+							(stCand[iCand].rc.bottom > m_stGroundLabel[iPlaced].rcRect.top))
+						{	OffsetRect(&stCand[iCand].rc, 0, -14);
+							bMoved = TRUE;
+					}	}
+				}
+
+				if (stCand[iCand].rc.top < 2) continue;			// clamp: off top of screen
+				if (stCand[iCand].rc.bottom > res_msy) continue;	// skip: would land in the UI band
+
+				m_DDraw.DrawShadowBox(stCand[iCand].rc.left, stCand[iCand].rc.top, stCand[iCand].rc.right, stCand[iCand].rc.bottom);
+				PutString2(stCand[iCand].rc.left + 4, stCand[iCand].rc.top + 2, stCand[iCand].cText,
+					stCand[iCand].cR, stCand[iCand].cG, stCand[iCand].cB);
+
+				if (m_iGroundLabelCount < DEF_MAXGROUNDLABELS)
+				{	m_stGroundLabel[m_iGroundLabelCount].rcRect      = stCand[iCand].rc;
+					m_stGroundLabel[m_iGroundLabelCount].sX          = stCand[iCand].sX;
+					m_stGroundLabel[m_iGroundLabelCount].sY          = stCand[iCand].sY;
+					m_stGroundLabel[m_iGroundLabelCount].cStackIndex = stCand[iCand].cStackIndex;
+					m_iGroundLabelCount++;
+				}
+			}
+		}else m_iGroundLabelCount = 0;
+	}else m_iGroundLabelCount = 0; // Alt released and not locked on - nothing is clickable
 }
 
 
@@ -2529,6 +2693,10 @@ void CGame::GameRecvMsgHandler(DWORD dwMsgSize, char * pData)
 
 	case MSGID_RESPONSE_MOTION:
 		MotionResponseHandler(pData);
+		break;
+
+	case MSGID_RESPONSE_GROUNDITEMINFO:
+		ResponseGroundItemInfo(pData);
 		break;
 
 	case MSGID_EVENT_COMMON:
@@ -4071,6 +4239,42 @@ void CGame::bItemDrop_ExternalScreen(char cItemID, short msX, short msY)
 }
 
 
+// Ground-item label UI: flat LRU lookup/allocation over m_stGroundItemCache, keyed by
+// absolute map coords. bAllocIfMissing == FALSE is a pure lookup (used by the label pass
+// and cache invalidation); TRUE reuses a free slot or evicts the oldest by dwRefTime.
+int CGame::_iFindGroundItemCacheSlot(short sX, short sY, BOOL bAllocIfMissing)
+{
+ int i, iOldest;
+ DWORD dwOldest;
+
+	for (i = 0; i < DEF_MAXGROUNDITEMCACHE; i++)
+	if ((m_stGroundItemCache[i].sX == sX) && (m_stGroundItemCache[i].sY == sY) &&
+		((m_stGroundItemCache[i].dwRefTime != 0) || (m_stGroundItemCache[i].bPending == TRUE)))
+		return i;
+
+	if (bAllocIfMissing == FALSE) return -1;
+
+	for (i = 0; i < DEF_MAXGROUNDITEMCACHE; i++)
+	if ((m_stGroundItemCache[i].dwRefTime == 0) && (m_stGroundItemCache[i].bPending == FALSE))
+	{	ZeroMemory(&m_stGroundItemCache[i], sizeof(m_stGroundItemCache[i]));
+		m_stGroundItemCache[i].sX = sX;
+		m_stGroundItemCache[i].sY = sY;
+		return i;
+	}
+
+	iOldest  = 0;
+	dwOldest = m_stGroundItemCache[0].dwRefTime;
+	for (i = 1; i < DEF_MAXGROUNDITEMCACHE; i++)
+	if (m_stGroundItemCache[i].dwRefTime < dwOldest)
+	{	dwOldest = m_stGroundItemCache[i].dwRefTime;
+		iOldest  = i;
+	}
+	ZeroMemory(&m_stGroundItemCache[iOldest], sizeof(m_stGroundItemCache[iOldest]));
+	m_stGroundItemCache[iOldest].sX = sX;
+	m_stGroundItemCache[iOldest].sY = sY;
+	return iOldest;
+}
+
 void CGame::CommonEventHandler(char * pData)
 {
  WORD * wp, wEventType;
@@ -4112,10 +4316,18 @@ void CGame::CommonEventHandler(char * pData)
 			bAddNewEffect(4, sX, sY, NULL, NULL, 0);
 		}
 		m_pMapData->bSetItem(sX, sY, sV1, sV2, (char)sV3);
+		{	// Ground-item label cache is now stale for this tile - drop it so the next
+			// visible frame re-fetches (keeps labels in sync without a relog).
+			int iGISlot = _iFindGroundItemCacheSlot(sX, sY, FALSE);
+			if (iGISlot >= 0) ZeroMemory(&m_stGroundItemCache[iGISlot], sizeof(m_stGroundItemCache[iGISlot]));
+		}
 		break;
 
 	case DEF_COMMONTYPE_SETITEM:
 		m_pMapData->bSetItem(sX, sY, sV1, sV2, (char)sV3, FALSE); // v1.4 color
+		{	int iGISlot = _iFindGroundItemCacheSlot(sX, sY, FALSE);
+			if (iGISlot >= 0) ZeroMemory(&m_stGroundItemCache[iGISlot], sizeof(m_stGroundItemCache[iGISlot]));
+		}
 		break;
 
 	case DEF_COMMONTYPE_MAGIC:
@@ -24375,7 +24587,11 @@ void CGame::OnSysKeyUp(WPARAM wParam)
 		break;
 	case VK_ESCAPE:
 		m_bEscPressed = FALSE;
+		break;
 
+	case VK_F10: // Ground-item label UI: toggle-lock labels on/off without holding Alt (F10 is unbound elsewhere)
+		m_bShowGroundLabels = !m_bShowGroundLabels;
+		break;
 	}
 }
 
@@ -29360,6 +29576,67 @@ void CGame::GetNpcName(short sType, char *pName)
 	}
 }
 
+// The ~30 hardcoded "special" item names (predates the level-gated affix system) get
+// Unique-tier treatment in the ground-item rarity classifier regardless of rolled affixes.
+// Memcmp lengths are preserved byte-for-byte as originally written - several don't match
+// the literal's strlen (e.g. "NecklaceOf" compared with length 10, "DemonSlayer" with 10,
+// "LightingBlade" with 12, "5thAnniversary" with 13) - changing them changes which items match.
+BOOL CGame::_bIsSpecialItemName(char * cName)
+{
+	     if (0 == memcmp(cName,"AcientTablet", 12)) return TRUE;
+	else if (0 == memcmp(cName,"NecklaceOf", 10)) return TRUE;
+	else if (0 == memcmp(cName,"DarkElfBow", 10)) return TRUE;
+	else if (0 == memcmp(cName,"DarkExecutor", 12)) return TRUE;
+	else if (0 == memcmp(cName,"The_Devastator", 14)) return TRUE;
+	else if (0 == memcmp(cName,"DemonSlayer", 10)) return TRUE;
+	else if (0 == memcmp(cName,"LightingBlade", 12)) return TRUE;
+	else if (0 == memcmp(cName,"5thAnniversary", 13)) return TRUE;
+	else if (0 == memcmp(cName,"RubyRing", 8)) return TRUE;
+	else if (0 == memcmp(cName,"SapphireRing", 12)) return TRUE;
+	else if (0 == memcmp(cName,"Ringof", 6)) return TRUE;
+	else if (0 == memcmp(cName,"MagicNecklace", 13)) return TRUE;
+	else if (0 == memcmp(cName,"MagicWand(M.Shield)", 19)) return TRUE;
+	else if (0 == memcmp(cName,"MagicWand(MS30-LLF)", 19)) return TRUE;
+	else if (0 == memcmp(cName,"Merien", 6)) return TRUE;
+	else if (0 == memcmp(cName,"BerserkWand", 11)) return TRUE;
+	else if (0 == memcmp(cName,"ResurWand", 9)) return TRUE;
+	else if (0 == memcmp(cName,"Blood", 5)) return TRUE;
+	else if (0 == memcmp(cName,"Swordof", 7)) return TRUE;
+	else if (0 == memcmp(cName,"StoneOf", 7)) return TRUE;
+	else if (0 == memcmp(cName,"ZemstoneofSacrifice", 19)) return TRUE;
+	else if (0 == memcmp(cName,"StormBringer", 12)) return TRUE;
+	else if (0 == memcmp(cName,"Aresden", 7)) return TRUE;
+	else if (0 == memcmp(cName,"Elvine", 6)) return TRUE;
+	else if (0 == memcmp(cName,"EmeraldRing", 11)) return TRUE;
+	else if (0 == memcmp(cName,"Excaliber", 9)) return TRUE;
+	else if (0 == memcmp(cName,"Xelima", 6)) return TRUE;
+	else if (0 == memcmp(cName,"Kloness", 7)) return TRUE;
+	else if (0 == memcmp(cName,"aHeroOf", 7)) return TRUE;
+	else if (0 == memcmp(cName,"eHeroOf", 7)) return TRUE;
+	return FALSE;
+}
+
+// Ground-item label UI: D4-style rarity tier for a name/affix triple. Unique beats
+// Legendary beats affix-count tiers - matches the level-gated 4-affix system where
+// m_dwAttribute/m_dwAttribute2 each carry up to 2 affix-type nibbles under 0x00F0F000.
+int CGame::_iGetItemRarity(char * cName, DWORD dwAttribute, DWORD dwAttribute2)
+{
+ int iAffixCount;
+
+	if (_bIsSpecialItemName(cName)) return DEF_ITEMRARITY_UNIQUE;
+	if ((dwAttribute & 0x00000001) != 0) return DEF_ITEMRARITY_LEGENDARY; // custom-made
+
+	iAffixCount = 0;
+	if ((dwAttribute  & 0x00F00000) != 0) iAffixCount++;
+	if ((dwAttribute  & 0x0000F000) != 0) iAffixCount++;
+	if ((dwAttribute2 & 0x00F00000) != 0) iAffixCount++;
+	if ((dwAttribute2 & 0x0000F000) != 0) iAffixCount++;
+
+	if (iAffixCount == 0) return DEF_ITEMRARITY_COMMON;
+	if (iAffixCount <= 2) return DEF_ITEMRARITY_MAGIC;
+	return DEF_ITEMRARITY_RARE; // 3-4
+}
+
 void CGame::GetItemName(CItem *pItem, char *pStr1, char *pStr2, char *pStr3)
 {int i;
  char cTxt[256], cTxt2[256], cName[51];
@@ -29378,36 +29655,7 @@ void CGame::GetItemName(CItem *pItem, char *pStr1, char *pStr2, char *pStr3)
 		break;
 	}
 
-     	 if (0 == memcmp(pItem->m_cName,"AcientTablet", 12)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"NecklaceOf", 10)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"DarkElfBow", 10)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"DarkExecutor", 12)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"The_Devastator", 14)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"DemonSlayer", 10)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"LightingBlade", 12)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"5thAnniversary", 13)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"RubyRing", 8)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"SapphireRing", 12)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"Ringof", 6)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"MagicNecklace", 13)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"MagicWand(M.Shield)", 19)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"MagicWand(MS30-LLF)", 19)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"Merien", 6)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"BerserkWand", 11)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"ResurWand", 9)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"Blood", 5)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"Swordof", 7)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"StoneOf", 7)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"ZemstoneofSacrifice", 19)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"StormBringer", 12)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"Aresden", 7)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"Elvine", 6)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"EmeraldRing", 11)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"Excaliber", 9)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"Xelima", 6)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"Kloness", 7)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"aHeroOf", 7)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(pItem->m_cName,"eHeroOf", 7)) m_bIsSpecial = TRUE;
+	if (_bIsSpecialItemName(pItem->m_cName)) m_bIsSpecial = TRUE;
 	if ((pItem->m_dwAttribute & 0x00000001) != 0)
 	{	m_bIsSpecial = TRUE;
 		strcpy(pStr1, cName);
@@ -29590,36 +29838,7 @@ void CGame::GetItemName(char * cItemName, DWORD dwAttribute, DWORD dwAttribute2,
 		break;
 	}
 
-     	 if (0 == memcmp(cItemName,"AcientTablet", 12)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"NecklaceOf", 10)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"DarkElfBow", 10)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"DarkExecutor", 12)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"The_Devastator", 14)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"DemonSlayer", 10)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"LightingBlade", 12)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"5thAnniversary", 13)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"RubyRing", 8)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"SapphireRing", 12)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"Ringof", 6)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"MagicNecklace", 13)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"MagicWand(M.Shield)", 19)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"MagicWand(MS30-LLF)", 19)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"Merien", 6)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"BerserkWand", 11)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"ResurWand", 9)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"Blood", 5)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"Swordof", 7)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"StoneOf", 7)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"ZemstoneofSacrifice", 19)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"StormBringer", 12)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"Aresden", 7)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"Elvine", 6)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"EmeraldRing", 11)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"Excaliber", 9)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"Xelima", 6)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"Kloness", 7)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"aHeroOf", 7)) m_bIsSpecial = TRUE;
-	else if (0 == memcmp(cItemName,"eHeroOf", 7)) m_bIsSpecial = TRUE;
+	if (_bIsSpecialItemName(cItemName)) m_bIsSpecial = TRUE;
 	strcpy(pStr1, cName);
 
 	if ((dwAttribute & 0x00F0F000) != 0)
@@ -30503,6 +30722,33 @@ void CGame::MotionResponseHandler(char * pData)
 }
 
 
+// Ground-item label UI: hit-tests this frame's labels (drawn in DrawObjects) against a
+// click. On a hit, queues the walk-then-pickup - sets the normal move command toward the
+// tile and remembers which stack slot to grab; the actual pickup fires once the player's
+// position matches (see the pending-pickup check at MOTION_COMMAND_PROCESS below), since
+// the server requires standing exactly on the tile.
+BOOL CGame::_bCheckGroundLabelClick(short msX, short msY)
+{
+ int i;
+
+	for (i = 0; i < m_iGroundLabelCount; i++)
+	{
+		if ((msX < m_stGroundLabel[i].rcRect.left) || (msX > m_stGroundLabel[i].rcRect.right) ||
+			(msY < m_stGroundLabel[i].rcRect.top)  || (msY > m_stGroundLabel[i].rcRect.bottom))
+			continue;
+
+		m_sPendingPickupX     = m_stGroundLabel[i].sX;
+		m_sPendingPickupY     = m_stGroundLabel[i].sY;
+		m_cPendingPickupIndex = m_stGroundLabel[i].cStackIndex;
+
+		m_cCommand = DEF_OBJECTMOVE;
+		m_sCommX   = m_sPendingPickupX;
+		m_sCommY   = m_sPendingPickupY;
+		return TRUE;
+	}
+	return FALSE;
+}
+
 void CGame::CommandProcessor(short msX, short msY, short indexX, short indexY, char cLB, char cRB)
 {
  char   cDir, absX, absY, cName[12];
@@ -30792,6 +31038,12 @@ CP_SKIPMOUSEBUTTONSTATUS:;
 			m_bIsGetPointingMode = FALSE;
 			return;
 		}
+
+		// Ground-item label click (D4-style loot labels) takes priority over ordinary
+		// tile interaction below; any other click cancels a stale pending pickup.
+		if (_bCheckGroundLabelClick(msX, msY))
+			goto MOTION_COMMAND_PROCESS;
+		m_sPendingPickupX = -1;
 
 		m_pMapData->bGetOwner(m_sMCX, m_sMCY-1, cName, &sObjectType, &iObjectStatus, &m_wCommObjectID); // v1.4
 		//m_pMapData->m_pData[dX][dY].m_sItemSprite
@@ -31633,6 +31885,23 @@ CP_SKIPMOUSEBUTTONSTATUS:;
 	}	}
 
 MOTION_COMMAND_PROCESS:;
+
+	// Ground-item label UI: fire the walk-then-pickup once we've actually arrived on the
+	// target tile (server requires standing exactly on it - see iClientMotion_GetItem_Handler).
+	// Runs every frame this label is reached, so it fires the instant a click lands while
+	// already standing on the tile, or the moment a queued walk finishes.
+	if ((m_sPendingPickupX != -1) && (m_sPlayerX == m_sPendingPickupX) && (m_sPlayerY == m_sPendingPickupY) &&
+		(m_bCommandAvailable == TRUE) && (m_iHP > 0))
+	{	bSendCommand(MSGID_COMMAND_MOTION, DEF_OBJECTGETITEM, m_cPlayerDir, NULL, NULL, m_cPendingPickupIndex, NULL);
+		m_pMapData->bSetOwner(m_sPlayerObjectID, m_sPlayerX, m_sPlayerY, m_sPlayerType, m_cPlayerDir,
+			                  m_sPlayerAppr1, m_sPlayerAppr2, m_sPlayerAppr3, m_sPlayerAppr4, m_iPlayerApprColor,
+							  m_iPlayerStatus, m_cPlayerName,
+							  DEF_OBJECTGETITEM, NULL, NULL, NULL);
+		m_bCommandAvailable = FALSE;
+		m_sPendingPickupX   = -1;
+		m_cCommand          = DEF_OBJECTSTOP;
+		return;
+	}
 
 	if (m_cCommand != DEF_OBJECTSTOP)
 	{	if (m_iHP <= 0) return;
@@ -37296,6 +37565,59 @@ void CGame::DlgBoxClick_SkillDlg(short msX, short msY)
 	}
 }
 
+// Ground-item label UI: decode the on-demand tile item-stack descriptor (11 + cCount*33
+// bytes, wire format frozen against the server - see MSGID_RESPONSE_GROUNDITEMINFO).
+void CGame::ResponseGroundItemInfo(char * pData)
+{
+ char * cp;
+ short * sp, sX, sY;
+ DWORD * dwp;
+ char cCount;
+ int  i, iSlot;
+
+	cp = pData + 6;
+
+	sp = (short *)cp;
+	sX = *sp;
+	cp += 2;
+
+	sp = (short *)cp;
+	sY = *sp;
+	cp += 2;
+
+	cCount = *cp;
+	cp += 1;
+
+	iSlot = _iFindGroundItemCacheSlot(sX, sY, TRUE);
+	ZeroMemory(&m_stGroundItemCache[iSlot], sizeof(m_stGroundItemCache[iSlot]));
+	m_stGroundItemCache[iSlot].sX        = sX;
+	m_stGroundItemCache[iSlot].sY        = sY;
+	m_stGroundItemCache[iSlot].bPending  = FALSE;
+	m_stGroundItemCache[iSlot].dwRefTime = m_dwCurTime; // marks the slot fresh (also "in use")
+	m_stGroundItemCache[iSlot].cCount    = cCount;	     // 0 = tile is empty, entry stays cleared
+
+	for (i = 0; (i < (int)cCount) && (i < 12); i++)
+	{
+		memcpy(m_stGroundItemCache[iSlot].stItem[i].cName, cp, 20); // cName[21] already zeroed above
+		cp += 20;
+
+		dwp = (DWORD *)cp;
+		m_stGroundItemCache[iSlot].stItem[i].dwAttribute = *dwp;
+		cp += 4;
+
+		dwp = (DWORD *)cp;
+		m_stGroundItemCache[iSlot].stItem[i].dwAttribute2 = *dwp;
+		cp += 4;
+
+		dwp = (DWORD *)cp;
+		m_stGroundItemCache[iSlot].stItem[i].dwCount = *dwp;
+		cp += 4;
+
+		m_stGroundItemCache[iSlot].stItem[i].cItemColor = *cp;
+		cp += 1;
+	}
+}
+
 void CGame::ResponseTeleportList(char *pData)
 {	char *cp;
 	int  *ip, i;
@@ -39609,6 +39931,12 @@ void CGame::InitDataResponseHandler(char * pData)
 	ZeroMemory( cPreCurLocation, sizeof(cPreCurLocation) );
 	m_bParalyze = FALSE;
 	m_pMapData->Init();
+
+	// Ground-item label cache is keyed by absolute coords on the OLD map - flush it
+	// entirely on map change so labels don't reappear pointing at the wrong tiles.
+	ZeroMemory(m_stGroundItemCache, sizeof(m_stGroundItemCache));
+	m_iGroundLabelCount = 0;
+	m_sPendingPickupX = -1;
 
 	m_sMonsterID = 0;
 	m_dwMonsterEventTime = 0;
