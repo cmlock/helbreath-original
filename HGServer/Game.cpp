@@ -10845,6 +10845,12 @@ NBA_CHASE:;
 		m_pNpcList[iNpcH]->m_iAttackCount = 0;
 
 		{
+			// dX/dY here is the target's live position, which is a different line every tick while it
+			// moves. m_tmp_iError is a Bresenham accumulator meant to persist across repeated steps of
+			// the SAME line (as used for waypoint travel); reusing it across ticks with a constantly
+			// changing slope biases the direction pick toward stale, unrelated lines and produces the
+			// zigzagging seen when chasing a moving target. Reset it so each chase step is computed fresh.
+			m_pNpcList[iNpcH]->m_tmp_iError = 0;
 			cDir = cGetNextMoveDir(sX, sY, dX, dY,m_pNpcList[iNpcH]->m_cMapIndex, m_pNpcList[iNpcH]->m_cTurn, &m_pNpcList[iNpcH]->m_tmp_iError);
 			if (cDir == 0) {
 				return;
@@ -11318,6 +11324,10 @@ void CGame::NpcBehavior_Flee(int iNpcH)
 	dX = sX - (dX - sX);
 	dY = sY - (dY - sY);
 
+	// Same stale-accumulator issue as the ATTACK chase step: the flee point is recomputed from the
+	// target's live position every tick, so the persisted Bresenham error from a previous, unrelated
+	// line must not carry over here either.
+	m_pNpcList[iNpcH]->m_tmp_iError = 0;
 	cDir = cGetNextMoveDir(sX, sY, dX, dY, m_pNpcList[iNpcH]->m_cMapIndex, m_pNpcList[iNpcH]->m_cTurn, &m_pNpcList[iNpcH]->m_tmp_iError);
 	if (cDir == 0) {
 	}
