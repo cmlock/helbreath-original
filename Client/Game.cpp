@@ -4275,6 +4275,17 @@ int CGame::_iFindGroundItemCacheSlot(short sX, short sY, BOOL bAllocIfMissing)
 	return iOldest;
 }
 
+// Drop a tile's cached item descriptors so the next visible frame re-fetches them.
+// Must be called from every path that changes what is on a tile - the event handlers
+// below, and the map-status path, which is the one that fires as tiles scroll into view.
+void CGame::_InvalidateGroundItemCache(short sX, short sY)
+{
+ int iSlot;
+
+	iSlot = _iFindGroundItemCacheSlot(sX, sY, FALSE);
+	if (iSlot >= 0) ZeroMemory(&m_stGroundItemCache[iSlot], sizeof(m_stGroundItemCache[iSlot]));
+}
+
 void CGame::CommonEventHandler(char * pData)
 {
  WORD * wp, wEventType;
@@ -4316,18 +4327,12 @@ void CGame::CommonEventHandler(char * pData)
 			bAddNewEffect(4, sX, sY, NULL, NULL, 0);
 		}
 		m_pMapData->bSetItem(sX, sY, sV1, sV2, (char)sV3);
-		{	// Ground-item label cache is now stale for this tile - drop it so the next
-			// visible frame re-fetches (keeps labels in sync without a relog).
-			int iGISlot = _iFindGroundItemCacheSlot(sX, sY, FALSE);
-			if (iGISlot >= 0) ZeroMemory(&m_stGroundItemCache[iGISlot], sizeof(m_stGroundItemCache[iGISlot]));
-		}
+		_InvalidateGroundItemCache(sX, sY);
 		break;
 
 	case DEF_COMMONTYPE_SETITEM:
 		m_pMapData->bSetItem(sX, sY, sV1, sV2, (char)sV3, FALSE); // v1.4 color
-		{	int iGISlot = _iFindGroundItemCacheSlot(sX, sY, FALSE);
-			if (iGISlot >= 0) ZeroMemory(&m_stGroundItemCache[iGISlot], sizeof(m_stGroundItemCache[iGISlot]));
-		}
+		_InvalidateGroundItemCache(sX, sY);
 		break;
 
 	case DEF_COMMONTYPE_MAGIC:
@@ -13181,6 +13186,10 @@ void CGame::_ReadMapData(short sPivotX, short sPivotY, char * pData)
 			cItemColor = *cp;
 			cp++;
 			m_pMapData->bSetItem(sPivotX + sX, sPivotY + sY, sItemSpr, sItemSprFrame, cItemColor, FALSE);
+			// A tile re-entering view may have changed while it was out of broadcast range
+			// (drop/pickup events only reach clients within ~12x10 tiles), so its cached
+			// descriptors cannot be trusted here.
+			_InvalidateGroundItemCache(sPivotX + sX, sPivotY + sY);
 		}
 		if (ucHeader & 0x08) // Dynamic object
 		{	wp = (WORD *)cp;

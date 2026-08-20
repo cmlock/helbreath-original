@@ -386,6 +386,7 @@ public:
 
 	// Ground-item label UI (D4-style loot labels)
 	int  _iFindGroundItemCacheSlot(short sX, short sY, BOOL bAllocIfMissing);
+	void _InvalidateGroundItemCache(short sX, short sY);
 	void ResponseGroundItemInfo(char * pData);
 	BOOL _bCheckGroundLabelClick(short msX, short msY);
 	void _InitOnCreateNewCharacter();
