@@ -4220,20 +4220,8 @@ void CGame::bItemDrop_ExternalScreen(char cItemID, short msX, short msY)
 			ZeroMemory(m_stDialogBoxInfo[17].cStr, sizeof(m_stDialogBoxInfo[17].cStr));
 			EnableDialogBox(17, cItemID, m_pItemList[cItemID]->m_dwCount, NULL);
 		}else
-		{	if(_ItemDropHistory(m_pItemList[cItemID]->m_cName))
-			{	m_stDialogBoxInfo[4].sX  = msX - 140;
-				m_stDialogBoxInfo[4].sY  = msY - 70;
-				if (m_stDialogBoxInfo[4].sY < 0)	m_stDialogBoxInfo[4].sY = 0;
-    			m_stDialogBoxInfo[4].sV1 = NULL;
-				m_stDialogBoxInfo[4].sV2 = NULL;
-				m_stDialogBoxInfo[4].sV3 = 1;
-				m_stDialogBoxInfo[4].sV4 = NULL;
-				m_stDialogBoxInfo[4].sV5 = cItemID;
-				ZeroMemory(m_stDialogBoxInfo[4].cStr, sizeof(m_stDialogBoxInfo[4].cStr));
-				EnableDialogBox(4, cItemID, m_pItemList[cItemID]->m_dwCount, NULL);
-			}else
-			{	bSendCommand(MSGID_COMMAND_COMMON, DEF_COMMONTYPE_ITEMDROP, NULL, cItemID, 1, NULL, m_pItemList[cItemID]->m_cName);
-		}	}
+		{	bSendCommand(MSGID_COMMAND_COMMON, DEF_COMMONTYPE_ITEMDROP, NULL, cItemID, 1, NULL, m_pItemList[cItemID]->m_cName);
+		}
 		m_bIsItemDisabled[cItemID] = TRUE;
 	}
 }
